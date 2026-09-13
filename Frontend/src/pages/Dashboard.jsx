@@ -87,7 +87,7 @@ function FeaturedCard({ post }) {
           {post.content_type}
         </span>
 
-        <h3>{post.heading}</h3>
+        <h3 className="featured-card-heading">{post.heading}</h3>
 
         {post.description && (
           <p>{post.description}</p>
@@ -264,7 +264,7 @@ function Dashboard() {
     <div className="magazine">
       <nav className="dashboard-navbar">
         <Link to="/" className="dashboard-nav-logo">
-          Academic Arc
+          <img src="/Icons/logo.svg" alt="Logo" />
         </Link>
 
         <div className="dashboard-nav-links">
@@ -301,9 +301,13 @@ function Dashboard() {
                     {user?.name || 'Profile'}
                   </span>
 
-                  <span className="profile-dropdown-arrow">
-                    {profileMenuOpen ? '⌃' : '⌄'}
-                  </span>
+                  <img
+                      src="/Icons/dropdown.svg"
+                      alt=""
+                      className={`profile-dropdown-arrow ${
+                          profileMenuOpen ? 'open' : ''
+                      }`}
+                  />
                 </button>
 
                 {profileMenuOpen && (
