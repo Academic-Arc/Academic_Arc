@@ -406,19 +406,27 @@ function Dashboard() {
                 </div>
 
                 <div className="featured-carousel-controls">
-                  <button
-                    onClick={() => scrollCarousel(specialCarouselRef, -1)}
-                    aria-label="Previous special mentions"
-                  >
-                    ←
-                  </button>
+                    <button
+                        onClick={() => scrollCarousel(specialCarouselRef, -1)}
+                        aria-label="Previous special mentions"
+                    >
+                        <img
+                            src="/Icons/dropdown.svg"
+                            alt=""
+                            className="carousel-arrow previous"
+                        />
+                    </button>
 
-                  <button
-                    onClick={() => scrollCarousel(specialCarouselRef, 1)}
-                    aria-label="Next special mentions"
-                  >
-                    →
-                  </button>
+                    <button
+                        onClick={() => scrollCarousel(specialCarouselRef, 1)}
+                        aria-label="Next special mentions"
+                    >
+                        <img
+                            src="/Icons/dropdown.svg"
+                            alt=""
+                            className="carousel-arrow next"
+                        />
+                    </button>
                 </div>
               </div>
 
@@ -457,19 +465,27 @@ function Dashboard() {
                 </div>
 
                 <div className="featured-carousel-controls">
-                  <button
-                    onClick={() => scrollCarousel(automaticCarouselRef, -1)}
-                    aria-label="Previous top posts"
-                  >
-                    ←
-                  </button>
+                    <button
+                        onClick={() => scrollCarousel(automaticCarouselRef, -1)}
+                        aria-label="Previous top posts"
+                    >
+                        <img
+                            src="/Icons/dropdown.svg"
+                            alt=""
+                            className="carousel-arrow previous"
+                        />
+                    </button>
 
-                  <button
-                    onClick={() => scrollCarousel(automaticCarouselRef, 1)}
-                    aria-label="Next top posts"
-                  >
-                    →
-                  </button>
+                    <button
+                        onClick={() => scrollCarousel(automaticCarouselRef, 1)}
+                        aria-label="Next top posts"
+                    >
+                        <img
+                            src="/Icons/dropdown.svg"
+                            alt=""
+                            className="carousel-arrow next"
+                        />
+                    </button>
                 </div>
               </div>
 

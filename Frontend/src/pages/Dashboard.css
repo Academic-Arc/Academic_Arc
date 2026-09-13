@@ -438,8 +438,21 @@
 }
 
 .featured-carousel-controls button:hover {
-  background: #171717;
-  color: #ffffff;
+  background: #fff;
+}
+
+.carousel-arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.carousel-arrow.previous {
+  transform: rotate(-90deg);
+}
+
+.carousel-arrow.next {
+  transform: rotate(90deg);
 }
 
 
