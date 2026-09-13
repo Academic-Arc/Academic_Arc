@@ -135,8 +135,33 @@ function Dashboard() {
   const isLoggedIn = !!token
 
   const [featuredPosts, setFeaturedPosts] = useState([])
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [user, setUser] = useState(null)
+
   const specialCarouselRef = useRef(null)
   const automaticCarouselRef = useRef(null)
+  const profileMenuRef = useRef(null)
+
+  useEffect(() => {
+    if (!token) return
+
+    fetch('http://127.0.0.1:8000/auth/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Could not load user profile.')
+        }
+
+        return response.json()
+      })
+      .then((data) => setUser(data))
+      .catch((error) => {
+        console.error('Error fetching user profile:', error)
+      })
+  }, [token])
 
   useEffect(() => {
     fetch('http://127.0.0.1:8000/featured/')
@@ -145,6 +170,23 @@ function Dashboard() {
       .catch((error) => {
         console.error('Error fetching featured posts:', error)
       })
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   const scrollCarousel = (ref, direction) => {
@@ -203,6 +245,21 @@ function Dashboard() {
     (post) => post.feature_type === 'automatic'
   )
 
+  const getInitials = (name) => {
+    if (!name) return '?'
+
+    const parts = name.trim().split(/\s+/)
+
+    if (parts.length === 1) {
+      return parts[0].charAt(0).toUpperCase()
+    }
+
+    return (
+      parts[0].charAt(0) +
+      parts[parts.length - 1].charAt(0)
+    ).toUpperCase()
+  }
+
   return (
     <div className="magazine">
       <nav className="dashboard-navbar">
@@ -218,11 +275,59 @@ function Dashboard() {
 
           {isLoggedIn ? (
             <>
-              <Link to="/submit">Submit</Link>
-              <Link to="/profile">
-                <img src="/Icons/profile.svg" alt="Profile" />
+              <Link to="/submit" className="submit-button">
+                Submit
               </Link>
-              <button onClick={logout}>Logout</button>
+
+              <div className="profile-dropdown" ref={profileMenuRef}>
+
+                <button
+                  className="profile-dropdown-button"
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  aria-expanded={profileMenuOpen}
+                >
+                  <div className="profile-avatar">
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user.name}
+                      />
+                    ) : (
+                      <span>{getInitials(user?.name)}</span>
+                    )}
+                  </div>
+
+                  <span className="profile-user-name">
+                    {user?.name || 'Profile'}
+                  </span>
+
+                  <span className="profile-dropdown-arrow">
+                    {profileMenuOpen ? '⌃' : '⌄'}
+                  </span>
+                </button>
+
+                {profileMenuOpen && (
+                  <div className="profile-dropdown-menu">
+
+                    <Link
+                      to="/profile"
+                      onClick={() => setProfileMenuOpen(false)}
+                    >
+                      <img src="/Icons/profile.svg" alt="" />
+                      <span>My Profile</span>
+                    </Link>
+
+                    <button
+                      onClick={logout}
+                    >
+                      <span className="logout-icon">↪</span>
+                      <span>Logout</span>
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
             </>
           ) : (
             <>
