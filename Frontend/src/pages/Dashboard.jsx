@@ -213,7 +213,7 @@ function Dashboard() {
         <div className="dashboard-nav-links">
 
           <button className="language-button">
-            বাংলা
+            <img src="/Icons/language.svg" alt="Language" />
           </button>
 
           {isLoggedIn ? (

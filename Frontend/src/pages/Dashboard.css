@@ -57,7 +57,8 @@
 
 .language-button {
   padding: 7px 14px !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  filter: invert(100%);
+  border: 2px solid rgba(0, 0, 0, 0.5) !important;
   border-radius: 20px;
 }
 
@@ -538,11 +539,23 @@
   }
 
   .categories-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding: 5px 2px 15px;
+    text-align: left;
+  }
+
+  .categories-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .category-card {
+    flex: 0 0 85%;
     height: 220px;
+    scroll-snap-align: start;
   }
 
   .featured-section {
