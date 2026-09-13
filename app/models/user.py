@@ -23,14 +23,14 @@ class User(Base):
         String(255),
         unique=True,
         index=True,
-        nullable=False
+        nullable=True
     )
 
     phone: Mapped[str] = mapped_column(
         String(15),
         unique=True,
         index=True,
-        nullable=False
+        nullable=True
     )
 
     is_student: Mapped[bool] = mapped_column(

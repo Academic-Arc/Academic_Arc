@@ -8,9 +8,10 @@ class UserSignup(BaseModel):
         max_length=100
     )
 
-    email: EmailStr
+    email: EmailStr | None = None
 
-    phone: str = Field(
+    phone: str | None = Field(
+        default=None,
         min_length=10,
         max_length=15
     )

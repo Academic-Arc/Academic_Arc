@@ -39,6 +39,11 @@ function Signup() {
     const handleSignup = async (e) => {
         e.preventDefault()
 
+        if (!formData.email && !formData.phone) {
+            alert('Please enter either an email address or phone number')
+            return
+        }
+
         if (formData.password !== formData.confirmPassword) {
             alert('Passwords do not match')
             return
@@ -47,8 +52,8 @@ function Signup() {
         try {
             const dataToSend = {
                 name: formData.name,
-                email: formData.email,
-                phone: formData.phone,
+                email: formData.email || null,
+                phone: formData.phone || null,
                 password: formData.password,
                 is_student: formData.is_student,
                 dob: formData.dob,
@@ -80,8 +85,10 @@ function Signup() {
                 return
             }
 
+            localStorage.setItem('access_token', data.access_token)
+
             alert('Signup successful!')
-            navigate('/login')
+            navigate('/')
         } catch (error) {
             console.error(error)
             alert('Could not connect to the backend')
@@ -272,7 +279,6 @@ function Signup() {
                         <div className="signup-field">
                             <label>
                                 Email
-                                <span className="required">*</span>
                             </label>
 
                             <input
@@ -280,8 +286,7 @@ function Signup() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                placeholder="your@email.com"
-                                required
+                                placeholder="Enter your email"
                             />
                         </div>
 
@@ -292,7 +297,6 @@ function Signup() {
                             <div className="signup-field">
                                 <label>
                                     Phone Number
-                                    <span className="required">*</span>
                                 </label>
 
                                 <input
@@ -300,8 +304,7 @@ function Signup() {
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
-                                    placeholder="Enter phone number"
-                                    required
+                                    placeholder="Enter your phone number"
                                 />
                             </div>
 

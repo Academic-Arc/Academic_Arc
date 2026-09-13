@@ -30,17 +30,38 @@ def signup(
     user_data: UserSignup,
     db: Session = Depends(get_db)
 ):
-    existing_user = (
-        db.query(User)
-        .filter(User.email == user_data.email)
-        .first()
-    )
 
-    if existing_user:
+    if not user_data.email and not user_data.phone:
         raise HTTPException(
             status_code=400,
-            detail="Email already registered"
+            detail="Please provide either an email address or phone number"
         )
+
+    if user_data.email:
+        existing_user = (
+            db.query(User)
+            .filter(User.email == user_data.email)
+            .first()
+        )
+
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+
+    if user_data.phone:
+        existing_user = (
+            db.query(User)
+            .filter(User.phone == user_data.phone)
+            .first()
+        )
+
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number already registered"
+            )
 
     new_user = User(
         name=user_data.name,
@@ -70,10 +91,16 @@ def signup(
         db.commit()
         db.refresh(new_student)
 
+    access_token = create_access_token(
+        new_user.id,
+        new_user.role
+    )
+
     return {
         "message": "User created successfully",
         "user_id": new_user.id,
-        "student_id": new_student.id if new_student else None
+        "student_id": new_student.id if new_student else None,
+        "access_token": access_token
     }
 
 @router.post("/login")
