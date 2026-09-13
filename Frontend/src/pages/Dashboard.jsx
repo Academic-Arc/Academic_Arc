@@ -317,14 +317,16 @@ function Dashboard() {
                       to="/profile"
                       onClick={() => setProfileMenuOpen(false)}
                     >
-                      <img src="/Icons/profile.svg" alt="" />
+                      <img src="/Icons/profile.svg" alt="Profile" />
                       <span>My Profile</span>
                     </Link>
 
                     <button
                       onClick={logout}
                     >
-                      <span className="logout-icon">↪</span>
+                      <span className="logout-icon">
+                        <img src="/Icons/logout.svg" alt="Logout" />
+                      </span>
                       <span>Logout</span>
                     </button>
 

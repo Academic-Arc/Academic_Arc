@@ -40,7 +40,7 @@
 .dashboard-nav-links {
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 12px;
 }
 
 .dashboard-nav-links a {
@@ -213,12 +213,13 @@
 .profile-dropdown-menu img {
   width: 18px;
   height: 18px;
+  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
 }
 
 .logout-icon {
   width: 18px;
+  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
   text-align: center;
-  font-size: 17px;
 }
 
 /* MAIN SECTION */
@@ -697,7 +698,7 @@
   }
 
   .dashboard-nav-links {
-    gap: 8px;
+    gap: 6px;
   }
 
   .dashboard-nav-links .submit-button {
