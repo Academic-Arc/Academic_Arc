@@ -226,23 +226,15 @@
 
 .content-type {
     min-height: 62px;
-
     display: flex;
     align-items: center;
-
     gap: 10px;
-
     padding: 9px 13px;
-
     border: 1px solid #d5d1c9;
     border-radius: 12px;
-
     background: #f0eee9;
-
     text-align: left;
-
     cursor: pointer;
-
     transition: 0.15s ease;
 }
 
@@ -252,33 +244,25 @@
 
 .content-type.selected {
     border-color: #dc7615;
-
     background: #fff7ed;
 }
 
 .type-icon {
-    color: #dc7615;
-
+    filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
     font-size: 20px;
-
     flex-shrink: 0;
 }
 
 .content-type strong {
     display: block;
-
     color: #292927;
-
     font-size: 13px;
 }
 
 .content-type small {
     display: block;
-
     margin-top: 3px;
-
     color: #77736d;
-
     font-size: 11px;
 }
 

@@ -219,7 +219,9 @@ function Submit() {
                                         setContentType('Writing')
                                     }}
                                 >
-                                    <span className="type-icon">⌁</span>
+                                    <span className="type-icon">
+                                        <img src="/Icons/writing.svg" alt="Writing" />
+                                    </span>
                                     <span>
                                         <strong>Writing</strong>
                                         <small>Writing</small>
@@ -239,7 +241,9 @@ function Submit() {
                                         setWrittenContent('')
                                     }}
                                 >
-                                    <span className="type-icon">⌕</span>
+                                    <span className="type-icon">
+                                        <img src="/Icons/drawing.svg" alt="Drawing" />
+                                    </span>
                                     <span>
                                         <strong>Drawing</strong>
                                         <small>Drawing</small>
@@ -258,7 +262,9 @@ function Submit() {
                                         setContentType('Poem')
                                     }}
                                 >
-                                    <span className="type-icon">▣</span>
+                                    <span className="type-icon">
+                                        <img src="/Icons/poem.svg" alt="Poem" />
+                                    </span>
                                     <span>
                                         <strong>Poem</strong>
                                         <small>Poem</small>
@@ -278,7 +284,9 @@ function Submit() {
                                         setWrittenContent('')
                                     }}
                                 >
-                                    <span className="type-icon">♫</span>
+                                    <span className="type-icon">
+                                        <img src="/Icons/song.svg" alt="Song" />
+                                    </span>
                                     <span>
                                         <strong>Song</strong>
                                         <small>Singing</small>
@@ -298,7 +306,9 @@ function Submit() {
                                         setWrittenContent('')
                                     }}
                                 >
-                                    <span className="type-icon">♬</span>
+                                    <span className="type-icon">
+                                        <img src="/Icons/instrument.svg" alt="Instrumental" />
+                                    </span>
                                     <span>
                                         <strong>Instrumental</strong>
                                         <small>Instruments</small>
@@ -318,7 +328,9 @@ function Submit() {
                                         setWrittenContent('')
                                     }}
                                 >
-                                    <span className="type-icon">✣</span>
+                                    <span className="type-icon">
+                                        <img src="/Icons/dance.svg" alt="Dance" />
+                                    </span>
                                     <span>
                                         <strong>Dance</strong>
                                         <small>Dance</small>
