@@ -47,6 +47,14 @@ class UserProfileUpdate(BaseModel):
         max_length=100
     )
 
+    email: EmailStr | None = None
+
+    phone: str | None = Field(
+        default=None,
+        min_length=10,
+        max_length=15
+    )
+
     district: str | None = Field(
         default=None,
         max_length=100
@@ -55,4 +63,11 @@ class UserProfileUpdate(BaseModel):
     village_locality: str | None = Field(
         default=None,
         max_length=200
+    )
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str = Field(
+        min_length=8,
+        max_length=100
     )

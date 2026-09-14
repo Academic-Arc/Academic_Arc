@@ -6,7 +6,7 @@ from app.supabase import supabase
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserSignup, UserLogin, UserProfileUpdate
+from app.schemas.user import UserSignup, UserLogin, UserProfileUpdate, PasswordChange
 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.student import Student
@@ -242,7 +242,47 @@ def update_profile(
             detail="User not found"
         )
 
+    if not profile_data.email and not profile_data.phone:
+        raise HTTPException(
+            status_code=400,
+            detail="Either email or phone number is required"
+        )
+
+    if profile_data.email:
+        existing_email = (
+            db.query(User)
+            .filter(
+                User.email == profile_data.email,
+                User.id != user.id
+            )
+            .first()
+        )
+
+        if existing_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+
+    if profile_data.phone:
+        existing_phone = (
+            db.query(User)
+            .filter(
+                User.phone == profile_data.phone,
+                User.id != user.id
+            )
+            .first()
+        )
+
+        if existing_phone:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number already registered"
+            )
+
     user.name = profile_data.name
+    user.email = profile_data.email
+    user.phone = profile_data.phone
     user.district = profile_data.district
     user.village_locality = profile_data.village_locality
 
@@ -325,4 +365,51 @@ async def upload_profile_picture(
     return {
         "message": "Profile picture uploaded successfully",
         "profile_picture": public_url
+    }
+
+@router.put("/change-password")
+def change_password(
+    password_data: PasswordChange,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user_id = payload.get("user_id")
+
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if not verify_password(
+        password_data.current_password,
+        user.password_hash
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+
+    user.password_hash = hash_password(
+        password_data.new_password
+    )
+
+    db.commit()
+
+    return {
+        "message": "Password changed successfully"
     }
