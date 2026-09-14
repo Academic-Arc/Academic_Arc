@@ -1,6 +1,6 @@
 .site-footer {
   width: 100%;
-  margin-top: 50px;
+  margin-top: 0;
   background: #11100f;
   color: #e8e5df;
   font-family: inherit;
@@ -11,11 +11,11 @@
 .footer-main {
   width: min(1250px, calc(100% - 60px));
   margin: 0 auto;
-  padding: 34px 0 30px;
+  padding: 28px 0 24px;
 
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1.7fr 1.3fr;
-  gap: 45px;
+  grid-template-columns: 145px 1.5fr 1.35fr 1.45fr 1.2fr;
+  gap: 38px;
   align-items: start;
 }
 
@@ -99,8 +99,12 @@
 
 /* Feedback */
 
+.footer-feedback {
+  padding-top: 0;
+}
+
 .feedback-form {
-  margin-top: 15px;
+  margin-top: 0;
 }
 
 .feedback-form label {
@@ -235,7 +239,7 @@
 @media (max-width: 900px) {
   .footer-main {
     grid-template-columns: 1fr 1fr;
-    gap: 35px;
+    gap: 30px;
   }
 
   .footer-photographers {
@@ -252,9 +256,6 @@
 /* Mobile */
 
 @media (max-width: 600px) {
-  .site-footer {
-    margin-top: 40px;
-  }
 
   .footer-main {
     width: calc(100% - 40px);

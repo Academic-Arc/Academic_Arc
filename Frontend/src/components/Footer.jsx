@@ -44,75 +44,78 @@ const Footer = () => {
           </p>
         </div>
 
-        {/* Contact + Feedback */}
+        {/* Contact */}
         <div className="footer-contact">
-          <h3>Contact Us</h3>
+        <h3>Contact Us</h3>
 
-          <div className="contact-item">
+        <div className="contact-item">
             <span className="contact-icon">Icon</span>
             <span>
-              Department of School Education,
-              <br />
-              Bikash Bhavan, Kolkata
+            Department of School Education,
+            <br />
+            Bikash Bhavan, Kolkata
             </span>
-          </div>
+        </div>
 
-          <div className="contact-item">
+        <div className="contact-item">
             <span className="contact-icon">Icon</span>
             <span>email@example.com</span>
-          </div>
+        </div>
 
-          <div className="contact-item">
+        <div className="contact-item">
             <span className="contact-icon">Icon</span>
             <span>0000000000</span>
-          </div>
+        </div>
+        </div>
 
-          <form className="feedback-form" onSubmit={handleSubmit}>
+        {/* Feedback */}
+        <div className="footer-feedback">
+        <form className="feedback-form" onSubmit={handleSubmit}>
             <label htmlFor="feedback">Your Feedback</label>
 
             <div className="feedback-input-wrapper">
-              <input
+            <input
                 id="feedback"
                 type="text"
                 placeholder="Share your feedback..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-              />
+            />
 
-              <button
+            <button
                 type="submit"
                 className="feedback-submit"
                 disabled={!feedback.trim()}
                 aria-label="Submit feedback"
-              >
+            >
                 <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path
+                <path
                     d="M21 3L10.2 13.8"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                  />
-                  <path
+                />
+                <path
                     d="M21 3L14.1 21L10.2 13.8L3 9.9L21 3Z"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinejoin="round"
-                  />
+                />
                 </svg>
-              </button>
+            </button>
             </div>
 
             {submitted && (
-              <span className="feedback-success">
+            <span className="feedback-success">
                 Feedback submitted!
-              </span>
+            </span>
             )}
-          </form>
+        </form>
         </div>
 
         {/* Photographer Placeholders */}
@@ -151,8 +154,7 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="footer-bottom">
         <p>
-          © 2025 Magazine Name. Department of School Education,
-          Government of West Bengal
+          © 2026 Academic Arc. All Rights Reserved.
         </p>
 
         <div className="footer-links">

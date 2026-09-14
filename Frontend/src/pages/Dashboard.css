@@ -1,6 +1,6 @@
 .magazine {
   min-height: 100vh;
-  padding: 0 clamp(24px, 8vw, 250px) 80px;
+  padding: 0 clamp(24px, 8vw, 250px) 0;
   color: #f5f2ed;
   background:
     radial-gradient(
