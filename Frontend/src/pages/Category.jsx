@@ -7,6 +7,52 @@ function Category() {
   const { type } = useParams()
   const categoryName = decodeURIComponent(type)
 
+  useEffect(() => {
+    const categoryTitles = {
+      Writing: 'Writing – Student Talent | Academic Arc',
+      Drawing: 'Drawing – Student Talent | Academic Arc',
+      Poem: 'Poetry – Student Talent | Academic Arc',
+      Song: 'Song – Student Talent | Academic Arc',
+      Instrumental: 'Instrumental – Student Talent | Academic Arc',
+      Dance: 'Dance – Student Talent | Academic Arc',
+    }
+
+    const categoryDescriptions = {
+      Writing:
+        'Explore original stories, essays and creative writing by students on Academic Arc.',
+      Drawing:
+        'Explore student sketches, paintings and illustrations on Academic Arc.',
+      Poem:
+        'Explore original poetry and compositions created by students on Academic Arc.',
+      Song:
+        'Discover original songs and musical creations by students on Academic Arc.',
+      Instrumental:
+        'Discover instrumental performances created and shared by students on Academic Arc.',
+      Dance:
+        'Explore classical, contemporary and folk dance performances by students on Academic Arc.',
+    }
+
+    document.title =
+      categoryTitles[categoryName] ||
+      `${categoryName} – Student Talent | Academic Arc`
+
+    const description =
+      categoryDescriptions[categoryName] ||
+      `Explore student ${categoryName.toLowerCase()} submissions on Academic Arc.`
+
+    let metaDescription = document.querySelector(
+      'meta[name="description"]'
+    )
+
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta')
+      metaDescription.name = 'description'
+      document.head.appendChild(metaDescription)
+    }
+
+    metaDescription.setAttribute('content', description)
+  }, [categoryName])
+
   const [submissions, setSubmissions] = useState([])
   const [likeData, setLikeData] = useState({})
   const [liking, setLiking] = useState({})
