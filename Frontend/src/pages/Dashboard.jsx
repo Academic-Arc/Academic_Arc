@@ -349,11 +349,11 @@ function Dashboard() {
           • STUDENT CREATIVITY
         </div>
 
-        <h1>Where does your talent belong?</h1>
+        <h1>Student Talent Showcase</h1>
 
         <p className="section-description">
-          Share your creative work and reach readers, artists and
-          audiences who appreciate student talent.
+          Create, share and inspire with writing, poetry, drawing, music and other
+          original student creations.
         </p>
 
         <div className="categories-grid">
