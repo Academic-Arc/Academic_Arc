@@ -51,6 +51,19 @@ function Category() {
     }
 
     metaDescription.setAttribute('content', description)
+
+    let canonical = document.querySelector('link[rel="canonical"]')
+
+    if (!canonical) {
+      canonical = document.createElement('link')
+      canonical.rel = 'canonical'
+      document.head.appendChild(canonical)
+    }
+
+    canonical.setAttribute(
+      'href',
+      `https://academicarc.in/category/${encodeURIComponent(categoryName)}`
+    )
   }, [categoryName])
 
   const [submissions, setSubmissions] = useState([])
