@@ -105,18 +105,14 @@ function Category() {
   // Open submission from shared URL
 
   useEffect(() => {
-    const postId = searchParams.get('post')
-
-    if (!postId || !submissions.length) {
-      return
-    }
+    const postToken = searchParams.get('post');
 
     const submission = submissions.find(
-      (item) => String(item.id) === String(postId)
-    )
+      (item) => item.share_token === postToken
+    );
 
     if (submission) {
-      setSelectedSubmission(submission)
+      setSelectedSubmission(submission);
     }
   }, [searchParams, submissions])
 
@@ -267,7 +263,7 @@ function Category() {
 
   const handleShare = async (submission) => {
     const shareUrl =
-      `${window.location.origin}${window.location.pathname}?post=${submission.id}`
+      `${window.location.origin}${window.location.pathname}?post=${submission.share_token}`;
 
     const shareData = {
       title: submission.heading,

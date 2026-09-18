@@ -1,4 +1,5 @@
 import uuid
+import secrets
 import asyncio
 from playwright.async_api import async_playwright
 
@@ -130,7 +131,8 @@ def create_submission(
         description=submission_data.description,
         written_content=submission_data.written_content,
         media_url=submission_data.media_url,
-        media_type=submission_data.media_type
+        media_type=submission_data.media_type,
+        share_token=secrets.token_urlsafe(16)
     )
 
     db.add(new_submission)
@@ -272,6 +274,7 @@ def get_submissions(
             "id": submission.id,
             "content_type": submission.content_type,
             "user_id": submission.user_id,
+            "share_token": submission.share_token,
             "student_class": submission.student_class,
             "heading": submission.heading,
             "description": submission.description,
@@ -487,6 +490,7 @@ def get_public_submissions(
             "id": submission.id,
             "content_type": submission.content_type,
             "user_id": submission.user_id,
+            "share_token": submission.share_token,
             "student_name": student.user.name,
             "student_class": submission.student_class,
             "school": student.school,
@@ -500,6 +504,48 @@ def get_public_submissions(
         })
 
     return results
+
+@router.get("/shared/{share_token}")
+def get_shared_submission(
+    share_token: str,
+    db: Session = Depends(get_db)
+):
+    result = (
+        db.query(Submission, Student)
+        .join(
+            Student,
+            Student.user_id == Submission.user_id
+        )
+        .filter(
+            Submission.share_token == share_token
+        )
+        .first()
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found"
+        )
+
+    submission, student = result
+
+    return {
+        "id": submission.id,
+        "share_token": submission.share_token,
+        "content_type": submission.content_type,
+        "user_id": submission.user_id,
+        "student_name": student.user.name,
+        "student_class": submission.student_class,
+        "school": student.school,
+        "profile_picture": student.user.profile_picture,
+        "heading": submission.heading,
+        "description": submission.description,
+        "written_content": submission.written_content,
+        "media_url": submission.media_url,
+        "media_type": submission.media_type,
+        "created_at": submission.created_at,
+    }
 
 
 @router.get("/facebook-embed")

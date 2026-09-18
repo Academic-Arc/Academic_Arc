@@ -9,6 +9,8 @@ class Submission(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
+    share_token = Column(String(32), unique=True, nullable=True, index=True)
+
     content_type = Column(String(50), nullable=False)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

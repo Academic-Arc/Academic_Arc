@@ -601,6 +601,35 @@
   display: block;
 }
 
+/* Viewer profile avatar */
+
+.viewer-avatar {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  overflow: hidden;
+
+  background: #d98222;
+  color: #181817;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.viewer-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 
 /* Empty category */
 
