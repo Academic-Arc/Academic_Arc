@@ -77,8 +77,14 @@ function Profile() {
                 const submissionsData =
                     await submissionsResponse.json()
 
+                const sortedSubmissions = [...submissionsData].sort(
+                    (a, b) =>
+                        new Date(b.created_at) -
+                        new Date(a.created_at)
+                )
+
                 setUser(profileData)
-                setSubmissions(submissionsData)
+                setSubmissions(sortedSubmissions)
 
                 setName(profileData.name || '')
                 setDistrict(profileData.district || '')
