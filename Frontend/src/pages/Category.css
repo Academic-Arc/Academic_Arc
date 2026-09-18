@@ -598,7 +598,6 @@
 .submission-share img {
   width: 22px;
   height: 22px;
-  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
   display: block;
 }
 

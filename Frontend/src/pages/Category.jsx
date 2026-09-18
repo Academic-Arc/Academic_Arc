@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import './Category.css'
 import FacebookEmbed from './FacebookEmbed'
 
@@ -14,6 +14,9 @@ function Category() {
 
   const [ownSubmissionIds, setOwnSubmissionIds] = useState(new Set())
   const [openMenu, setOpenMenu] = useState(null)
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedSubmission, setSelectedSubmission] = useState(null)
 
   const menuRef = useRef(null)
 
@@ -77,6 +80,7 @@ function Category() {
   }, [categoryName])
 
   // Fetch public submissions
+
   useEffect(() => {
     fetch('http://127.0.0.1:8000/submissions/public')
       .then((response) => response.json())
@@ -97,6 +101,24 @@ function Category() {
         console.error('Error fetching submissions:', error)
       })
   }, [categoryName])
+
+  // Open submission from shared URL
+
+  useEffect(() => {
+    const postId = searchParams.get('post')
+
+    if (!postId || !submissions.length) {
+      return
+    }
+
+    const submission = submissions.find(
+      (item) => String(item.id) === String(postId)
+    )
+
+    if (submission) {
+      setSelectedSubmission(submission)
+    }
+  }, [searchParams, submissions])
 
   // Fetch current user's submissions so ownership is determined
   // from the backend rather than trusting the public data.
@@ -244,28 +266,36 @@ function Category() {
   }
 
   const handleShare = async (submission) => {
-      const shareData = {
-          title: submission.heading,
-          text: submission.description || submission.heading,
-          url: window.location.href,
-      }
+    const shareUrl =
+      `${window.location.origin}${window.location.pathname}?post=${submission.id}`
 
-      try {
-          if (navigator.share) {
-              await navigator.share(shareData)
-          } else {
-              await navigator.clipboard.writeText(
-                  window.location.href
-              )
+    const shareData = {
+      title: submission.heading,
+      text: submission.description || submission.heading,
+      url: shareUrl,
+    }
 
-              alert('Link copied to clipboard!')
-          }
-      } catch (error) {
-          // User cancelled the share dialog.
-          if (error.name !== 'AbortError') {
-              console.error('Share failed:', error)
-          }
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+      } else {
+        await navigator.clipboard.writeText(shareUrl)
+        alert('Link copied to clipboard!')
       }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Share failed:', error)
+      }
+    }
+  }
+
+  const closeSubmissionViewer = () => {
+    setSelectedSubmission(null)
+
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('post')
+
+    setSearchParams(newParams, { replace: true })
   }
 
   const handleMenuToggle = (submissionId) => {
@@ -771,6 +801,165 @@ function Category() {
         )}
 
       </main>
+
+      {/* FLOATING SUBMISSION VIEWER */}
+
+      {selectedSubmission && (
+        <div
+          className="submission-viewer-overlay"
+          onClick={closeSubmissionViewer}
+        >
+
+          <div
+            className="submission-viewer"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+
+            <button
+              type="button"
+              className="submission-viewer-close"
+              onClick={closeSubmissionViewer}
+            >
+              ×
+            </button>
+
+            {/* MEDIA */}
+
+            <div className="submission-viewer-media">
+
+              {isUploadedVideo(
+                selectedSubmission.media_url
+              ) ? (
+
+                <video
+                  src={selectedSubmission.media_url}
+                  controls
+                  autoPlay
+                  playsInline
+                  preload="metadata"
+                />
+
+              ) : selectedSubmission.media_url?.includes(
+                'facebook.com'
+              ) ? (
+
+                <FacebookEmbed
+                  url={selectedSubmission.media_url}
+                />
+
+              ) : getEmbedUrl(
+                selectedSubmission.media_url
+              ) ? (
+
+                <iframe
+                  src={getEmbedUrl(
+                    selectedSubmission.media_url
+                  )}
+                  title={selectedSubmission.heading}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+
+              ) : selectedSubmission.media_url ? (
+
+                <img
+                  src={selectedSubmission.media_url}
+                  alt={selectedSubmission.heading}
+                />
+
+              ) : selectedSubmission.written_content ? (
+
+                <div className="viewer-writing">
+                  {selectedSubmission.written_content}
+                </div>
+
+              ) : (
+
+                <div className="viewer-no-media">
+                  No preview available
+                </div>
+
+              )}
+
+            </div>
+
+            {/* DETAILS */}
+
+            <div className="submission-viewer-details">
+
+              <div className="submission-viewer-header">
+
+                <div className="viewer-avatar">
+
+                  {selectedSubmission.profile_picture ? (
+
+                    <img
+                      src={selectedSubmission.profile_picture}
+                      alt={selectedSubmission.student_name}
+                    />
+
+                  ) : (
+
+                    selectedSubmission.student_name
+                      ?.charAt(0)
+                      .toUpperCase() || 'S'
+
+                  )}
+
+                </div>
+
+                <div>
+
+                  <strong>
+                    {selectedSubmission.student_name}
+                  </strong>
+
+                  <span>
+                    {selectedSubmission.content_type}
+                    {' · '}
+                    {selectedSubmission.created_at &&
+                      new Date(
+                        selectedSubmission.created_at
+                      ).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                  </span>
+
+                </div>
+
+              </div>
+
+              <h2>
+                {selectedSubmission.heading}
+              </h2>
+
+              {selectedSubmission.description && (
+                <p className="viewer-description">
+                  {selectedSubmission.description}
+                </p>
+              )}
+
+              {selectedSubmission.media_url && (
+                <a
+                  className="viewer-open-link"
+                  href={selectedSubmission.media_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open original ↗
+                </a>
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   )
