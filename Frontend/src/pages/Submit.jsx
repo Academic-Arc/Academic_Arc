@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
-import {
-    Link,
-    Navigate,
-    useNavigate,
-    useSearchParams
-} from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { API_URL } from "../config";
 import './Submit.css'
 
 function Submit() {
@@ -51,7 +47,7 @@ function Submit() {
         const loadSubmission = async () => {
             try {
                 const response = await fetch(
-                    'http://127.0.0.1:8000/submissions/',
+                    `${API_URL}/submissions/`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -269,7 +265,7 @@ function Submit() {
                 }
 
                 const response = await fetch(
-                    `http://127.0.0.1:8000/submissions/${editId}`,
+                    `${API_URL}/submissions/${editId}`,
                     {
                         method: 'PATCH',
                         headers: {
@@ -316,7 +312,7 @@ function Submit() {
                     )
 
                     const uploadResponse = await fetch(
-                        `http://127.0.0.1:8000/submissions/upload?submission_id=${editId}`,
+                        `${API_URL}/submissions/upload?submission_id=${editId}`,
                         {
                             method: 'POST',
                             headers: {
@@ -357,7 +353,7 @@ function Submit() {
              */
 
             const response = await fetch(
-                'http://127.0.0.1:8000/submissions/',
+                `${API_URL}/submissions/`,
                 {
                     method: 'POST',
                     headers: {
@@ -401,7 +397,7 @@ function Submit() {
                 )
 
                 const uploadResponse = await fetch(
-                    `http://127.0.0.1:8000/submissions/upload?submission_id=${data.submission_id}`,
+                    `${API_URL}/submissions/upload?submission_id=${data.submission_id}`,
                     {
                         method: 'POST',
                         headers: {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { API_URL } from "../config";
 import './AdminPostView.css'
 
 function AdminPostView() {
@@ -20,7 +21,7 @@ function AdminPostView() {
 
             try {
                 const response = await fetch(
-                    `http://127.0.0.1:8000/admin/posts/${id}`,
+                    `${API_URL}/admin/posts/${id}`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,

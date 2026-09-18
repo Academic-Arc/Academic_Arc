@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { API_URL } from "../config";
 import './Category.css'
 import FacebookEmbed from './FacebookEmbed'
 
@@ -82,7 +83,7 @@ function Category() {
   // Fetch public submissions
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/submissions/public')
+    fetch(`${API_URL}/submissions/public`)
       .then((response) => response.json())
       .then((data) => {
         const filtered = data
@@ -126,7 +127,7 @@ function Category() {
       return
     }
 
-    fetch('http://127.0.0.1:8000/submissions/', {
+    fetch(`${API_URL}/submissions/`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -180,7 +181,7 @@ function Category() {
       }
 
       const response = await fetch(
-        `http://127.0.0.1:8000/submissions/${submissionId}/likes`,
+        `${API_URL}/submissions/${submissionId}/likes`,
         {
           headers,
         }
@@ -226,7 +227,7 @@ function Category() {
       const method = current?.liked_by_user ? 'DELETE' : 'POST'
 
       const response = await fetch(
-        `http://127.0.0.1:8000/submissions/${submissionId}/like`,
+        `${API_URL}/submissions/${submissionId}/like`,
         {
           method,
           headers: {
@@ -316,7 +317,7 @@ function Category() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/submissions/${submissionId}`,
+        `${API_URL}/submissions/${submissionId}`,
         {
           method: 'DELETE',
           headers: {

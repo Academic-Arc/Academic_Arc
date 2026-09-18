@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_URL } from "../config";
 import './AdminFeatured.css'
 
 function AdminFeatured() {
@@ -24,7 +25,7 @@ function AdminFeatured() {
 
             try {
                 const adminResponse = await fetch(
-                    'http://127.0.0.1:8000/admin/me',
+                    `${API_URL}/admin/me`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -42,7 +43,7 @@ function AdminFeatured() {
                 setAdmin(adminData)
 
                 const featuredResponse = await fetch(
-                    'http://127.0.0.1:8000/admin/featured',
+                    `${API_URL}/admin/featured`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -58,7 +59,7 @@ function AdminFeatured() {
                 setFeaturedPosts(featuredData)
 
                 const postsResponse = await fetch(
-                    'http://127.0.0.1:8000/admin/posts',
+                    `${API_URL}/admin/posts`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -90,7 +91,7 @@ function AdminFeatured() {
 
         try {
             const response = await fetch(
-                `http://127.0.0.1:8000/admin/featured/${submissionId}`,
+                `${API_URL}/admin/featured/${submissionId}`,
                 {
                     method: 'POST',
                     headers: {
@@ -108,7 +109,7 @@ function AdminFeatured() {
 
             // Reload featured posts
             const featuredResponse = await fetch(
-                'http://127.0.0.1:8000/admin/featured',
+                `${API_URL}/admin/featured`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -155,7 +156,7 @@ function AdminFeatured() {
 
         try {
             const response = await fetch(
-                `http://127.0.0.1:8000/admin/featured/${submissionId}`,
+                `${API_URL}/admin/featured/${submissionId}`,
                 {
                     method: 'DELETE',
                     headers: {

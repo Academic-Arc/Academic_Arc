@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_URL } from "../config";
 import './Signup.css'
 
 function Signup() {
@@ -65,7 +66,7 @@ function Signup() {
             }
 
             const response = await fetch(
-                'http://127.0.0.1:8000/auth/signup',
+                `${API_URL}/auth/signup`,
                 {
                     method: 'POST',
                     headers: {
