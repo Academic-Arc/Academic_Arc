@@ -884,6 +884,7 @@ function Profile() {
 
                                                         <FacebookEmbed
                                                             url={submission.media_url}
+                                                            className="facebook-grid-embed"
                                                         />
 
                                                     </div>

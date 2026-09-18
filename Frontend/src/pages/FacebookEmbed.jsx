@@ -56,7 +56,7 @@ function loadFacebookSDK() {
   })
 }
 
-function FacebookEmbed({ url }) {
+function FacebookEmbed({ url, className = '' }) {
   const containerRef = useRef(null)
   const [embedUrl, setEmbedUrl] = useState(null)
   const [error, setError] = useState(false)
@@ -147,7 +147,7 @@ function FacebookEmbed({ url }) {
   return (
     <div
       ref={containerRef}
-      className="facebook-embed-container"
+      className={`facebook-embed-container ${className}`}
     />
   )
 }
