@@ -533,6 +533,40 @@
     font-size: 13px;
 }
 
+.current-media {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    margin-bottom: 18px;
+    padding: 14px 16px;
+
+    background: #f7f5f0;
+    border: 1px solid #dfdbd4;
+    border-radius: 10px;
+}
+
+.current-media strong {
+    color: #25231f;
+    font-size: 13px;
+}
+
+.current-media span {
+    color: #77736d;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.current-media a {
+    color: #d98222;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.current-media a:hover {
+    text-decoration: underline;
+}
+
 
 /* =========================
    RESPONSIVE

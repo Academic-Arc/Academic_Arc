@@ -1,11 +1,21 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import './Category.css'
 import FacebookEmbed from './FacebookEmbed'
 
 function Category() {
   const { type } = useParams()
+  const navigate = useNavigate()
   const categoryName = decodeURIComponent(type)
+
+  const [submissions, setSubmissions] = useState([])
+  const [likeData, setLikeData] = useState({})
+  const [liking, setLiking] = useState({})
+
+  const [ownSubmissionIds, setOwnSubmissionIds] = useState(new Set())
+  const [openMenu, setOpenMenu] = useState(null)
+
+  const menuRef = useRef(null)
 
   useEffect(() => {
     const categoryTitles = {
@@ -66,10 +76,7 @@ function Category() {
     )
   }, [categoryName])
 
-  const [submissions, setSubmissions] = useState([])
-  const [likeData, setLikeData] = useState({})
-  const [liking, setLiking] = useState({})
-
+  // Fetch public submissions
   useEffect(() => {
     fetch('http://127.0.0.1:8000/submissions/public')
       .then((response) => response.json())
@@ -90,6 +97,59 @@ function Category() {
         console.error('Error fetching submissions:', error)
       })
   }, [categoryName])
+
+  // Fetch current user's submissions so ownership is determined
+  // from the backend rather than trusting the public data.
+  useEffect(() => {
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      setOwnSubmissionIds(new Set())
+      return
+    }
+
+    fetch('http://127.0.0.1:8000/submissions/', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Unable to fetch your submissions')
+        }
+
+        return response.json()
+      })
+      .then((data) => {
+        setOwnSubmissionIds(
+          new Set(data.map((submission) => submission.id))
+        )
+      })
+      .catch((error) => {
+        console.error('Error fetching own submissions:', error)
+      })
+  }, [])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target)
+      ) {
+        setOpenMenu(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleClickOutside
+      )
+    }
+  }, [])
 
   const fetchLikes = async (submissionId) => {
     const token = localStorage.getItem('access_token')
@@ -160,7 +220,9 @@ function Category() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Unable to update like')
+        throw new Error(
+          data.detail || 'Unable to update like'
+        )
       }
 
       setLikeData((prev) => ({
@@ -178,6 +240,64 @@ function Category() {
         ...prev,
         [submissionId]: false,
       }))
+    }
+  }
+
+  const handleMenuToggle = (submissionId) => {
+    setOpenMenu((current) =>
+      current === submissionId ? null : submissionId
+    )
+  }
+
+  const handleDelete = async (submissionId) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this submission? This cannot be undone.'
+    )
+
+    if (!confirmed) return
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      alert('Please log in to delete your post.')
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/submissions/${submissionId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || 'Unable to delete submission'
+        )
+      }
+
+      setSubmissions((prev) =>
+        prev.filter(
+          (submission) => submission.id !== submissionId
+        )
+      )
+
+      setLikeData((prev) => {
+        const updated = { ...prev }
+        delete updated[submissionId]
+        return updated
+      })
+
+      setOpenMenu(null)
+    } catch (error) {
+      console.error('Error deleting submission:', error)
+      alert(error.message)
     }
   }
 
@@ -200,7 +320,6 @@ function Category() {
   const getEmbedUrl = (url) => {
     if (!url) return null
 
-    // YouTube
     if (url.includes('youtube.com/watch')) {
       try {
         const videoId = new URL(url).searchParams.get('v')
@@ -213,7 +332,6 @@ function Category() {
       }
     }
 
-    // YouTube shortened URL
     if (url.includes('youtu.be/')) {
       const videoId = url
         .split('youtu.be/')[1]
@@ -224,7 +342,6 @@ function Category() {
       }
     }
 
-    // Google Drive
     if (url.includes('drive.google.com')) {
       const match = url.match(/\/file\/d\/([^/]+)/)
 
@@ -269,7 +386,6 @@ function Category() {
 
       </nav>
 
-
       <main className="category-container">
 
         <div className="category-heading">
@@ -284,7 +400,6 @@ function Category() {
 
         </div>
 
-
         {submissions.length === 0 ? (
 
           <p className="empty-category">
@@ -298,11 +413,17 @@ function Category() {
             {submissions.map((submission) => {
 
               const videoType = isVideoType(submission)
+
               const uploadedVideo = isUploadedVideo(
                 submission.media_url
               )
+
               const embedUrl = getEmbedUrl(
                 submission.media_url
+              )
+
+              const isOwner = ownSubmissionIds.has(
+                submission.id
               )
 
               return (
@@ -317,18 +438,25 @@ function Category() {
                   <div className="submission-header">
 
                     <div className="submission-avatar">
+
                       {submission.profile_picture ? (
+
                         <img
                           src={submission.profile_picture}
                           alt={submission.student_name}
                         />
-                      ) : (
-                        submission.student_name
-                          ? submission.student_name.charAt(0).toUpperCase()
-                          : 'S'
-                      )}
-                    </div>
 
+                      ) : (
+
+                        submission.student_name
+                          ? submission.student_name
+                              .charAt(0)
+                              .toUpperCase()
+                          : 'S'
+
+                      )}
+
+                    </div>
 
                     <div className="submission-meta">
 
@@ -348,19 +476,82 @@ function Category() {
                           ).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short',
-                            year: 'numeric'
+                            year: 'numeric',
                           })}
                       </small>
 
                     </div>
 
+                    {/* THREE DOT MENU */}
 
-                    <span className="submission-menu">
-                      •••
-                    </span>
+                    <div
+                      className="submission-menu-wrapper"
+                      ref={
+                        openMenu === submission.id
+                          ? menuRef
+                          : null
+                      }
+                    >
+
+                      <button
+                        type="button"
+                        className="submission-menu-button"
+                        onClick={() =>
+                          handleMenuToggle(submission.id)
+                        }
+                        aria-label="Post options"
+                        aria-expanded={
+                          openMenu === submission.id
+                        }
+                      >
+                        ⋯
+                      </button>
+
+                      {openMenu === submission.id && (
+
+                        <div className="submission-menu-dropdown">
+
+                          {isOwner ? (
+
+                            <>
+                              <button
+                                  type="button"
+                                  onClick={() => {
+                                      setOpenMenu(null)
+                                      navigate(
+                                          `/submit?edit=${submission.id}`
+                                      )
+                                  }}
+                              >
+                                  ✏️ Edit post
+                              </button>
+
+                              <button
+                                type="button"
+                                className="delete-option"
+                                onClick={() =>
+                                  handleDelete(submission.id)
+                                }
+                              >
+                                🗑 Delete post
+                              </button>
+                            </>
+
+                          ) : (
+
+                            <div className="menu-no-actions">
+                              No actions available
+                            </div>
+
+                          )}
+
+                        </div>
+
+                      )}
+
+                    </div>
 
                   </div>
-
 
                   {/* IMAGE */}
 
@@ -377,7 +568,6 @@ function Category() {
                       </div>
 
                     )}
-
 
                   {/* NATIVE VIDEO UPLOAD */}
 
@@ -401,7 +591,6 @@ function Category() {
 
                     )}
 
-
                   {/* VIDEO LINK */}
 
                   {videoType &&
@@ -419,27 +608,34 @@ function Category() {
 
                       </div>
 
-                  )}
+                    )}
+
+                  {/* FACEBOOK */}
 
                   {videoType &&
                     !uploadedVideo &&
-                    submission.media_url?.includes('facebook.com') && (
+                    submission.media_url?.includes(
+                      'facebook.com'
+                    ) && (
 
                       <div className="submission-video">
 
-                        <FacebookEmbed url={submission.media_url} />
+                        <FacebookEmbed
+                          url={submission.media_url}
+                        />
 
                       </div>
 
-                  )}
-
+                    )}
 
                   {/* UNSUPPORTED VIDEO LINK */}
 
                   {videoType &&
                     !uploadedVideo &&
                     !embedUrl &&
-                    !submission.media_url?.includes('facebook.com') &&
+                    !submission.media_url?.includes(
+                      'facebook.com'
+                    ) &&
                     submission.media_url && (
 
                       <div className="submission-link">
@@ -456,7 +652,6 @@ function Category() {
 
                     )}
 
-
                   {/* POST TEXT */}
 
                   <div className="submission-content">
@@ -466,11 +661,12 @@ function Category() {
                     </h2>
 
                     {submission.description && (
+
                       <p>
                         {submission.description}
                       </p>
-                    )}
 
+                    )}
 
                     {/* WRITING / POEM CONTENT */}
 
@@ -479,14 +675,14 @@ function Category() {
                       <div className="written-content-box">
 
                         <div className="written-content">
-
                           {submission.written_content}
-
                         </div>
 
                       </div>
 
                     )}
+
+                    {/* POST ACTIONS */}
 
                     <div className="submission-actions">
 
@@ -496,16 +692,26 @@ function Category() {
                             ? 'liked'
                             : ''
                         }`}
-                        onClick={() => handleLike(submission.id)}
-                        disabled={liking[submission.id]}
+                        onClick={() =>
+                          handleLike(submission.id)
+                        }
+                        disabled={
+                          liking[submission.id]
+                        }
                       >
+
                         <span className="like-icon">
-                          {likeData[submission.id]?.liked_by_user ? '♥' : '♡'}
+                          {likeData[submission.id]
+                            ?.liked_by_user
+                            ? '♥'
+                            : '♡'}
                         </span>
 
                         <span>
-                          {likeData[submission.id]?.like_count ?? 0}
+                          {likeData[submission.id]
+                            ?.like_count ?? 0}
                         </span>
+
                       </button>
 
                     </div>

@@ -229,6 +229,264 @@
   line-height: 1.55;
 }
 
+/* ============================= */
+/* Submission Menu */
+/* ============================= */
+
+.submission-menu-wrapper {
+  position: relative;
+  margin-left: auto;
+}
+
+.submission-menu-button {
+  width: 36px;
+  height: 36px;
+
+  border: none;
+  background: transparent;
+
+  color: #99948c;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  border-radius: 50%;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.submission-menu-button:hover {
+  background: #f4f1ec;
+  color: #55514b;
+}
+
+.submission-menu-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+
+  min-width: 165px;
+
+  background: #ffffff;
+  border: 1px solid #dfdbd4;
+  border-radius: 10px;
+
+  padding: 5px;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+
+  z-index: 100;
+}
+
+.submission-menu-dropdown button {
+  width: 100%;
+
+  border: none;
+  background: transparent;
+
+  padding: 10px 12px;
+
+  text-align: left;
+
+  color: #25231f;
+  font-family: inherit;
+  font-size: 13px;
+
+  border-radius: 7px;
+
+  cursor: pointer;
+}
+
+.submission-menu-dropdown button:hover {
+  background: #f4f1ec;
+}
+
+.submission-menu-dropdown .delete-option {
+  color: #c0392b;
+}
+
+.submission-menu-dropdown .delete-option:hover {
+  background: #fdf0ee;
+}
+
+.menu-no-actions {
+  padding: 10px 12px;
+
+  color: #99948c;
+  font-size: 12px;
+  text-align: center;
+}
+
+
+/* ============================= */
+/* Edit Modal */
+/* ============================= */
+
+.edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(24, 24, 23, 0.45);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  z-index: 1000;
+}
+
+.edit-modal {
+  width: min(500px, 100%);
+
+  background: #ffffff;
+
+  border: 1px solid #dfdbd4;
+  border-radius: 16px;
+
+  padding: 24px;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.edit-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 22px;
+}
+
+.edit-modal-header h2 {
+  margin: 0;
+
+  color: #181817;
+  font-size: 22px;
+}
+
+.edit-modal-close {
+  width: 34px;
+  height: 34px;
+
+  border: none;
+  background: transparent;
+
+  color: #77736d;
+
+  font-size: 25px;
+  line-height: 1;
+
+  border-radius: 50%;
+
+  cursor: pointer;
+}
+
+.edit-modal-close:hover {
+  background: #f4f1ec;
+}
+
+.edit-modal label {
+  display: block;
+
+  margin-bottom: 18px;
+
+  color: #25231f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.edit-modal input,
+.edit-modal textarea {
+  display: block;
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  margin-top: 7px;
+
+  padding: 11px 12px;
+
+  border: 1px solid #d8d3cb;
+  border-radius: 8px;
+
+  background: #faf9f6;
+  color: #181817;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.edit-modal input:focus,
+.edit-modal textarea:focus {
+  border-color: #d98222;
+  box-shadow: 0 0 0 3px rgba(217, 130, 34, 0.12);
+}
+
+.edit-modal textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.edit-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+.edit-modal-actions button {
+  border: none;
+
+  padding: 10px 16px;
+
+  border-radius: 8px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.edit-cancel-button {
+  background: #f1eee9;
+  color: #55514b;
+}
+
+.edit-cancel-button:hover {
+  background: #e8e4de;
+}
+
+.edit-save-button {
+  background: #d98222;
+  color: #ffffff;
+}
+
+.edit-save-button:hover {
+  background: #c87319;
+}
+
+.edit-modal-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 
 /* Writing / Poem */
 
@@ -385,6 +643,20 @@
 
   .submission-actions {
     padding: 0 18px 16px;
+  }
+
+  .submission-menu-dropdown {
+    right: 0;
+    min-width: 155px;
+  }
+
+  .edit-modal {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  .edit-modal-header h2 {
+    font-size: 20px;
   }
 
 }
