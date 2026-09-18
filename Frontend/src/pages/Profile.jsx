@@ -1026,7 +1026,10 @@ function Profile() {
                                                                 )
                                                             }
                                                         >
-                                                            🗑 Delete post
+                                                            <img
+                                                                src="/Icons/f7_trash.svg"
+                                                                alt="Delete"
+                                                            /> Delete post
                                                         </button>
 
                                                     </div>

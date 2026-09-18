@@ -804,7 +804,7 @@ function Submit() {
                                 </span>
 
                                 <small>
-                                    Supported formats: Word, PDF, PNG, JPG, JPEG
+                                    Supported formats: Word, PDF, PNG, JPG, JPEG, MP4
                                 </small>
 
                             </label>

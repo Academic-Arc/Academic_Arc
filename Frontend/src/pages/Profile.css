@@ -843,9 +843,13 @@
     background: #f4f1ec;
 }
 
-.profile-submission-dropdown
+/*.profile-submission-dropdown
 .delete-option {
     color: #c0392b;
+}*/
+
+.delete-option img{
+    filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
 }
 
 .profile-submission-dropdown

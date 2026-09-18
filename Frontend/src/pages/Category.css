@@ -308,8 +308,12 @@
   background: #f4f1ec;
 }
 
-.submission-menu-dropdown .delete-option {
+/*.submission-menu-dropdown .delete-option {
   color: #c0392b;
+}*/
+
+.delete-option img{
+  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
 }
 
 .submission-menu-dropdown .delete-option:hover {
@@ -530,6 +534,7 @@
 .submission-actions {
   display: flex;
   align-items: center;
+  gap: 14px;
   padding: 4px 0px 0px;
   margin-top: 4px;
 }
@@ -575,6 +580,26 @@
 .submission-like:disabled {
   cursor: default;
   opacity: 0.7;
+}
+
+.submission-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background: transparent;
+
+  padding: 0;
+
+  cursor: pointer;
+}
+
+.submission-share img {
+  width: 22px;
+  height: 22px;
+  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
+  display: block;
 }
 
 

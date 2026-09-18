@@ -243,6 +243,31 @@ function Category() {
     }
   }
 
+  const handleShare = async (submission) => {
+      const shareData = {
+          title: submission.heading,
+          text: submission.description || submission.heading,
+          url: window.location.href,
+      }
+
+      try {
+          if (navigator.share) {
+              await navigator.share(shareData)
+          } else {
+              await navigator.clipboard.writeText(
+                  window.location.href
+              )
+
+              alert('Link copied to clipboard!')
+          }
+      } catch (error) {
+          // User cancelled the share dialog.
+          if (error.name !== 'AbortError') {
+              console.error('Share failed:', error)
+          }
+      }
+  }
+
   const handleMenuToggle = (submissionId) => {
     setOpenMenu((current) =>
       current === submissionId ? null : submissionId
@@ -533,7 +558,10 @@ function Category() {
                                   handleDelete(submission.id)
                                 }
                               >
-                                🗑 Delete post
+                                <img
+                                    src="/Icons/f7_trash.svg"
+                                    alt="Share"
+                                /> Delete post
                               </button>
                             </>
 
@@ -712,6 +740,21 @@ function Category() {
                             ?.like_count ?? 0}
                         </span>
 
+                      </button>
+
+                      {/* SHARE */}
+
+                      <button
+                        className="submission-share"
+                        onClick={() =>
+                          handleShare(submission)
+                        }
+                        aria-label="Share submission"
+                      >
+                        <img
+                          src="/Icons/share.svg"
+                          alt="Share"
+                        />
                       </button>
 
                     </div>
