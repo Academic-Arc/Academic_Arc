@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_URL } from "../config";
 import './AdminPosts.css'
 
 function AdminPosts() {
@@ -21,7 +22,7 @@ function AdminPosts() {
 
             try {
                 const response = await fetch(
-                    'http://127.0.0.1:8000/admin/posts',
+                    `${API_URL}/admin/posts`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -80,7 +81,7 @@ function AdminPosts() {
 
         try {
             const response = await fetch(
-                `http://127.0.0.1:8000/admin/posts/${postId}`,
+                `${API_URL}/admin/posts/${postId}`,
                 {
                     method: 'DELETE',
                     headers: {

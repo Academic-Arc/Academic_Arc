@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { API_URL } from "../config";
 
 function loadFacebookSDK() {
   return new Promise((resolve, reject) => {
@@ -56,7 +57,7 @@ function loadFacebookSDK() {
   })
 }
 
-function FacebookEmbed({ url }) {
+function FacebookEmbed({ url, className = '' }) {
   const containerRef = useRef(null)
   const [embedUrl, setEmbedUrl] = useState(null)
   const [error, setError] = useState(false)
@@ -69,7 +70,7 @@ function FacebookEmbed({ url }) {
         setError(false)
 
         const response = await fetch(
-          `http://127.0.0.1:8000/submissions/facebook-embed?url=${encodeURIComponent(url)}`
+          `${API_URL}/submissions/facebook-embed?url=${encodeURIComponent(url)}`
         )
 
         if (!response.ok) {
@@ -147,7 +148,7 @@ function FacebookEmbed({ url }) {
   return (
     <div
       ref={containerRef}
-      className="facebook-embed-container"
+      className={`facebook-embed-container ${className}`}
     />
   )
 }

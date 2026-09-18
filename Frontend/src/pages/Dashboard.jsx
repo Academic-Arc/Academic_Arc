@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { API_URL } from "../config";
 import './Dashboard.css'
 import FacebookEmbed from './FacebookEmbed'
 
@@ -145,7 +146,7 @@ function Dashboard() {
   useEffect(() => {
     if (!token) return
 
-    fetch('http://127.0.0.1:8000/auth/me', {
+    fetch(`${API_URL}/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -164,7 +165,7 @@ function Dashboard() {
   }, [token])
 
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/featured/')
+    fetch(`${API_URL}/featured/`)
       .then((response) => response.json())
       .then((data) => setFeaturedPosts(data))
       .catch((error) => {

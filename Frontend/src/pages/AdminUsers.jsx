@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_URL } from "../config";
 import './AdminUsers.css'
 
 function AdminUsers() {
@@ -20,7 +21,7 @@ function AdminUsers() {
                 return
             }
 
-            fetch('http://127.0.0.1:8000/admin/me', {
+            fetch(`${API_URL}/admin/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -41,7 +42,7 @@ function AdminUsers() {
 
             try {
                 const response = await fetch(
-                    'http://127.0.0.1:8000/admin/users',
+                    `${API_URL}/admin/users`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,

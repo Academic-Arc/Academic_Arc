@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { API_URL } from "../config";
 import './AdminDashboard.css'
 import './AdminUserView.css'
 
@@ -22,13 +23,13 @@ function AdminUserView() {
 
             try {
                 const [adminResponse, userResponse] = await Promise.all([
-                    fetch('http://127.0.0.1:8000/admin/me', {
+                    fetch(`${API_URL}/admin/me`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
                     }),
 
-                    fetch(`http://127.0.0.1:8000/admin/users/${user_id}`, {
+                    fetch(`${API_URL}/admin/users/${user_id}`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },

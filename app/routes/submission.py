@@ -1,4 +1,5 @@
 import uuid
+import secrets
 import asyncio
 from playwright.async_api import async_playwright
 
@@ -11,7 +12,7 @@ from app.supabase import supabase
 
 from app.database import get_db
 from app.models.submission import Submission
-from app.schemas.submission import SubmissionCreate
+from app.schemas.submission import SubmissionCreate, SubmissionUpdate
 
 from app.models.user import User
 from app.models.like import PostLike
@@ -130,7 +131,8 @@ def create_submission(
         description=submission_data.description,
         written_content=submission_data.written_content,
         media_url=submission_data.media_url,
-        media_type=submission_data.media_type
+        media_type=submission_data.media_type,
+        share_token=secrets.token_urlsafe(16)
     )
 
     db.add(new_submission)
@@ -177,11 +179,7 @@ async def upload_submission_file(
             detail="Submission not found"
         )
 
-    if submission.media_url:
-        raise HTTPException(
-            status_code=400,
-            detail="This submission already has media attached."
-        )
+    old_media_url = submission.media_url
 
     # Get file extension
     file_extension = file.filename.split(".")[-1]
@@ -207,6 +205,31 @@ async def upload_submission_file(
 
     submission.media_url = public_url
     submission.media_type = file.content_type
+
+    # Delete the previous uploaded Supabase file after
+    # the new file has been uploaded successfully.
+    if (
+        old_media_url
+        and "/storage/v1/object/public/submissions/" in old_media_url
+    ):
+        try:
+            parsed_url = urlparse(old_media_url)
+
+            old_file_name = parsed_url.path.split(
+                "/storage/v1/object/public/submissions/",
+                1
+            )[1]
+
+            if old_file_name:
+                supabase.storage.from_("submissions").remove(
+                    [old_file_name]
+                )
+
+        except Exception as error:
+            print(
+                "Old Supabase media deletion error:",
+                repr(error)
+            )
 
     db.commit()
     db.refresh(submission)
@@ -251,6 +274,7 @@ def get_submissions(
             "id": submission.id,
             "content_type": submission.content_type,
             "user_id": submission.user_id,
+            "share_token": submission.share_token,
             "student_class": submission.student_class,
             "heading": submission.heading,
             "description": submission.description,
@@ -261,6 +285,193 @@ def get_submissions(
         })
 
     return results
+
+@router.patch("/{submission_id}")
+def update_submission(
+    submission_id: int,
+    submission_data: SubmissionUpdate,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    submission = db.query(Submission).filter(
+        Submission.id == submission_id,
+        Submission.user_id == user_id
+    ).first()
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found or you do not have permission to edit it."
+        )
+
+    # Validate external media URL if one is supplied.
+    # Supabase-hosted media URLs are also valid because they
+    # represent files already stored in our own storage.
+    if submission_data.media_url:
+
+        is_supabase_media = (
+            "/storage/v1/object/public/submissions/"
+            in submission_data.media_url
+        )
+
+        if not is_supabase_media:
+
+            if not validate_external_url(
+                submission_data.media_url
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Only YouTube, Facebook, and Google Drive links are allowed."
+                )
+
+            allowed_media_types = {
+                "video",
+                "image",
+                "audio"
+            }
+
+            if submission_data.media_type not in allowed_media_types:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid external media type."
+                )
+
+    # Save old media URL before changing it
+    old_media_url = submission.media_url
+
+    # Update normal fields
+    submission.content_type = submission_data.content_type
+    submission.student_class = submission_data.student_class
+    submission.heading = submission_data.heading
+    submission.description = submission_data.description
+    submission.written_content = submission_data.written_content
+
+    # Update media information
+    submission.media_url = submission_data.media_url
+    submission.media_type = submission_data.media_type
+
+    # If old media was a Supabase uploaded file and is being replaced/removed,
+    # delete the old file from Supabase Storage.
+    if (
+        old_media_url
+        and old_media_url != submission_data.media_url
+        and "/storage/v1/object/public/submissions/" in old_media_url
+    ):
+        try:
+            parsed_url = urlparse(old_media_url)
+
+            file_name = parsed_url.path.split(
+                "/storage/v1/object/public/submissions/",
+                1
+            )[1]
+
+            if file_name:
+                supabase.storage.from_("submissions").remove(
+                    [file_name]
+                )
+
+        except Exception as error:
+            print(
+                "Old Supabase media deletion error:",
+                repr(error)
+            )
+
+    db.commit()
+    db.refresh(submission)
+
+    return {
+        "message": "Submission updated successfully",
+        "submission_id": submission.id,
+        "content_type": submission.content_type,
+        "student_class": submission.student_class,
+        "heading": submission.heading,
+        "description": submission.description,
+        "written_content": submission.written_content,
+        "media_url": submission.media_url,
+        "media_type": submission.media_type,
+    }
+
+@router.delete("/{submission_id}")
+def delete_submission(
+    submission_id: int,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    submission = db.query(Submission).filter(
+        Submission.id == submission_id,
+        Submission.user_id == user_id
+    ).first()
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found or you do not have permission to delete it."
+        )
+
+    # Delete uploaded media from Supabase Storage
+    if submission.media_url:
+        try:
+            parsed_url = urlparse(submission.media_url)
+
+            # Only attempt deletion for files stored in our
+            # Supabase submissions bucket.
+            if "/storage/v1/object/public/submissions/" in parsed_url.path:
+
+                file_name = parsed_url.path.split(
+                    "/storage/v1/object/public/submissions/",
+                    1
+                )[1]
+
+                if file_name:
+                    supabase.storage.from_("submissions").remove(
+                        [file_name]
+                    )
+
+        except Exception as error:
+            print(
+                "Supabase media deletion error:",
+                repr(error)
+            )
+
+    db.delete(submission)
+    db.commit()
+
+    return {
+        "message": "Submission deleted successfully",
+        "submission_id": submission_id
+    }
 
 @router.get("/public")
 def get_public_submissions(
@@ -278,6 +489,8 @@ def get_public_submissions(
         results.append({
             "id": submission.id,
             "content_type": submission.content_type,
+            "user_id": submission.user_id,
+            "share_token": submission.share_token,
             "student_name": student.user.name,
             "student_class": submission.student_class,
             "school": student.school,
@@ -291,6 +504,48 @@ def get_public_submissions(
         })
 
     return results
+
+@router.get("/shared/{share_token}")
+def get_shared_submission(
+    share_token: str,
+    db: Session = Depends(get_db)
+):
+    result = (
+        db.query(Submission, Student)
+        .join(
+            Student,
+            Student.user_id == Submission.user_id
+        )
+        .filter(
+            Submission.share_token == share_token
+        )
+        .first()
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found"
+        )
+
+    submission, student = result
+
+    return {
+        "id": submission.id,
+        "share_token": submission.share_token,
+        "content_type": submission.content_type,
+        "user_id": submission.user_id,
+        "student_name": student.user.name,
+        "student_class": submission.student_class,
+        "school": student.school,
+        "profile_picture": student.user.profile_picture,
+        "heading": submission.heading,
+        "description": submission.description,
+        "written_content": submission.written_content,
+        "media_url": submission.media_url,
+        "media_type": submission.media_type,
+        "created_at": submission.created_at,
+    }
 
 
 @router.get("/facebook-embed")
