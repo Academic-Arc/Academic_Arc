@@ -16,6 +16,20 @@ function Signup() {
         dob: '',
         school: '',
         student_class: '',
+        security_questions: [
+            {
+                question_key: '',
+                answer: '',
+            },
+            {
+                question_key: '',
+                answer: '',
+            },
+            {
+                question_key: '',
+                answer: '',
+            },
+        ],
     })
 
     const [showPassword, setShowPassword] = useState(false)
@@ -35,6 +49,67 @@ function Signup() {
             ...formData,
             is_student: value,
         })
+    }
+
+    const handleSecurityQuestionChange = (index, field, value) => {
+        const updatedQuestions = [...formData.security_questions]
+
+        updatedQuestions[index] = {
+            ...updatedQuestions[index],
+            [field]: value,
+        }
+
+        setFormData({
+            ...formData,
+            security_questions: updatedQuestions,
+        })
+    }
+
+    const getAvailableQuestions = (currentIndex) => {
+        const selectedKeys = formData.security_questions
+            .map((question, index) =>
+                index !== currentIndex
+                    ? question.question_key
+                    : null
+            )
+            .filter(Boolean)
+
+        return [
+            {
+                key: 'childhood_friend',
+                label: 'What was the name of your childhood best friend?',
+            },
+            {
+                key: 'first_school',
+                label: 'What was the name of your first school?',
+            },
+            {
+                key: 'favorite_teacher',
+                label: 'What was the name of your favorite teacher?',
+            },
+            {
+                key: 'favorite_book',
+                label: 'What was the title of your favorite book as a child?',
+            },
+            {
+                key: 'birth_city',
+                label: 'What city were you born in?',
+            },
+            {
+                key: 'first_pet',
+                label: 'What was the name of your first pet?',
+            },
+            {
+                key: 'favorite_subject',
+                label: 'What was your favorite subject in school?',
+            },
+            {
+                key: 'dream_job',
+                label: 'What did you want to be when you grew up?',
+            },
+        ].filter(question =>
+            !selectedKeys.includes(question.key)
+        )
     }
 
     const handleSignup = async (e) => {
@@ -58,6 +133,7 @@ function Signup() {
                 password: formData.password,
                 is_student: formData.is_student,
                 dob: formData.dob,
+                security_questions: formData.security_questions,
             }
 
             if (formData.is_student) {
@@ -460,6 +536,77 @@ function Signup() {
                                     </button>
                                 </div>
                             </div>
+
+                        </div>
+
+                        {/* Security Questions */}
+                        <div className="security-questions-section">
+
+                            <h3>Security Questions</h3>
+
+                            <p>
+                                These questions will be used to recover your account if you forget
+                                your password.
+                            </p>
+
+                            {formData.security_questions.map((question, index) => (
+                                <div className="security-question" key={index}>
+
+                                    <div className="signup-field">
+                                        <label>
+                                            Security Question {index + 1}
+                                            <span className="required">*</span>
+                                        </label>
+
+                                        <select
+                                            value={question.question_key}
+                                            onChange={(e) =>
+                                                handleSecurityQuestionChange(
+                                                    index,
+                                                    'question_key',
+                                                    e.target.value
+                                                )
+                                            }
+                                            required
+                                        >
+                                            <option value="">
+                                                Select a question
+                                            </option>
+
+                                            {getAvailableQuestions(index).map((option) => (
+                                                <option
+                                                    key={option.key}
+                                                    value={option.key}
+                                                >
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="signup-field">
+                                        <label>
+                                            Your Answer
+                                            <span className="required">*</span>
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            value={question.answer}
+                                            onChange={(e) =>
+                                                handleSecurityQuestionChange(
+                                                    index,
+                                                    'answer',
+                                                    e.target.value
+                                                )
+                                            }
+                                            placeholder="Enter your answer"
+                                            required
+                                        />
+                                    </div>
+
+                                </div>
+                            ))}
 
                         </div>
 

@@ -5,6 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+from app.models.security_question import SecurityQuestion
+
 
 class User(Base):
     __tablename__ = "users"
@@ -80,4 +82,10 @@ class User(Base):
         "Student",
         back_populates="user",
         uselist=False
+    )
+
+    security_questions = relationship(
+        "SecurityQuestion",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
