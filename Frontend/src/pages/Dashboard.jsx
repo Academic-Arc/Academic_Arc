@@ -126,11 +126,14 @@ function FeaturedCard({ post }) {
 }
 
 function Dashboard() {
-  const token = localStorage.getItem('access_token')
+  const [token, setToken] = useState(() =>
+    localStorage.getItem('access_token')
+  )
 
   const logout = () => {
     localStorage.removeItem('access_token')
-    window.location.href = '/'
+    setToken(null)
+    setUser(null)
   }
 
   const isLoggedIn = !!token
@@ -152,13 +155,24 @@ function Dashboard() {
       },
     })
       .then((response) => {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('access_token')
+          setToken(null)
+          setUser(null)
+          return null
+        }
+
         if (!response.ok) {
           throw new Error('Could not load user profile.')
         }
 
         return response.json()
       })
-      .then((data) => setUser(data))
+      .then((data) => {
+        if (data) {
+          setUser(data)
+        }
+      })
       .catch((error) => {
         console.error('Error fetching user profile:', error)
       })
