@@ -1,13 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from sqlalchemy.orm import Session
 
 import uuid
 import secrets
 import hashlib
+import io
+
+from PIL import Image
 from datetime import datetime, timedelta
 from app.supabase import supabase
 
 from app.database import get_db
+from app.limiter import limiter
 from app.models.user import User
 from app.models.security_question import SecurityQuestion
 from app.models.password_recovery import PasswordRecoverySession
@@ -48,7 +52,9 @@ def hash_recovery_token(token: str) -> str:
 security = HTTPBearer()
 
 @router.post("/signup")
+@limiter.limit("5/15minutes")
 def signup(
+    request: Request,
     user_data: UserSignup,
     db: Session = Depends(get_db)
 ):
@@ -152,7 +158,8 @@ def signup(
 
     access_token = create_access_token(
         new_user.id,
-        new_user.role
+        new_user.role,
+        new_user.token_version
     )
 
     return {
@@ -163,7 +170,9 @@ def signup(
     }
 
 @router.post("/login")
+@limiter.limit("10/10minutes")
 def login(
+    request: Request,
     user_data: UserLogin,
     db: Session = Depends(get_db)
 ):
@@ -199,7 +208,8 @@ def login(
 
     access_token = create_access_token(
         user.id,
-        user.role
+        user.role,
+        user.token_version
     )
 
     return {
@@ -241,6 +251,12 @@ def get_current_user(
         raise HTTPException(
             status_code=404,
             detail="User not found"
+        )
+
+    if payload.get("token_version") != user.token_version:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
         )
 
     student = (
@@ -403,6 +419,27 @@ async def upload_profile_picture(
 
     file_bytes = await file.read()
 
+    MAX_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024
+
+    if len(file_bytes) > MAX_PROFILE_PICTURE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="Profile picture must be 5 MB or smaller."
+        )
+
+    try:
+        image = Image.open(
+            io.BytesIO(file_bytes)
+        )
+
+        image.verify()
+
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or corrupted profile picture."
+        )
+
     supabase.storage.from_("profile-pictures").upload(
         path=file_name,
         file=file_bytes,
@@ -467,6 +504,8 @@ def change_password(
         password_data.new_password
     )
 
+    user.token_version += 1
+
     db.commit()
 
     return {
@@ -474,15 +513,17 @@ def change_password(
     }
 
 @router.post("/forgot-password")
+@limiter.limit("5/15minutes")
 def forgot_password(
-    request: ForgotPasswordRequest,
+    request: Request,
+    forgot_request: ForgotPasswordRequest,
     db: Session = Depends(get_db)
 ):
     user = (
         db.query(User)
         .filter(
-            (User.email == request.identifier) |
-            (User.phone == request.identifier)
+            (User.email == forgot_request.identifier) |
+            (User.phone == forgot_request.identifier)
         )
         .first()
     ) 
@@ -726,6 +767,8 @@ def reset_password(
     user.password_hash = hash_password(
         request.new_password
     )
+
+    user.token_version += 1
 
     recovery_session.used_at = datetime.utcnow()
 

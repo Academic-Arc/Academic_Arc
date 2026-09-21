@@ -52,6 +52,11 @@ class User(Base):
         nullable=False
     )
 
+    token_version: Mapped[int] = mapped_column(
+        default=0,
+        nullable=False
+    )
+
     profile_picture: Mapped[str | None] = mapped_column(
         String(500),
         nullable=True

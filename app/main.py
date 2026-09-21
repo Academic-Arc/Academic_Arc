@@ -1,5 +1,11 @@
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.limiter import limiter
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.database import Base, engine
 from app.models.user import User
@@ -21,6 +27,25 @@ app = FastAPI(
     title="Academic Arc API"
 )
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173",
@@ -28,8 +53,8 @@ app.add_middleware(
                    "https://www.academicarc.in"
                    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(auth_router)

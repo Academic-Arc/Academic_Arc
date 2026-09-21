@@ -42,7 +42,7 @@ def verify_password(
         hashed_password
     )
 
-def create_access_token(user_id: int, role: str):
+def create_access_token(user_id: int, role: str, token_version: int):
     expire = datetime.utcnow() + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
@@ -50,6 +50,7 @@ def create_access_token(user_id: int, role: str):
     payload = {
         "user_id": user_id,
         "role": role,
+        "token_version": token_version,
         "exp": expire
     }
 
@@ -98,6 +99,12 @@ def get_current_user(
             detail="User not found"
         )
 
+    if payload.get("token_version") != user.token_version:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
     return user
 
 def get_current_admin(
@@ -122,6 +129,12 @@ def get_current_admin(
         raise HTTPException(
             status_code=401,
             detail="User not found"
+        )
+
+    if payload.get("token_version") != user.token_version:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
         )
 
     if user.role != "admin":
