@@ -1,6 +1,9 @@
 import uuid
 import secrets
 import asyncio
+import io
+
+from PIL import Image
 from playwright.async_api import async_playwright
 
 from sqlalchemy.orm import Session
@@ -182,13 +185,90 @@ async def upload_submission_file(
     old_media_url = submission.media_url
 
     # Get file extension
-    file_extension = file.filename.split(".")[-1]
+    extension_map = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "audio/mpeg": "mp3",
+        "audio/wav": "wav",
+        "audio/ogg": "ogg",
+        "audio/mp4": "m4a",
+        "video/mp4": "mp4",
+        "video/webm": "webm",
+        "video/ogg": "ogv"
+    }
+
+    file_extension = extension_map[file.content_type]
 
     # Generate unique filename
     file_name = f"{uuid.uuid4()}.{file_extension}"
 
     # Read file
     file_bytes = await file.read()
+
+    # File Size Limiter
+    MAX_IMAGE_SIZE = 5 * 1024 * 1024
+    MAX_AUDIO_SIZE = 20 * 1024 * 1024
+    MAX_VIDEO_SIZE = 50 * 1024 * 1024
+
+    allowed_image_types = {
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+    }
+
+    allowed_audio_types = {
+        "audio/mpeg",
+        "audio/wav",
+        "audio/ogg",
+        "audio/mp4"
+    }
+
+    allowed_video_types = {
+        "video/mp4",
+        "video/webm",
+        "video/ogg"
+    }
+
+    if file.content_type in allowed_image_types:
+        if len(file_bytes) > MAX_IMAGE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail="Image files must be 5 MB or smaller."
+            )
+
+        try:
+            image = Image.open(
+                io.BytesIO(file_bytes)
+            )
+
+            image.verify()
+
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or corrupted image file."
+            )
+
+    elif file.content_type in allowed_audio_types:
+        if len(file_bytes) > MAX_AUDIO_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail="Audio files must be 20 MB or smaller."
+            )
+
+    elif file.content_type in allowed_video_types:
+        if len(file_bytes) > MAX_VIDEO_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail="Video files must be 50 MB or smaller."
+            )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported media format."
+        )
 
     # Upload to Supabase Storage
     response = supabase.storage.from_("submissions").upload(
