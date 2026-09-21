@@ -2,11 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 import uuid
+import secrets
+import hashlib
+from datetime import datetime, timedelta
 from app.supabase import supabase
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserSignup, UserLogin, UserProfileUpdate, PasswordChange
+from app.models.security_question import SecurityQuestion
+from app.models.password_recovery import PasswordRecoverySession
+from app.schemas.user import (UserSignup, UserLogin, UserProfileUpdate, PasswordChange, 
+                              ForgotPasswordRequest, VerifySecurityAnswers, ResetPassword)
 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.student import Student
@@ -23,6 +29,22 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
+SECURITY_QUESTIONS = {
+    "childhood_friend": "What was the name of your childhood best friend?",
+    "first_school": "What was the name of your first school?",
+    "favorite_teacher": "What was the name of your favorite teacher?",
+    "favorite_book": "What was the title of your favorite book as a child?",
+    "birth_city": "What city were you born in?",
+    "first_pet": "What was the name of your first pet?",
+    "favorite_subject": "What was your favorite subject in school?",
+    "dream_job": "What did you want to be when you grew up?"
+}
+
+def hash_recovery_token(token: str) -> str:
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
+
 security = HTTPBearer()
 
 @router.post("/signup")
@@ -36,6 +58,30 @@ def signup(
             status_code=400,
             detail="Please provide either an email address or phone number"
         )
+
+    if len(user_data.security_questions) != 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Exactly 3 security questions are required"
+        )
+
+    question_keys = [
+        question.question_key
+        for question in user_data.security_questions
+    ]
+
+    if len(set(question_keys)) != 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Security questions must be different"
+        )
+
+    for question in user_data.security_questions:
+        if question.question_key not in SECURITY_QUESTIONS:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid security question"
+            )
 
     if user_data.email:
         existing_user = (
@@ -77,6 +123,19 @@ def signup(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    for security_question in user_data.security_questions:
+        new_security_question = SecurityQuestion(
+            user_id=new_user.id,
+            question_key=security_question.question_key,
+            answer_hash=hash_password(
+                security_question.answer.strip().lower()
+            )
+        )
+
+        db.add(new_security_question)
+
+    db.commit()
 
     new_student = None
 
@@ -412,4 +471,266 @@ def change_password(
 
     return {
         "message": "Password changed successfully"
+    }
+
+@router.post("/forgot-password")
+def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    user = (
+        db.query(User)
+        .filter(
+            (User.email == request.identifier) |
+            (User.phone == request.identifier)
+        )
+        .first()
+    ) 
+
+    if not user:
+        fake_questions = secrets.SystemRandom().sample(
+            list(SECURITY_QUESTIONS.items()),
+            2
+        )
+
+        fake_recovery_token = secrets.token_urlsafe(32)
+
+        return {
+            "recovery_token": fake_recovery_token,
+            "questions": [
+                {
+                    "id": -(index + 1),
+                    "question_key": question_key,
+                    "question": question_text
+                }
+                for index, (question_key, question_text)
+                in enumerate(fake_questions)
+            ]
+        }
+
+    questions = (
+        db.query(SecurityQuestion)
+        .filter(
+            SecurityQuestion.user_id == user.id
+        )
+        .all()
+    )
+
+    if len(questions) != 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Security questions are not configured for this account"
+        )
+
+    db.query(PasswordRecoverySession).filter(
+        PasswordRecoverySession.user_id == user.id,
+        PasswordRecoverySession.used_at.is_(None)
+    ).update(
+        {
+            PasswordRecoverySession.used_at: datetime.utcnow()
+        },
+        synchronize_session=False
+    )
+
+    db.commit()
+
+    selected_questions = secrets.SystemRandom().sample(
+        questions,
+        2
+    )
+
+    recovery_token = secrets.token_urlsafe(32)
+
+    recovery_session = PasswordRecoverySession(
+        user_id=user.id,
+        token_hash=hash_recovery_token(
+            recovery_token
+        ),
+        question_1_id=selected_questions[0].id,
+        question_2_id=selected_questions[1].id,
+        expires_at=datetime.utcnow() + timedelta(minutes=10),
+        attempts=0
+    )
+
+    db.add(recovery_session)
+    db.commit()
+
+    return {
+        "recovery_token": recovery_token,
+        "questions": [
+            {
+                "id": question.id,
+                "question_key": question.question_key,
+                "question": SECURITY_QUESTIONS[
+                    question.question_key
+                ]
+            }
+            for question in selected_questions
+        ]
+    }
+
+@router.post("/verify-security-answers")
+def verify_security_answers(
+    request: VerifySecurityAnswers,
+    db: Session = Depends(get_db)
+):
+    recovery_session = (
+        db.query(PasswordRecoverySession)
+        .filter(
+            PasswordRecoverySession.token_hash
+            == hash_recovery_token(request.recovery_token)
+        )
+        .first()
+    )
+
+    if not recovery_session:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid recovery token"
+        )
+
+    if recovery_session.used_at is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Recovery session has already been used"
+        )
+
+    if recovery_session.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=400,
+            detail="Recovery session has expired"
+        )
+
+    if (
+        recovery_session.question_1_id not in request.answers
+        or recovery_session.question_2_id not in request.answers
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Answers for both security questions are required"
+        )
+
+    questions = (
+        db.query(SecurityQuestion)
+        .filter(
+            SecurityQuestion.id.in_([
+                recovery_session.question_1_id,
+                recovery_session.question_2_id
+            ])
+        )
+        .all()
+    )
+
+    questions_by_id = {
+        question.id: question
+        for question in questions
+    }
+
+    for question_id in [
+        recovery_session.question_1_id,
+        recovery_session.question_2_id
+    ]:
+        question = questions_by_id.get(question_id)
+
+        if not question:
+            raise HTTPException(
+                status_code=400,
+                detail="Security question configuration is invalid"
+            )
+
+        answer = request.answers[question_id].strip().lower()
+
+        if not verify_password(
+            answer,
+            question.answer_hash
+        ):
+            recovery_session.attempts += 1
+            db.commit()
+
+            if recovery_session.attempts >= 3:
+                recovery_session.used_at = datetime.utcnow()
+                db.commit()
+
+                raise HTTPException(
+                    status_code=400,
+                    detail="Too many incorrect attempts"
+                )
+
+            raise HTTPException(
+                status_code=400,
+                detail="Incorrect security answers"
+            )
+
+    reset_token = secrets.token_urlsafe(32)
+
+    recovery_session.token_hash = hash_recovery_token(
+        reset_token
+    )
+
+    db.commit()
+
+    return {
+        "reset_token": reset_token
+    }
+
+@router.post("/reset-password")
+def reset_password(
+    request: ResetPassword,
+    db: Session = Depends(get_db)
+):
+    recovery_session = (
+        db.query(PasswordRecoverySession)
+        .filter(
+            PasswordRecoverySession.token_hash
+            == hash_recovery_token(request.reset_token)
+        )
+        .first()
+    )
+
+    if not recovery_session:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid reset token"
+        )
+
+    if recovery_session.used_at is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="Reset token has already been used"
+        )
+
+    if recovery_session.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=400,
+            detail="Reset token has expired"
+        )
+
+    if recovery_session.attempts >= 3:
+        raise HTTPException(
+            status_code=400,
+            detail="Too many incorrect attempts"
+        )
+
+    user = (
+        db.query(User)
+        .filter(User.id == recovery_session.user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.password_hash = hash_password(
+        request.new_password
+    )
+
+    recovery_session.used_at = datetime.utcnow()
+
+    db.commit()
+
+    return {
+        "message": "Password reset successfully"
     }
