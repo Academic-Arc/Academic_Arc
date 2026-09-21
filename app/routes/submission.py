@@ -478,23 +478,37 @@ def get_public_submissions(
     db: Session = Depends(get_db)
 ):
     submissions = (
-        db.query(Submission, Student)
-        .join(Student, Student.user_id == Submission.user_id)
+        db.query(Submission, User, Student)
+        .join(User, User.id == Submission.user_id)
+        .outerjoin(Student, Student.user_id == Submission.user_id)
         .all()
     )
 
     results = []
 
-    for submission, student in submissions:
+    for submission, user, student in submissions:
         results.append({
             "id": submission.id,
             "content_type": submission.content_type,
             "user_id": submission.user_id,
             "share_token": submission.share_token,
-            "student_name": student.user.name,
-            "student_class": submission.student_class,
-            "school": student.school,
-            "profile_picture": student.user.profile_picture,
+
+            "student_name": user.name,
+
+            "student_class": (
+                student.student_class
+                if student
+                else None
+            ),
+
+            "school": (
+                student.school
+                if student
+                else None
+            ),
+
+            "profile_picture": user.profile_picture,
+
             "heading": submission.heading,
             "description": submission.description,
             "written_content": submission.written_content,
