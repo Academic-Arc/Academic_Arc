@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
@@ -13,16 +15,22 @@ import AdminFeatured from './pages/AdminFeatured'
 import AdminUsers from './pages/AdminUsers'
 import AdminUserView from './pages/AdminUserView'
 import Footer from './components/Footer'
+import About from './pages/About'
 
 function App() {
 
     const location = useLocation();
+
+    useEffect(() => {
+      window.scrollTo(0, 0);
+    }, [location.pathname]);
 
     const showFooter =
       location.pathname === "/" ||
       location.pathname === "/dashboard" ||
       location.pathname === "/profile" ||
       location.pathname === "/submit" ||
+      location.pathname === "/about" ||
       location.pathname.startsWith("/category/");
   return (
     <>
@@ -34,6 +42,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/submit" element={<Submit />} />
         <Route path="/category/:type" element={<Category />} />
+        <Route path="/about" element={<About />} />
 
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/posts" element={<AdminPosts />} />

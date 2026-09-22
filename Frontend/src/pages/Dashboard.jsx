@@ -279,7 +279,7 @@ function Dashboard() {
     <div className="magazine">
       <nav className="dashboard-navbar">
         <Link to="/" className="dashboard-nav-logo">
-          <img src="/Icons/logo.svg" alt="Logo" />
+          <img src="/Icons/Logo.svg" alt="Logo" />
         </Link>
 
         <div className="dashboard-nav-links">

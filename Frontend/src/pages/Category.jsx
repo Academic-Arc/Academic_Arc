@@ -587,7 +587,7 @@ function Category() {
                               >
                                 <img
                                     src="/Icons/f7_trash.svg"
-                                    alt="Share"
+                                    alt="Delete"
                                 /> Delete post
                               </button>
                             </>
