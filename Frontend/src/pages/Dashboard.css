@@ -315,7 +315,7 @@
 }
 
 .category-04 {
-  background-image: url('music.png?auto=format&fit=crop&w=900&q=80');
+  background-image: url('/music.png');
 }
 
 .category-05 {
@@ -323,7 +323,7 @@
 }
 
 .category-06 {
-  background-image: url('dance.png?auto=format&fit=crop&w=900&q=80');
+  background-image: url('/dance.png');
 }
 
 /* CARD CONTENT */
