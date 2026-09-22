@@ -120,8 +120,14 @@ function Signup() {
             return
         }
 
-        if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match')
+        if (formData.password.length < 8) {
+            return
+        }
+
+        if (
+            formData.confirmPassword &&
+            formData.password !== formData.confirmPassword
+        ) {
             return
         }
 
@@ -365,6 +371,9 @@ function Signup() {
                                 onChange={handleChange}
                                 placeholder="Enter your email"
                             />
+                            <p className="field-requirement">
+                                Enter a valid email address.
+                            </p>
                         </div>
 
 
@@ -383,6 +392,9 @@ function Signup() {
                                     onChange={handleChange}
                                     placeholder="Enter your phone number"
                                 />
+                                <p className="field-requirement">
+                                    Enter a phone number between 10 and 15 digits.
+                                </p>
                             </div>
 
                             <div className="signup-field">
@@ -467,6 +479,11 @@ function Signup() {
                                         )}
                                     </button>
                                 </div>
+
+                                <p className="password-requirement">
+                                    Password must be at least 8 characters long.
+                                </p>
+
                             </div>
 
 
@@ -535,10 +552,17 @@ function Signup() {
                                         )}
                                     </button>
                                 </div>
+
+                                {formData.confirmPassword &&
+                                    formData.password !== formData.confirmPassword && (
+                                        <p className="password-error">
+                                            Passwords do not match.
+                                        </p>
+                                    )}
                             </div>
 
                         </div>
-
+                        
                         {/* Security Questions */}
                         <div className="security-questions-section">
 
