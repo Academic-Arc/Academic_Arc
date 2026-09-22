@@ -12,7 +12,7 @@
 
 .signup-left {
     width: 46%;
-    min-height: 100vh;
+    height: 100vh;
     background: #191918;
 
     display: flex;
@@ -20,6 +20,9 @@
     justify-content: center;
 
     box-sizing: border-box;
+
+    position: sticky;
+    top: 0;
 }
 
 .signup-left-content {
@@ -332,6 +335,21 @@
 
 .password-toggle:hover {
     color: #292927;
+}
+
+.password-requirement,
+.field-requirement {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #777;
+    line-height: 1.4;
+}
+
+.password-error {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #d93025;
+    line-height: 1.4;
 }
 
 /* ================================

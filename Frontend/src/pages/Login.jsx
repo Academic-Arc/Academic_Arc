@@ -15,6 +15,8 @@ function Login() {
     const [resetMode, setResetMode] = useState(false)
     const [newPassword, setNewPassword] = useState('')
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
 
     const handleForgotPassword = async (e) => {
         e.preventDefault()
@@ -105,11 +107,6 @@ function Login() {
 
     const handleResetPassword = async (e) => {
         e.preventDefault()
-
-        if (newPassword !== confirmNewPassword) {
-            alert('Passwords do not match')
-            return
-        }
 
         try {
             const response = await fetch(
@@ -288,13 +285,57 @@ function Login() {
                                         <span className="required">*</span>
                                     </label>
 
-                                    <input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="Enter your new password"
-                                        required
-                                    />
+                                    <div className="password-wrapper">
+                                        <input
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="Enter your new password"
+                                            required
+                                        />
+
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            {showNewPassword ? (
+                                                <svg
+                                                    width="20"
+                                                    height="20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.8"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            ) : (
+                                                <svg
+                                                    width="20"
+                                                    height="20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.8"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M3 3l18 18" />
+                                                    <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                                                    <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a17.7 17.7 0 0 1-3.2 4.4" />
+                                                    <path d="M6.6 6.6C3.7 8.5 2 12 2 12s3.5 8 10 8c1.4 0 2.7-.3 3.9-.8" />
+                                                </svg>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <p className="password-requirement">
+                                        Password must be at least 8 characters long.
+                                    </p>
                                 </div>
 
                                 <div className="form-field">
@@ -303,15 +344,68 @@ function Login() {
                                         <span className="required">*</span>
                                     </label>
 
-                                    <input
-                                        type="password"
-                                        value={confirmNewPassword}
-                                        onChange={(e) =>
-                                            setConfirmNewPassword(e.target.value)
-                                        }
-                                        placeholder="Confirm your new password"
-                                        required
-                                    />
+                                    <div className="password-wrapper">
+                                        <input
+                                            type={showConfirmNewPassword ? 'text' : 'password'}
+                                            value={confirmNewPassword}
+                                            onChange={(e) =>
+                                                setConfirmNewPassword(e.target.value)
+                                            }
+                                            placeholder="Confirm your new password"
+                                            required
+                                        />
+
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() =>
+                                                setShowConfirmNewPassword(!showConfirmNewPassword)
+                                            }
+                                            aria-label={
+                                                showConfirmNewPassword
+                                                    ? 'Hide password'
+                                                    : 'Show password'
+                                            }
+                                        >
+                                            {showConfirmNewPassword ? (
+                                                <svg
+                                                    width="20"
+                                                    height="20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.8"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            ) : (
+                                                <svg
+                                                    width="20"
+                                                    height="20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="1.8"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M3 3l18 18" />
+                                                    <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                                                    <path d="M9.9 4.2A10.7 10.7 0 0 1 12 4c6.5 0 10 8 10 8a17.7 17.7 0 0 1-3.2 4.4" />
+                                                    <path d="M6.6 6.6C3.7 8.5 2 12 2 12s3.5 8 10 8c1.4 0 2.7-.3 3.9-.8" />
+                                                </svg>
+                                            )}
+                                        </button>
+                                    </div>
+                                    {confirmNewPassword &&
+                                        newPassword !== confirmNewPassword && (
+                                            <p className="password-error">
+                                                Passwords do not match.
+                                            </p>
+                                        )}
                                 </div>
 
                             </div>
