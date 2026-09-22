@@ -26,7 +26,7 @@
   align-items: center;
   justify-content: center;
 
-  background: #f5f3ef;
+  /*background: #f5f3ef;*/
   color: #777;
 
   font-size: 11px;
@@ -37,6 +37,10 @@
 .footer-mascot-placeholder {
   width: 145px;
   height: 145px;
+}
+
+.footer-mascot-placeholder img{
+  width: 150px;
 }
 
 /* About */
@@ -51,11 +55,14 @@
 }
 
 .footer-icon-placeholder {
-  width: 38px;
+  width: 56px;
   height: 38px;
-  margin-bottom: 15px;
-
+  margin-bottom: 4px;
   border-radius: 4px;
+}
+
+.footer-icon-placeholder img{
+  width: 38px;
 }
 
 .footer-about p {
@@ -65,6 +72,20 @@
   font-size: 12px;
   line-height: 1.6;
   color: #bcb9b4;
+}
+
+.about-know-more {
+    display: inline-block;
+    margin-top: 8px;
+    color: #d97745;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.about-know-more:hover {
+    opacity: 0.7;
 }
 
 /* Contact */
@@ -125,6 +146,7 @@
   align-items: center;
 
   border: 1px solid #d9d7d3;
+  border-radius: 15px;
 }
 
 .feedback-input-wrapper input {
@@ -159,7 +181,7 @@
   border: none;
   background: transparent;
 
-  color: #f07b18;
+  color: #d9d7d3;
   cursor: pointer;
 }
 
@@ -181,30 +203,46 @@
   color: #9fcf8a;
 }
 
-/* Photographers */
+/* Social Media */
 
-.footer-photographers {
-  display: flex;
-  gap: 16px;
+.footer-social {
+  padding-top: 0;
 }
 
-.photographer {
-  text-align: center;
+.footer-social h3 {
+  margin: 0 0 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
 }
 
-.photographer-placeholder {
-  width: 75px;
-  height: 75px;
+.footer-social p {
+  margin: 0 0 16px;
 
-  border-radius: 5px;
-}
-
-.photographer p {
-  margin: 8px 0 0;
-
-  font-size: 10px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.5;
   color: #bcb9b4;
+}
+
+.social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 30px;
+}
+
+.social-link:hover {
+  color: #ffffff;
+  border-color: #d97745;
+  background: rgba(217, 119, 69, 0.08);
 }
 
 /* Bottom Bar */

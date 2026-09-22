@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
 const Footer = () => {
@@ -26,46 +27,53 @@ const Footer = () => {
         {/* Mascot Placeholder */}
         <div className="footer-brand">
           <div className="footer-placeholder footer-mascot-placeholder">
-            Mascot
+            <img
+                src="Mascot.png"
+                alt="Mascot"
+            />
           </div>
         </div>
 
         {/* About Placeholder */}
         <div className="footer-about">
           <div className="footer-placeholder footer-icon-placeholder">
-            Logo
+            <img
+                src="Short Logo.png"
+                alt="Logo"
+            />
           </div>
 
           <h3>About Us</h3>
 
           <p>
-            Your magazine description will go here. This space will contain
-            a short introduction about the magazine and its purpose.
+            Academic Arc is a cultural magazine celebrating creativity, talent, and 
+            expression beyond the classroom. From writing and poetry to music, dance, 
+            and art, we provide a platform to showcase and share the diverse talents of our 
+            school community.
           </p>
+
+          <Link to="/about" className="about-know-more">
+            Know More →
+          </Link>
         </div>
 
         {/* Contact */}
         <div className="footer-contact">
-        <h3>Contact Us</h3>
+          <h3>Contact Us</h3>
 
-        <div className="contact-item">
+          <div className="contact-item">
             <span className="contact-icon">Icon</span>
             <span>
             Department of School Education,
             <br />
             Bikash Bhavan, Kolkata
             </span>
-        </div>
+          </div>
 
-        <div className="contact-item">
+          <div className="contact-item">
             <span className="contact-icon">Icon</span>
             <span>email@example.com</span>
-        </div>
-
-        <div className="contact-item">
-            <span className="contact-icon">Icon</span>
-            <span>0000000000</span>
-        </div>
+          </div>
         </div>
 
         {/* Feedback */}
@@ -118,34 +126,50 @@ const Footer = () => {
         </form>
         </div>
 
-        {/* Photographer Placeholders */}
-        <div className="footer-photographers">
-          <div className="photographer">
-            <div className="footer-placeholder photographer-placeholder">
-              Photo
-            </div>
+        {/* Social Media */}
+        <div className="footer-social">
+          <h3>Follow Us</h3>
 
-            <p>
-              Photographer
-              <br />
-              information
-              <br />
-              will go here
-            </p>
-          </div>
+          <p>Stay connected with Academic Arc.</p>
 
-          <div className="photographer">
-            <div className="footer-placeholder photographer-placeholder">
-              Photo
-            </div>
+          <div className="social-links">
 
-            <p>
-              Photographer
-              <br />
-              information
-              <br />
-              will go here
-            </p>
+            <a
+              href="https://www.instagram.com/academicarc.in"
+              className="social-link"
+              aria-label="Instagram"
+            >
+              <img
+                  src="/Icons/instagram.svg"
+                  alt=""
+                  className="Instagram"
+              />
+            </a>
+
+            <a
+              href="https://www.facebook.com/academicarc.in"
+              className="social-link"
+              aria-label="Facebook"
+            >
+              <img
+                  src="/Icons/facebook.svg"
+                  alt=""
+                  className="Facebook"
+              />
+            </a>
+
+            <a
+              href="https://www.linkedin.com/company/academic-arc2026/home/"
+              className="social-link"
+              aria-label="LinkedIn"
+            >
+              <img
+                  src="/Icons/linkedin.svg"
+                  alt=""
+                  className="LinkedIn"
+              />
+            </a>
+
           </div>
         </div>
 
