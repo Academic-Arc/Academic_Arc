@@ -16,7 +16,7 @@
 
 .dashboard-navbar {
   /*max-width: 1400px;*/
-  margin: 0 auto 110px;
+  margin: 0 auto 70px;
   padding: 25px 0;
   display: flex;
   justify-content: space-between;
@@ -40,7 +40,7 @@
 .dashboard-nav-links {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
 }
 
 .dashboard-nav-links a {
@@ -50,20 +50,23 @@
 }
 
 .dashboard-nav-links .submit-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-  padding: 8px 14px;
-  background: transparent;
-  border: 1px solid rgba(216, 138, 53, 0.6);
-  border-radius: 20px;
+    height: 42px;
+    box-sizing: border-box;
 
-  color: #d8d4ce;
-  text-decoration: none;
-  font-size: 14px;
+    padding: 0 10px;
 
-  line-height: 1;
+    background: transparent;
+    border: 1px solid rgba(216, 138, 53, 0.6);
+    border-radius: 20px;
+
+    color: #d8d4ce;
+    text-decoration: none;
+    font-size: 14px;
+    line-height: 1;
 }
 
 .dashboard-nav-links .submit-button:hover {
@@ -81,10 +84,29 @@
 }
 
 .language-button {
-  padding: 7px 14px !important;
+  padding: 4px 8px !important;
   filter: invert(100%);
   border: 2px solid rgba(0, 0, 0, 0.5) !important;
   border-radius: 20px;
+}
+
+.search-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.search-button img {
+  height: 30px;
+  filter: invert(1);
 }
 
 /* PROFILE DROPDOWN */
@@ -173,7 +195,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
 
-  background: #22211f;
+  background: rgba(35, 33, 31, 1);
 
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
 
@@ -696,7 +718,7 @@
   /* NAVBAR */
 
   .dashboard-navbar {
-    margin-bottom: 50px;
+    margin-bottom: 24px;
     padding: 20px 0;
   }
 
@@ -707,7 +729,7 @@
   }
 
   .dashboard-nav-logo img {
-    width: 95px;
+    width: 125px;
   }
 
   .dashboard-nav-links {
@@ -717,6 +739,27 @@
   .dashboard-nav-links .submit-button {
     padding: 5px 7px 5px 5px;
     font-size: 12px;
+  }
+
+  /* SEARCH BUTTON */
+
+  .search-button {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border: none;
+      background: transparent;
+      cursor: pointer;
+  }
+
+  .search-button img {
+      height: 30px;
+      filter: invert(1);
   }
 
   /* LANGUAGE BUTTON */
@@ -730,27 +773,38 @@
     height: 20px;
   }
 
+  /* MOVE SUBMIT + LANGUAGE INTO PROFILE MENU */
+
+  .dashboard-nav-links > .language-button {
+      display: none;
+  }
+
+  .dashboard-nav-links > .submit-button {
+      display: none;
+  }
+
   /* PROFILE DROPDOWN */
 
   .profile-dropdown-button {
-    padding: 5px 7px 5px 5px;
-    gap: 5px;
-    font-size: 12px;
+      padding: 5px 7px 5px 5px;
+      width: 100px;
+      gap: 5px;
+      font-size: 12px;
   }
 
   .profile-avatar {
-    width: 25px;
-    height: 25px;
-    font-size: 9px;
+      width: 75px;
+      height: 25px;
+      font-size: 9px;
   }
 
   .profile-user-name {
-    max-width: 60px;
+      max-width: 60px;
   }
 
   .profile-dropdown-arrow {
-    font-size: 10px;
-    margin-left: 0;
+      font-size: 10px;
+      margin-left: 0;
   }
 
 

@@ -284,6 +284,10 @@ function Dashboard() {
 
         <div className="dashboard-nav-links">
 
+          <button className="search-button" aria-label="Search">
+            <img src="/Icons/search.svg" alt="Search" />
+          </button>
+
           <button className="language-button">
             <img src="/Icons/language.svg" alt="Language" />
           </button>
@@ -335,6 +339,23 @@ function Dashboard() {
                       <img src="/Icons/profile.svg" alt="Profile" />
                       <span>My Profile</span>
                     </Link>
+
+                    {/* MOBILE ONLY */}
+                    <Link
+                        to="/submit"
+                        className="mobile-dropdown-item"
+                        onClick={() => setProfileMenuOpen(false)}
+                    >
+                      <img src="/Icons/submit.svg" alt="Submit" />
+                      <span>Submit</span>
+                    </Link>
+
+                    <button
+                        className="mobile-dropdown-item mobile-language-item"
+                    >
+                        <img src="/Icons/language.svg" alt="Language" />
+                        <span>Language</span>
+                    </button>
 
                     <button
                       onClick={logout}
