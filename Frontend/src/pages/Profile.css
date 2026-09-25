@@ -240,7 +240,7 @@
 
     aspect-ratio: 1 / 1;
 
-    overflow: hidden;
+    overflow: visible;
 
     background: #eeeae4;
 
@@ -816,7 +816,7 @@
     box-shadow:
         0 8px 25px rgba(0, 0, 0, 0.18);
 
-    z-index: 50;
+    z-index: 9999;
 }
 
 .profile-submission-dropdown button {
