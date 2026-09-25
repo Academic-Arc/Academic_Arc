@@ -347,6 +347,32 @@ function Profile() {
         )
     }
 
+    const handleShare = async (submission) => {
+        const shareUrl =
+            `${window.location.origin}/category/${encodeURIComponent(
+                submission.content_type
+            )}?post=${submission.share_token}`
+
+        const shareData = {
+            title: submission.heading,
+            text: submission.description || submission.heading,
+            url: shareUrl,
+        }
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData)
+            } else {
+                await navigator.clipboard.writeText(shareUrl)
+                alert('Link copied to clipboard!')
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Share failed:', error)
+            }
+        }
+    }
+
     const handleEditSubmission = (submissionId) => {
         setOpenSubmissionMenu(null)
 
@@ -1018,6 +1044,20 @@ function Profile() {
                                                             }
                                                         >
                                                             ✏️ Edit post
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            className="share-option"
+                                                            onClick={() => {
+                                                                setOpenSubmissionMenu(null)
+                                                                handleShare(submission)
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src="/Icons/share.svg"
+                                                                alt="Share"
+                                                            /> Share
                                                         </button>
 
                                                         <button
