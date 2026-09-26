@@ -284,7 +284,7 @@ function Dashboard() {
 
         <div className="dashboard-nav-links">
 
-          <button className="search-button" aria-label="Search">
+          <button className="dash-search-button" aria-label="Search">
             <img src="/Icons/search.svg" alt="Search" />
           </button>
 
@@ -298,14 +298,14 @@ function Dashboard() {
                 Submit
               </Link>
 
-              <div className="profile-dropdown" ref={profileMenuRef}>
+              <div className="dash-profile-dropdown" ref={profileMenuRef}>
 
                 <button
-                  className="profile-dropdown-button"
+                  className="dash-profile-dropdown-button"
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                   aria-expanded={profileMenuOpen}
                 >
-                  <div className="profile-avatar">
+                  <div className="dash-profile-avatar">
                     {user?.profile_picture ? (
                       <img
                         src={user.profile_picture}
@@ -316,21 +316,21 @@ function Dashboard() {
                     )}
                   </div>
 
-                  <span className="profile-user-name">
+                  <span className="dash-profile-user-name">
                     {user?.name || 'Profile'}
                   </span>
 
                   <img
                       src="/Icons/dropdown.svg"
                       alt=""
-                      className={`profile-dropdown-arrow ${
+                      className={`dash-profile-dropdown-arrow ${
                           profileMenuOpen ? 'open' : ''
                       }`}
                   />
                 </button>
 
                 {profileMenuOpen && (
-                  <div className="profile-dropdown-menu">
+                  <div className="dash-profile-dropdown-menu">
 
                     <Link
                       to="/profile"
@@ -373,8 +373,10 @@ function Dashboard() {
             </>
           ) : (
             <>
-              <Link to="/login">Login</Link>
-              <Link to="/signup">Sign Up</Link>
+              <Link to="/login" className="dash-sign-in-button">
+                Sign In
+              </Link>
+              {/*<Link to="/signup">Sign Up</Link>*/}
             </>
           )}
         </div>
