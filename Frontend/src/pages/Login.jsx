@@ -244,7 +244,7 @@ function Login() {
                             type="button"
                             className="auth-tab active"
                         >
-                            Login
+                            Log In
                         </button>
 
                         <button

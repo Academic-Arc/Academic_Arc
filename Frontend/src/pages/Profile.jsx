@@ -15,6 +15,8 @@ function Profile() {
 
     const [openSubmissionMenu, setOpenSubmissionMenu] = useState(null)
     const submissionMenuRef = useRef(null)
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+    const profileMenuRef = useRef(null)
 
     const [showEditProfile, setShowEditProfile] = useState(false)
     const [name, setName] = useState('')
@@ -122,6 +124,29 @@ function Profile() {
             document.removeEventListener(
                 'mousedown',
                 handleOutsideClick
+            )
+        }
+    }, [])
+
+    useEffect(() => {
+        const handleProfileClickOutside = (event) => {
+            if (
+                profileMenuRef.current &&
+                !profileMenuRef.current.contains(event.target)
+            ) {
+                setProfileMenuOpen(false)
+            }
+        }
+
+        document.addEventListener(
+            'mousedown',
+            handleProfileClickOutside
+        )
+
+        return () => {
+            document.removeEventListener(
+                'mousedown',
+                handleProfileClickOutside
             )
         }
     }, [])
@@ -345,6 +370,32 @@ function Profile() {
                 ? null
                 : submissionId
         )
+    }
+
+    const handleShare = async (submission) => {
+        const shareUrl =
+            `${window.location.origin}/category/${encodeURIComponent(
+                submission.content_type
+            )}?post=${submission.share_token}`
+
+        const shareData = {
+            title: submission.heading,
+            text: submission.description || submission.heading,
+            url: shareUrl,
+        }
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData)
+            } else {
+                await navigator.clipboard.writeText(shareUrl)
+                alert('Link copied to clipboard!')
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Share failed:', error)
+            }
+        }
     }
 
     const handleEditSubmission = (submissionId) => {
@@ -619,22 +670,166 @@ function Profile() {
 
             <nav className="navbar">
 
-                <Link
-                    to="/"
-                    className="nav-logo"
-                >
-                    Academic Arc
+                <Link to="/" className="nav-logo">
+                    <img
+                        src="/Icons/Logo_Black.svg"
+                        alt="Logo"
+                    />
                 </Link>
 
                 <div className="nav-links">
+
+                    <button
+                        className="search-button"
+                        aria-label="Search"
+                    >
+                        <img
+                            src="/Icons/search.svg"
+                            alt="Search"
+                        />
+                    </button>
 
                     <Link to="/">
                         Home
                     </Link>
 
-                    <Link to="/submit">
+                    <Link
+                        to="/submit"
+                        className="submit-button"
+                    >
                         Submit
                     </Link>
+
+                    <div
+                        className="profile-dropdown"
+                        ref={profileMenuRef}
+                    >
+
+                        <button
+                            className="profile-dropdown-button"
+                            onClick={() =>
+                                setProfileMenuOpen(
+                                    !profileMenuOpen
+                                )
+                            }
+                            aria-expanded={
+                                profileMenuOpen
+                            }
+                        >
+
+                            <div className="profile-avatar">
+
+                                {user?.profile_picture ? (
+
+                                    <img
+                                        src={
+                                            user.profile_picture
+                                        }
+                                        alt={user.name}
+                                    />
+
+                                ) : (
+
+                                    <span>
+                                        {getInitial()}
+                                    </span>
+
+                                )}
+
+                            </div>
+
+                            <span className="profile-user-name">
+                                {user?.name || 'Profile'}
+                            </span>
+
+                            <img
+                                src="/Icons/dropdown.svg"
+                                alt=""
+                                className={`profile-dropdown-arrow ${
+                                    profileMenuOpen
+                                        ? 'open'
+                                        : ''
+                                }`}
+                            />
+
+                        </button>
+
+                        {profileMenuOpen && (
+
+                            <div className="profile-dropdown-menu">
+
+                                {/*<Link
+                                    to="/profile"
+                                    onClick={() =>
+                                        setProfileMenuOpen(false)
+                                    }
+                                >
+                                    <img
+                                        src="/Icons/profile.svg"
+                                        alt="Profile"
+                                    />
+
+                                    <span>
+                                        My Profile
+                                    </span>
+                                </Link>*/}
+
+                                <Link to="/">
+                                    <img
+                                        src="/Icons/home.svg"
+                                        alt="Home"
+                                    />
+
+                                    <span>
+                                        Home
+                                    </span>
+                                </Link>
+
+                                <Link
+                                    to="/submit"
+                                    className="mobile-dropdown-item"
+                                    onClick={() =>
+                                        setProfileMenuOpen(false)
+                                    }
+                                >
+                                    <img
+                                        src="/Icons/submit.svg"
+                                        alt="Submit"
+                                    />
+
+                                    <span>
+                                        Submit
+                                    </span>
+                                </Link>
+
+                                <button
+                                    onClick={() => {
+                                        localStorage.removeItem(
+                                            'access_token'
+                                        )
+
+                                        setProfileMenuOpen(false)
+
+                                        navigate('/login')
+                                    }}
+                                >
+                                    <span className="logout-icon">
+                                        <img
+                                            src="/Icons/logout.svg"
+                                            alt="Logout"
+                                        />
+                                    </span>
+
+                                    <span>
+                                        Logout
+                                    </span>
+                                </button>
+
+                            </div>
+
+                        )}
+
+                    </div>
 
                 </div>
 
@@ -1018,6 +1213,20 @@ function Profile() {
                                                             }
                                                         >
                                                             ✏️ Edit post
+                                                        </button>
+
+                                                        <button
+                                                            type="button"
+                                                            className="share-option"
+                                                            onClick={() => {
+                                                                setOpenSubmissionMenu(null)
+                                                                handleShare(submission)
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src="/Icons/share.svg"
+                                                                alt="Share"
+                                                            /> Share
                                                         </button>
 
                                                         <button

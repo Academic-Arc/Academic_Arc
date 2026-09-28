@@ -240,7 +240,7 @@
 
     aspect-ratio: 1 / 1;
 
-    overflow: hidden;
+    overflow: visible;
 
     background: #eeeae4;
 
@@ -816,7 +816,7 @@
     box-shadow:
         0 8px 25px rgba(0, 0, 0, 0.18);
 
-    z-index: 50;
+    z-index: 9999;
 }
 
 .profile-submission-dropdown button {
@@ -847,6 +847,10 @@
 .delete-option {
     color: #c0392b;
 }*/
+
+.share-option img{
+    filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
+}
 
 .delete-option img{
     filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);

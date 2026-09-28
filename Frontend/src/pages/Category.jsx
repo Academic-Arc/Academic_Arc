@@ -9,6 +9,8 @@ function Category() {
   const navigate = useNavigate()
   const categoryName = decodeURIComponent(type)
 
+  const isLoggedIn = !!localStorage.getItem('access_token')
+
   const [submissions, setSubmissions] = useState([])
   const [likeData, setLikeData] = useState({})
   const [liking, setLiking] = useState({})
@@ -20,6 +22,33 @@ function Category() {
   const [selectedSubmission, setSelectedSubmission] = useState(null)
 
   const menuRef = useRef(null)
+
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef(null)
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    if (!isLoggedIn) return
+
+    fetch(`${API_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Could not load user profile.')
+        }
+
+        return response.json()
+      })
+      .then((data) => {
+        setUser(data)
+      })
+      .catch((error) => {
+        console.error('Error fetching user profile:', error)
+      })
+  }, [isLoggedIn])
 
   useEffect(() => {
     const categoryTitles = {
@@ -262,6 +291,22 @@ function Category() {
     }
   }
 
+  const getInitials = (name) => {
+    if (!name) return '?'
+
+    return name
+      .trim()
+      .charAt(0)
+      .toUpperCase()
+  }
+
+  const logout = () => {
+    localStorage.removeItem('access_token')
+    setUser(null)
+    setProfileMenuOpen(false)
+    navigate('/login')
+  }
+
   const handleShare = async (submission) => {
     const shareUrl =
       `${window.location.origin}${window.location.pathname}?post=${submission.share_token}`;
@@ -421,30 +466,115 @@ function Category() {
       <nav className="navbar">
 
         <Link to="/" className="nav-logo">
-          Academic Arc
+          <img src="/Icons/Logo_Black.svg" alt="Logo" />
         </Link>
 
         <div className="nav-links">
+
+          <button className="search-button" aria-label="Search">
+            <img src="/Icons/search.svg" alt="Search" />
+          </button>
+
+          {/* LANGUAGE BUTTON — kept for future use
+          <button className="language-button">
+            <img src="/Icons/language.svg" alt="Language" />
+          </button>
+          */}
 
           <Link to="/">
             Home
           </Link>
 
-          <Link to="/profile">
-            Profile
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link to="/submit" className="submit-button">
+                Submit
+              </Link>
 
-        </div>
+              <div className="profile-dropdown" ref={profileMenuRef}>
 
+                <button
+                  className="profile-dropdown-button"
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  aria-expanded={profileMenuOpen}
+                >
+                  <div className="profile-avatar">
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user.name}
+                      />
+                    ) : (
+                      <span>{getInitials(user?.name)}</span>
+                    )}
+                  </div>
+
+                  <span className="profile-user-name">
+                    {user?.name || 'Profile'}
+                  </span>
+
+                  <img
+                    src="/Icons/dropdown.svg"
+                    alt=""
+                    className={`profile-dropdown-arrow ${
+                      profileMenuOpen ? 'open' : ''
+                    }`}
+                  />
+                </button>
+
+                {profileMenuOpen && (
+                  <div className="profile-dropdown-menu">
+
+                    <Link
+                      to="/profile"
+                      onClick={() => setProfileMenuOpen(false)}
+                    >
+                      <img src="/Icons/profile.svg" alt="Profile" />
+                      <span>My Profile</span>
+                    </Link>
+
+                    {/* MOBILE ONLY */}
+                    <Link
+                      to="/submit"
+                      className="mobile-dropdown-item"
+                      onClick={() => setProfileMenuOpen(false)}
+                    >
+                      <img src="/Icons/submit.svg" alt="Submit" />
+                      <span>Submit</span>
+                    </Link>
+
+                    <button onClick={logout}>
+                      <span className="logout-icon">
+                        <img src="/Icons/logout.svg" alt="Logout" />
+                      </span>
+                      <span>Logout</span>
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="sign-in-button">
+                Sign In
+              </Link>
+              {/*<Link to="/signup">Sign Up</Link>*/}
+            </>
+          )}
+
+        </div>  
       </nav>
 
       <main className="category-container">
 
         <div className="category-heading">
 
-          <h1>
-            {categoryName}
-          </h1>
+          <img
+            src={`/${categoryName.toLowerCase()}.png`}
+            alt={categoryName}
+          />
 
           <p>
             Explore student {categoryName.toLowerCase()} submissions.
