@@ -571,9 +571,10 @@ function Category() {
 
         <div className="category-heading">
 
-          <h1>
-            {categoryName}
-          </h1>
+          <img
+            src={`/${categoryName.toLowerCase()}.png`}
+            alt={categoryName}
+          />
 
           <p>
             Explore student {categoryName.toLowerCase()} submissions.
