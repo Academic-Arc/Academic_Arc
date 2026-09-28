@@ -175,6 +175,11 @@ function Dashboard() {
       })
       .catch((error) => {
         console.error('Error fetching user profile:', error)
+
+        localStorage.removeItem('access_token')
+        setToken(null)
+        setUser(null)
+        setProfileMenuOpen(false)
       })
   }, [token])
 
