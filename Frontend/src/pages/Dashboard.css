@@ -4,10 +4,10 @@
   color: #f5f2ed;
   background:
     radial-gradient(
-      circle at 50% 0%,
+      ellipse 80% 620px at 50% 0%,
       rgba(150, 75, 20, 0.28) 0%,
-      rgba(150, 75, 20, 0.12) 22%,
-      rgba(24, 24, 23, 0) 55%
+      rgba(150, 75, 20, 0.12) 45%,
+      rgba(24, 24, 23, 0) 100%
     ),
     #181817;
 }
