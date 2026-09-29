@@ -142,6 +142,13 @@ function Dashboard() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [user, setUser] = useState(null)
 
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [allPublicSubmissions, setAllPublicSubmissions] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+
   const specialCarouselRef = useRef(null)
   const automaticCarouselRef = useRef(null)
   const profileMenuRef = useRef(null)
@@ -193,6 +200,40 @@ function Dashboard() {
   }, [])
 
   useEffect(() => {
+    if (!searchOpen || allPublicSubmissions.length > 0) return
+
+    fetch(`${API_URL}/submissions/public`)
+      .then((response) => response.json())
+      .then((data) => {
+        setAllPublicSubmissions(data)
+      })
+      .catch((error) => {
+        console.error('Error fetching search data:', error)
+      })
+  }, [searchOpen])
+
+  useEffect(() => {
+    const query = searchQuery.trim().toLowerCase()
+
+    if (!query) {
+      setSearchResults([])
+      return
+    }
+
+    const results = allPublicSubmissions.filter((submission) => {
+      return (
+        submission.heading?.toLowerCase().includes(query) ||
+        submission.description?.toLowerCase().includes(query) ||
+        submission.student_name?.toLowerCase().includes(query) ||
+        submission.school?.toLowerCase().includes(query) ||
+        submission.content_type?.toLowerCase().includes(query)
+      )
+    })
+
+    setSearchResults(results)
+  }, [searchQuery, allPublicSubmissions])
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         profileMenuRef.current &&
@@ -208,6 +249,25 @@ function Dashboard() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  useEffect(() => {
+    const handleSearchOutsideClick = (event) => {
+      if (
+        searchOpen &&
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setSearchOpen(false)
+        setSearchQuery('')
+      }
+    }
+
+    document.addEventListener('mousedown', handleSearchOutsideClick)
+
+    return () => {
+      document.removeEventListener('mousedown', handleSearchOutsideClick)
+    }
+  }, [searchOpen])
 
   const scrollCarousel = (ref, direction) => {
     if (!ref.current) return
@@ -289,7 +349,11 @@ function Dashboard() {
 
         <div className="dashboard-nav-links">
 
-          <button className="dash-search-button" aria-label="Search">
+          <button
+            className="dash-search-button"
+            aria-label="Search"
+            onClick={() => setSearchOpen((prev) => !prev)}
+          >
             <img src="/Icons/search.svg" alt="Search" />
           </button>
 
@@ -386,6 +450,74 @@ function Dashboard() {
           )}
         </div>
       </nav>
+
+      {searchOpen && (
+        <div className="dash-search-overlay">
+          <div className="dash-search-box" ref={searchRef}>
+
+            <div className="dash-search-input-row">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(event.target.value)
+                }
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && searchResults.length > 0) {
+                    const submission = searchResults[0]
+
+                    window.location.href = `/category/${encodeURIComponent(
+                      submission.content_type
+                    )}?post=${submission.share_token}`
+                  }
+                }}
+                placeholder="Search Academic Arc..."
+                autoFocus
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchOpen(false)
+                  setSearchQuery('')
+                }}
+                aria-label="Close search"
+              >
+                ×
+              </button>
+            </div>
+
+            {searchQuery.trim() && (
+              <div className="dash-search-results">
+                {searchResults.length > 0 ? (
+                  searchResults.map((submission) => (
+                    <button
+                      key={submission.id}
+                      type="button"
+                      className="dash-search-result-item"
+                      onClick={() => {
+                        window.location.href = `/category/${encodeURIComponent(
+                          submission.content_type
+                        )}?post=${submission.share_token}`
+                      }}
+                    >
+                      <strong>{submission.heading || 'Untitled'}</strong>
+                      <span>
+                        {submission.content_type} · {submission.student_name || 'Academic Arc'}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="dash-search-no-results">
+                    No submissions found.
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       <main className="categories-section">
         <div className="section-label">
