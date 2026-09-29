@@ -21,7 +21,14 @@ function Category() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedSubmission, setSelectedSubmission] = useState(null)
 
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [allPublicSubmissions, setAllPublicSubmissions] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+
   const menuRef = useRef(null)
+  const searchRef = useRef(null)
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef(null)
@@ -132,6 +139,40 @@ function Category() {
       })
   }, [categoryName])
 
+  useEffect(() => {
+    if (!searchOpen || allPublicSubmissions.length > 0) return
+
+    fetch(`${API_URL}/submissions/public`)
+      .then((response) => response.json())
+      .then((data) => {
+        setAllPublicSubmissions(data)
+      })
+      .catch((error) => {
+        console.error('Error fetching search data:', error)
+      })
+  }, [searchOpen])
+
+  useEffect(() => {
+    const query = searchQuery.trim().toLowerCase()
+
+    if (!query) {
+      setSearchResults([])
+      return
+    }
+
+    const results = allPublicSubmissions.filter((submission) => {
+      return (
+        submission.heading?.toLowerCase().includes(query) ||
+        submission.description?.toLowerCase().includes(query) ||
+        submission.student_name?.toLowerCase().includes(query) ||
+        submission.school?.toLowerCase().includes(query) ||
+        submission.content_type?.toLowerCase().includes(query)
+      )
+    })
+
+    setSearchResults(results)
+  }, [searchQuery, allPublicSubmissions])
+
   // Open submission from shared URL
 
   useEffect(() => {
@@ -198,6 +239,25 @@ function Category() {
       )
     }
   }, [])
+
+  useEffect(() => {
+    const handleSearchOutsideClick = (event) => {
+      if (
+        searchOpen &&
+        searchRef.current &&
+        !searchRef.current.contains(event.target)
+      ) {
+        setSearchOpen(false)
+        setSearchQuery('')
+      }
+    }
+
+    document.addEventListener('mousedown', handleSearchOutsideClick)
+
+    return () => {
+      document.removeEventListener('mousedown', handleSearchOutsideClick)
+    }
+  }, [searchOpen])
 
   const fetchLikes = async (submissionId) => {
     const token = localStorage.getItem('access_token')
@@ -471,7 +531,11 @@ function Category() {
 
         <div className="nav-links">
 
-          <button className="search-button" aria-label="Search">
+          <button
+            className="search-button"
+            aria-label="Search"
+            onClick={() => setSearchOpen((prev) => !prev)}
+          >
             <img src="/Icons/search.svg" alt="Search" />
           </button>
 
@@ -566,6 +630,74 @@ function Category() {
 
         </div>  
       </nav>
+
+      {searchOpen && (
+        <div className="search-overlay">
+          <div className="search-box" ref={searchRef}>
+
+            <div className="search-input-row">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) =>
+                  setSearchQuery(event.target.value)
+                }
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && searchResults.length > 0) {
+                    const submission = searchResults[0]
+
+                    setSelectedSubmission(submission)
+                    setSearchOpen(false)
+                    setSearchQuery('')
+                  }
+                }}
+                placeholder="Search Academic Arc..."
+                autoFocus
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchOpen(false)
+                  setSearchQuery('')
+                }}
+                aria-label="Close search"
+              >
+                ×
+              </button>
+            </div>
+
+            {searchQuery.trim() && (
+              <div className="search-results">
+                {searchResults.length > 0 ? (
+                  searchResults.map((submission) => (
+                    <button
+                      key={submission.id}
+                      type="button"
+                      className="search-result-item"
+                      onClick={() => {
+                        setSelectedSubmission(submission)
+                        setSearchOpen(false)
+                        setSearchQuery('')
+                      }}
+                    >
+                      <strong>{submission.heading || 'Untitled'}</strong>
+                      <span>
+                        {submission.content_type} · {submission.student_name || 'Academic Arc'}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="search-no-results">
+                    No submissions found.
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       <main className="category-container">
 

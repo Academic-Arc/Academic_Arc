@@ -17,6 +17,7 @@ function Profile() {
     const submissionMenuRef = useRef(null)
     const [profileMenuOpen, setProfileMenuOpen] = useState(false)
     const profileMenuRef = useRef(null)
+    const searchRef = useRef(null)
 
     const [showEditProfile, setShowEditProfile] = useState(false)
     const [name, setName] = useState('')
@@ -38,6 +39,11 @@ function Profile() {
     const [uploadingPicture, setUploadingPicture] = useState(false)
 
     const [selectedSubmission, setSelectedSubmission] = useState(null)
+
+    const [searchOpen, setSearchOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchResults, setSearchResults] = useState([])
+    const [allPublicSubmissions, setAllPublicSubmissions] = useState([])
 
     if (!token) {
         return <Navigate to="/login" replace />
@@ -100,6 +106,40 @@ function Profile() {
         fetchProfile()
     }, [token])
 
+    useEffect(() => {
+        if (!searchOpen || allPublicSubmissions.length > 0) return
+
+        fetch(`${API_URL}/submissions/public`)
+            .then((response) => response.json())
+            .then((data) => {
+                setAllPublicSubmissions(data)
+            })
+            .catch((error) => {
+                console.error('Error fetching search data:', error)
+            })
+    }, [searchOpen])
+
+    useEffect(() => {
+        const query = searchQuery.trim().toLowerCase()
+
+        if (!query) {
+            setSearchResults([])
+            return
+        }
+
+        const results = allPublicSubmissions.filter((submission) => {
+            return (
+            submission.heading?.toLowerCase().includes(query) ||
+            submission.description?.toLowerCase().includes(query) ||
+            submission.student_name?.toLowerCase().includes(query) ||
+            submission.school?.toLowerCase().includes(query) ||
+            submission.content_type?.toLowerCase().includes(query)
+            )
+        })
+
+        setSearchResults(results)
+    }, [searchQuery, allPublicSubmissions])
+
     /*
      * Close submission menu when clicking outside.
      */
@@ -150,6 +190,25 @@ function Profile() {
             )
         }
     }, [])
+
+    useEffect(() => {
+        const handleSearchOutsideClick = (event) => {
+            if (
+            searchOpen &&
+            searchRef.current &&
+            !searchRef.current.contains(event.target)
+            ) {
+            setSearchOpen(false)
+            setSearchQuery('')
+            }
+        }
+
+        document.addEventListener('mousedown', handleSearchOutsideClick)
+
+        return () => {
+            document.removeEventListener('mousedown', handleSearchOutsideClick)
+        }
+    }, [searchOpen])
 
     const getInitial = () => {
         if (!user?.name) return '?'
@@ -682,6 +741,7 @@ function Profile() {
                     <button
                         className="search-button"
                         aria-label="Search"
+                        onClick={() => setSearchOpen((prev) => !prev)}
                     >
                         <img
                             src="/Icons/search.svg"
@@ -834,6 +894,74 @@ function Profile() {
                 </div>
 
             </nav>
+
+            {searchOpen && (
+                <div className="search-overlay">
+                    <div className="search-box" ref={searchRef}>
+
+                    <div className="search-input-row">
+                        <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                        }
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' && searchResults.length > 0) {
+                            const submission = searchResults[0]
+
+                            setSelectedSubmission(submission)
+                            setSearchOpen(false)
+                            setSearchQuery('')
+                            }
+                        }}
+                        placeholder="Search Academic Arc..."
+                        autoFocus
+                        />
+
+                        <button
+                        type="button"
+                        onClick={() => {
+                            setSearchOpen(false)
+                            setSearchQuery('')
+                        }}
+                        aria-label="Close search"
+                        >
+                        ×
+                        </button>
+                    </div>
+
+                    {searchQuery.trim() && (
+                        <div className="search-results">
+                        {searchResults.length > 0 ? (
+                            searchResults.map((submission) => (
+                            <button
+                                key={submission.id}
+                                type="button"
+                                className="search-result-item"
+                                onClick={() => {
+                                setSelectedSubmission(submission)
+                                setSearchOpen(false)
+                                setSearchQuery('')
+                                }}
+                            >
+                                <strong>{submission.heading || 'Untitled'}</strong>
+                                <span>
+                                {submission.content_type} · {submission.student_name || 'Academic Arc'}
+                                </span>
+                            </button>
+                            ))
+                        ) : (
+                            <div className="search-no-results">
+                            No submissions found.
+                            </div>
+                        )}
+                        </div>
+                    )}
+
+                    </div>
+                </div>
+                )}
 
             <div className="profile-container">
 

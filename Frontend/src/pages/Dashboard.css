@@ -109,6 +109,102 @@
   filter: invert(1);
 }
 
+/* Search overlay */
+.dash-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(24, 24, 23, 0.18);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 110px;
+}
+
+.dash-search-box {
+  width: min(600px, calc(100% - 32px));
+  background: #f8f6f1;
+  border: 1px solid rgba(24, 24, 23, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.dash-search-input-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px 8px 18px;
+}
+
+.dash-search-input-row input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 17px;
+  color: #181817;
+  padding: 10px 0;
+}
+
+.dash-search-input-row input::placeholder {
+  color: #999;
+}
+
+.dash-search-input-row button {
+  border: none;
+  background: transparent;
+  font-size: 25px;
+  color: #777;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.dash-search-input-row button:hover {
+  color: #181817;
+}
+
+.dash-search-results {
+  border-top: 1px solid rgba(24, 24, 23, 0.1);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.dash-search-result-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 13px 18px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: inherit;
+}
+
+.dash-search-result-item:hover {
+  background: rgba(24, 24, 23, 0.06);
+}
+
+.dash-search-result-item strong {
+  font-size: 15px;
+  color: #181817;
+}
+
+.dash-search-result-item span {
+  font-size: 12px;
+  color: #888;
+}
+
+.dash-search-no-results {
+  padding: 18px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
 .dash-sign-in-button {
   display: inline-flex;
   align-items: center;
@@ -792,6 +888,15 @@
   .dash-search-button img {
       height: 30px;
       filter: invert(1);
+  }
+
+  .dash-search-overlay {
+    padding-top: 80px;
+  }
+
+  .dash-search-box {
+    width: calc(100% - 24px);
+    border-radius: 14px;
   }
 
   /* LANGUAGE BUTTON */
