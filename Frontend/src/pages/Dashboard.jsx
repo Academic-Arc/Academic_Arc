@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL } from "../config";
+import { useBackend } from '../BackendContext'
 import './Dashboard.css'
 import FacebookEmbed from './FacebookEmbed'
 
@@ -126,6 +127,8 @@ function FeaturedCard({ post }) {
 }
 
 function Dashboard() {
+  const { backendLoading } = useBackend()
+
   const [token, setToken] = useState(() =>
     localStorage.getItem('access_token')
   )
@@ -154,7 +157,7 @@ function Dashboard() {
   const profileMenuRef = useRef(null)
 
   useEffect(() => {
-    if (!token) return
+    if (!token || backendLoading) return
 
     fetch(`${API_URL}/auth/me`, {
       headers: {
@@ -188,16 +191,87 @@ function Dashboard() {
         setUser(null)
         setProfileMenuOpen(false)
       })
-  }, [token])
+  }, [token, backendLoading])
 
   useEffect(() => {
+    let retryTimeout = null
+    let healthInterval = null
+    let isChecking = false
+
+    const checkBackend = async () => {
+      if (isChecking) return
+
+      isChecking = true
+
+      try {
+        const response = await fetch(`${API_URL}/health`, {
+          method: 'GET',
+          cache: 'no-store',
+        })
+
+        if (!response.ok) {
+          throw new Error('Backend is not healthy.')
+        }
+
+        setBackendLoading(false)
+      } catch (error) {
+        console.error('Backend health check failed:', error)
+
+        setBackendLoading(true)
+
+        // Retry frequently while the backend is waking up.
+        retryTimeout = setTimeout(checkBackend, 3000)
+      } finally {
+        isChecking = false
+      }
+    }
+
+    // Check immediately when Dashboard loads.
+    checkBackend()
+
+    // Check periodically so the loader can return if the backend
+    // becomes unavailable/sleeps while the user is on the Dashboard.
+    healthInterval = setInterval(() => {
+      checkBackend()
+    }, 60000)
+
+    // Check again when the user returns to the tab.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkBackend()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(healthInterval)
+      clearTimeout(retryTimeout)
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    if (backendLoading) return
+
     fetch(`${API_URL}/featured/`)
-      .then((response) => response.json())
-      .then((data) => setFeaturedPosts(data))
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Could not load featured posts.')
+        }
+
+        return response.json()
+      })
+      .then((data) => {
+        setFeaturedPosts(data)
+      })
       .catch((error) => {
         console.error('Error fetching featured posts:', error)
       })
-  }, [])
+  }, [backendLoading])
 
   useEffect(() => {
     if (!searchOpen || allPublicSubmissions.length > 0) return
@@ -342,6 +416,34 @@ function Dashboard() {
 
   return (
     <div className="magazine">
+
+      {backendLoading && (
+        <div className="backend-loader">
+          <div className="backend-loader-content">
+
+            {/* FUTURE CUSTOM ANIMATION
+                Replace the spinner below with a custom animation/video
+                if you decide to add one later.
+
+                Example:
+
+                <video
+                  src="/loader-animation.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+            */}
+
+            <div className="backend-loader-spinner"></div>
+
+            <h2>Academic Arc</h2>
+            <p>Waking up the server...</p>
+          </div>
+        </div>
+      )}
+
       <nav className="dashboard-navbar">
         <Link to="/" className="dashboard-nav-logo">
           <img src="/Icons/Logo.svg" alt="Logo" />

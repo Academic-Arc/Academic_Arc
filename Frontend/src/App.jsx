@@ -1,5 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+
+import { API_URL } from './config'
+import { BackendContext } from './BackendContext'
 
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -21,6 +24,58 @@ function App() {
 
     const location = useLocation();
 
+    const [backendLoading, setBackendLoading] = useState(true)
+
+    useEffect(() => {
+      let retryTimeout = null
+      let isChecking = false
+
+      const checkBackend = async () => {
+        if (isChecking) return
+
+        isChecking = true
+
+        try {
+          const response = await fetch(`${API_URL}/health`, {
+            method: 'GET',
+            cache: 'no-store',
+          })
+
+          if (!response.ok) {
+            throw new Error('Backend is not healthy.')
+          }
+
+          setBackendLoading(false)
+        } catch (error) {
+          console.error('Backend health check failed:', error)
+
+          setBackendLoading(true)
+
+          retryTimeout = setTimeout(checkBackend, 3000)
+        } finally {
+          isChecking = false
+        }
+      }
+
+      checkBackend()
+
+      return () => {
+        clearTimeout(retryTimeout)
+      }
+    }, [location.pathname])
+
+    useEffect(() => {
+      if (backendLoading) {
+        document.body.classList.add('backend-loading')
+      } else {
+        document.body.classList.remove('backend-loading')
+      }
+
+      return () => {
+        document.body.classList.remove('backend-loading')
+      }
+    }, [backendLoading])
+
     useEffect(() => {
       window.scrollTo(0, 0);
     }, [location.pathname]);
@@ -33,7 +88,35 @@ function App() {
       location.pathname === "/about" ||
       location.pathname.startsWith("/category/");
   return (
-    <>
+    <BackendContext.Provider value={{ backendLoading }}>
+
+      {backendLoading && (
+        <div className="backend-loader">
+          <div className="backend-loader-content">
+
+            {/* FUTURE CUSTOM ANIMATION
+                Replace the spinner below with a custom animation/video
+                if you decide to add one later.
+
+                Example:
+
+                <video
+                  src="/loader-animation.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+            */}
+
+            <div className="backend-loader-spinner"></div>
+
+            <h2>Academic Arc</h2>
+            <p>Waking up the server...</p>
+          </div>
+        </div>
+      )}
+
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -54,7 +137,7 @@ function App() {
       </Routes>
 
       {showFooter && <Footer />}
-    </>
+    </BackendContext.Provider>
   )
 }
 

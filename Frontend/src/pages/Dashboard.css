@@ -12,6 +12,63 @@
     #181817;
 }
 
+/* ================================
+   BACKEND LOADER
+   ================================ */
+
+.backend-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #181817;
+}
+
+.backend-loader-content {
+  text-align: center;
+  color: #f5f2ed;
+}
+
+.backend-loader-content h2 {
+  margin: 18px 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.backend-loader-content p {
+  margin: 0;
+  color: #8e8b86;
+  font-size: 14px;
+}
+
+/* Indeterminate loader — intentionally no fake percentage */
+.backend-loader-spinner {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto;
+
+  border: 3px solid rgba(216, 138, 53, 0.2);
+  border-top-color: #d88a35;
+  border-radius: 50%;
+
+  animation: backend-loader-spin 0.8s linear infinite;
+}
+
+body.backend-loading {
+  overflow: hidden;
+}
+
+@keyframes backend-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* NAVBAR */
 
 .dashboard-navbar {

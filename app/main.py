@@ -69,3 +69,9 @@ def root():
     return {
         "message": "Academic Arc API is running"
     }
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok"
+    }
