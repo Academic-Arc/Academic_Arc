@@ -194,67 +194,6 @@ function Dashboard() {
   }, [token, backendLoading])
 
   useEffect(() => {
-    let retryTimeout = null
-    let healthInterval = null
-    let isChecking = false
-
-    const checkBackend = async () => {
-      if (isChecking) return
-
-      isChecking = true
-
-      try {
-        const response = await fetch(`${API_URL}/health`, {
-          method: 'GET',
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          throw new Error('Backend is not healthy.')
-        }
-
-        setBackendLoading(false)
-      } catch (error) {
-        console.error('Backend health check failed:', error)
-
-        setBackendLoading(true)
-
-        // Retry frequently while the backend is waking up.
-        retryTimeout = setTimeout(checkBackend, 3000)
-      } finally {
-        isChecking = false
-      }
-    }
-
-    // Check immediately when Dashboard loads.
-    checkBackend()
-
-    // Check periodically so the loader can return if the backend
-    // becomes unavailable/sleeps while the user is on the Dashboard.
-    healthInterval = setInterval(() => {
-      checkBackend()
-    }, 60000)
-
-    // Check again when the user returns to the tab.
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkBackend()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      clearInterval(healthInterval)
-      clearTimeout(retryTimeout)
-      document.removeEventListener(
-        'visibilitychange',
-        handleVisibilityChange
-      )
-    }
-  }, [])
-
-  useEffect(() => {
     if (backendLoading) return
 
     fetch(`${API_URL}/featured/`)
