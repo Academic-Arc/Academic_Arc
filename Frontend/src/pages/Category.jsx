@@ -18,6 +18,11 @@ function Category() {
   const [ownSubmissionIds, setOwnSubmissionIds] = useState(new Set())
   const [openMenu, setOpenMenu] = useState(null)
 
+  const [reportSubmission, setReportSubmission] = useState(null)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedSubmission, setSelectedSubmission] = useState(null)
 
@@ -458,6 +463,61 @@ function Category() {
     }
   }
 
+  const handleReport = async () => {
+    if (!reportSubmission || !reportReason) return
+
+    const token = localStorage.getItem('access_token')
+
+    if (!token) {
+      alert('Please log in to report a post.')
+      return
+    }
+
+    setReportSubmitting(true)
+
+    try {
+      const params = new URLSearchParams({
+        submission_id: String(reportSubmission.id),
+        reason: reportReason,
+      })
+
+      if (reportDetails.trim()) {
+        params.append('details', reportDetails.trim())
+      }
+
+      const response = await fetch(
+        `${API_URL}/reports/?${params.toString()}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail || 'Unable to submit report'
+        )
+      }
+
+      alert('Thank you. Your report has been submitted.')
+
+      setReportSubmission(null)
+      setReportReason('')
+      setReportDetails('')
+      setOpenMenu(null)
+
+    } catch (error) {
+      console.error('Error submitting report:', error)
+      alert(error.message)
+    } finally {
+      setReportSubmitting(false)
+    }
+  }
+
   const isVideoType = (submission) => {
     const type = submission.content_type?.toLowerCase()
 
@@ -856,9 +916,24 @@ function Category() {
 
                           ) : (
 
-                            <div className="menu-no-actions">
-                              No actions available
-                            </div>
+                            <button
+                              type="button"
+                              className="report-option"
+                              onClick={() => {
+                                if (!isLoggedIn) {
+                                  alert('Please log in to report a post.')
+                                  setOpenMenu(null)
+                                  return
+                                }
+
+                                setReportSubmission(submission)
+                                setReportReason('')
+                                setReportDetails('')
+                                setOpenMenu(null)
+                              }}
+                            >
+                              🚩 Report post
+                            </button>
 
                           )}
 
@@ -1060,6 +1135,154 @@ function Category() {
         )}
 
       </main>
+
+      {/* REPORT MODAL */}
+
+      {reportSubmission && (
+        <div
+          className="report-modal-overlay"
+          onClick={() => {
+            if (!reportSubmitting) {
+              setReportSubmission(null)
+              setReportReason('')
+              setReportDetails('')
+            }
+          }}
+        >
+
+          <div
+            className="report-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+
+            <div className="report-modal-header">
+
+              <div>
+                <h2>Report post</h2>
+                <p>
+                  Why are you reporting this post?
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="report-modal-close"
+                onClick={() => {
+                  if (!reportSubmitting) {
+                    setReportSubmission(null)
+                    setReportReason('')
+                    setReportDetails('')
+                  }
+                }}
+                disabled={reportSubmitting}
+                aria-label="Close report"
+              >
+                ×
+              </button>
+
+            </div>
+
+            <div className="report-reasons">
+
+              {[
+                'Inappropriate or offensive content',
+                'Harassment or bullying',
+                'Copyright infringement',
+                'Spam or misleading content',
+                'Sexual or inappropriate content involving minors',
+                'Violence or dangerous content',
+                'Other',
+              ].map((reason) => (
+
+                <label
+                  key={reason}
+                  className={`report-reason ${
+                    reportReason === reason
+                      ? 'selected'
+                      : ''
+                  }`}
+                >
+
+                  <input
+                    type="radio"
+                    name="report-reason"
+                    value={reason}
+                    checked={reportReason === reason}
+                    onChange={(event) =>
+                      setReportReason(event.target.value)
+                    }
+                    disabled={reportSubmitting}
+                  />
+
+                  <span>{reason}</span>
+
+                </label>
+
+              ))}
+
+            </div>
+
+            <div className="report-details">
+
+              <label htmlFor="report-details-input">
+                Additional details
+                <span> (optional)</span>
+              </label>
+
+              <textarea
+                id="report-details-input"
+                value={reportDetails}
+                onChange={(event) =>
+                  setReportDetails(event.target.value)
+                }
+                placeholder="Tell us anything else that may help us review this report..."
+                maxLength={1000}
+                disabled={reportSubmitting}
+              />
+
+              <small>
+                {reportDetails.length}/1000
+              </small>
+
+            </div>
+
+            <div className="report-modal-actions">
+
+              <button
+                type="button"
+                className="report-cancel-button"
+                onClick={() => {
+                  if (!reportSubmitting) {
+                    setReportSubmission(null)
+                    setReportReason('')
+                    setReportDetails('')
+                  }
+                }}
+                disabled={reportSubmitting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="report-submit-button"
+                onClick={handleReport}
+                disabled={
+                  !reportReason ||
+                  reportSubmitting
+                }
+              >
+                {reportSubmitting
+                  ? 'Submitting...'
+                  : 'Submit report'}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
       {/* FLOATING SUBMISSION VIEWER */}
 
