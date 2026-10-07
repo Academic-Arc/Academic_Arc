@@ -249,7 +249,10 @@ function AdminFeatured() {
                         Users
                     </button>
 
-                    <button className="admin-nav-item">
+                    <button
+                        className="admin-nav-item"
+                        onClick={() => navigate('/admin/reports')}
+                    >
                         <span>⚑</span>
                         Reports
                     </button>

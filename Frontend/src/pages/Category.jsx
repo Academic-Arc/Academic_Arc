@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { API_URL } from "../config";
 import './Category.css'
-import FacebookEmbed from './FacebookEmbed'
+import FacebookEmbed from './FacebookEmbed';
+import NotificationBell from '../components/NotificationBell';
 
 function Category() {
   const { type } = useParams()
@@ -614,6 +615,8 @@ function Category() {
               <Link to="/submit" className="submit-button">
                 Submit
               </Link>
+
+              <NotificationBell theme="light" />
 
               <div className="profile-dropdown" ref={profileMenuRef}>
 

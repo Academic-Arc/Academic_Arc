@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Navigate, Link, useNavigate } from 'react-router-dom'
+import { Navigate, Link, useNavigate, useLocation } from 'react-router-dom'
 import { API_URL } from "../config";
 import './Profile.css'
 import FacebookEmbed from './FacebookEmbed'
+import NotificationBell from '../components/NotificationBell'
 
 function Profile() {
     const token = localStorage.getItem('access_token')
     const navigate = useNavigate()
+    const location = useLocation()
 
     const [user, setUser] = useState(null)
     const [submissions, setSubmissions] = useState([])
@@ -105,6 +107,29 @@ function Profile() {
 
         fetchProfile()
     }, [token])
+
+    useEffect(() => {
+        const openSubmissionId = location.state?.openSubmissionId
+
+        if (!openSubmissionId || submissions.length === 0) {
+            return
+        }
+
+        const submission = submissions.find(
+            (item) => item.id === openSubmissionId
+        )
+
+        if (submission) {
+            setSelectedSubmission(submission)
+
+            // Clear the navigation state so refreshing
+            // doesn't reopen the same post.
+            navigate('/profile', {
+                replace: true,
+                state: {}
+            })
+        }
+    }, [location.state, submissions, navigate])
 
     useEffect(() => {
         if (!searchOpen || allPublicSubmissions.length > 0) return
@@ -759,6 +784,8 @@ function Profile() {
                     >
                         Submit
                     </Link>
+
+                    <NotificationBell theme="light" />
 
                     <div
                         className="profile-dropdown"

@@ -4,6 +4,7 @@ import { API_URL } from "../config";
 import { useBackend } from '../BackendContext'
 import './Dashboard.css'
 import FacebookEmbed from './FacebookEmbed'
+import NotificationBell from '../components/NotificationBell'
 
 const isYouTubeUrl = (url) => {
   return url?.includes('youtube.com') || url?.includes('youtu.be')
@@ -407,6 +408,8 @@ function Dashboard() {
               <Link to="/submit" className="submit-button">
                 Submit
               </Link>
+
+              <NotificationBell theme="dark" />
 
               <div className="dash-profile-dropdown" ref={profileMenuRef}>
 
