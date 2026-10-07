@@ -98,7 +98,9 @@ function AdminPosts() {
                 }
             )
 
-            const data = await response.json()
+            const data = response.status === 204
+                ? {}
+                : await response.json()
 
             if (!response.ok) {
                 alert(data.detail || 'Failed to delete post')
