@@ -2,9 +2,17 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from "../config";
 import './AdminPosts.css'
+import AdminSidebar from '../components/AdminSidebar'
 
 function AdminPosts() {
     const navigate = useNavigate()
+
+    const [admin, setAdmin] = useState(null)
+
+    const handleLogout = () => {
+        localStorage.removeItem('access_token')
+        navigate('/login')
+    }
 
     const [posts, setPosts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -113,97 +121,11 @@ function AdminPosts() {
         <div className="admin-layout">
 
             {/* SIDEBAR */}
-            <aside className="admin-sidebar">
-
-                <div className="admin-brand">
-                    <h2>Academic Arc</h2>
-                    <span>ADMIN PANEL</span>
-                </div>
-
-                <nav className="admin-nav">
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin')}
-                    >
-                        <span>▦</span>
-                        Dashboard
-                    </button>
-
-                    <div className="admin-nav-section">
-                        CONTENT
-                    </div>
-
-                    <button className="admin-nav-item active">
-                        <span>◫</span>
-                        Posts
-                    </button>
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin/categories')}
-                    >
-                        <span>◈</span>
-                        Categories
-                    </button>
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin/featured')}
-                    >
-                        <span>★</span>
-                        Featured
-                    </button>
-
-                    <div className="admin-nav-section">
-                        USERS
-                    </div>
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin/users')}
-                    >
-                        <span>♙</span>
-                        Users
-                    </button>
-
-                    <button className="admin-nav-item">
-                        <span>⚑</span>
-                        Reports
-                    </button>
-
-                    <button className="admin-nav-item">
-                        <span>♟</span>
-                        Admins
-                    </button>
-
-                    <div className="admin-nav-section">
-                        SYSTEM
-                    </div>
-
-                    <button className="admin-nav-item">
-                        <span>⚙</span>
-                        Settings
-                    </button>
-
-                </nav>
-
-                <div className="admin-sidebar-bottom">
-
-                    <button
-                        className="admin-logout"
-                        onClick={() => {
-                            localStorage.removeItem('access_token')
-                            navigate('/login')
-                        }}
-                    >
-                        ← Logout
-                    </button>
-
-                </div>
-
-            </aside>
-
+            <AdminSidebar
+                admin={admin}
+                activePage="posts"
+                onLogout={handleLogout}
+            />
 
             {/* MAIN */}
             <main className="admin-main">

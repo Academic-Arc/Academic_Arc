@@ -1,0 +1,305 @@
+/* =========================================================
+   NOTIFICATION BELL
+   ========================================================= */
+
+.notification-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+
+/* =========================================================
+   NOTIFICATION BUTTON
+   ========================================================= */
+
+.notification-button {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notification-button:hover {
+  background-color: rgba(128, 128, 128, 0.12);
+}
+
+.notification-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-icon img {
+  width: 24px;
+  height: 24px;
+}
+
+
+/* =========================================================
+   LIGHT THEME — BUTTON / ICON
+   ========================================================= */
+
+.notification-light .notification-icon img {
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(66%)
+    sepia(30%)
+    saturate(1633%)
+    hue-rotate(344deg)
+    brightness(90%)
+    contrast(90%);
+}
+
+
+/* =========================================================
+   DARK THEME — BUTTON / ICON
+   ========================================================= */
+
+.notification-dark .notification-icon img {
+  filter: invert(100%);
+}
+
+
+/* =========================================================
+   UNREAD BADGE
+   ========================================================= */
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+
+  border-radius: 999px;
+  background: #e53935;
+  color: #fff;
+
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* =========================================================
+   DROPDOWN — SHARED STRUCTURE
+   ========================================================= */
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 340px;
+  max-height: 430px;
+
+  border-radius: 12px;
+
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+
+  z-index: 1000;
+}
+
+
+/* =========================================================
+   LIGHT THEME — DROPDOWN
+   ========================================================= */
+
+.notification-light .notification-dropdown {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #111;
+}
+
+.notification-light .notification-header {
+  background: #fff;
+  color: #111;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.notification-light .notification-list {
+  background: #fff;
+}
+
+.notification-light .notification-item {
+  background: #fff;
+  color: #111;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.notification-light .notification-item:hover {
+  background: #f8f8f8;
+}
+
+.notification-light .notification-item.unread {
+  background: #f5f7ff;
+}
+
+.notification-light .notification-item-title {
+  color: #111;
+}
+
+.notification-light .notification-item-message {
+  color: #666;
+}
+
+
+/* =========================================================
+   DARK THEME — DROPDOWN
+   ========================================================= */
+
+.notification-dark .notification-dropdown {
+  background: rgba(35, 33, 31, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.notification-dark .notification-header {
+  background: rgba(35, 33, 31, 1);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.notification-dark .notification-list {
+  background: rgba(35, 33, 31, 1);
+}
+
+.notification-dark .notification-item {
+  background: rgba(35, 33, 31, 1);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.notification-dark .notification-item:hover {
+  background: rgba(45, 43, 41, 1);
+}
+
+.notification-dark .notification-item.unread {
+  background: rgba(45, 43, 41, 1);
+}
+
+.notification-dark .notification-item-title {
+  color: #fff;
+}
+
+.notification-dark .notification-item-message {
+  color: #b8b8b8;
+}
+
+
+/* =========================================================
+   DROPDOWN HEADER
+   ========================================================= */
+
+.notification-header {
+  padding: 16px 18px;
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   NOTIFICATION LIST
+   ========================================================= */
+
+.notification-list {
+  max-height: 365px;
+  overflow-y: auto;
+}
+
+
+/* =========================================================
+   NOTIFICATION ITEM
+   ========================================================= */
+
+.notification-item {
+  position: relative;
+
+  padding: 15px 18px;
+
+  cursor: default;
+
+  transition: background-color 0.2s ease;
+}
+
+.notification-item-title {
+  padding-right: 15px;
+  margin-bottom: 5px;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.notification-item-message {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   UNREAD INDICATOR
+   ========================================================= */
+
+.notification-unread-dot {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+  background: #3f51b5;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.notification-empty {
+  padding: 35px 20px;
+
+  text-align: center;
+
+  color: #777;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .notification-dropdown {
+    position: fixed;
+
+    top: 70px;
+    left: 15px;
+    right: 15px;
+
+    width: auto;
+    max-width: none;
+  }
+}

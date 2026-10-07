@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { API_URL } from "../config";
 import './AdminDashboard.css'
 import './AdminUserView.css'
+import AdminSidebar from '../components/AdminSidebar'
 
 function AdminUserView() {
     const navigate = useNavigate()
@@ -92,110 +93,11 @@ function AdminUserView() {
 
             {/* SIDEBAR */}
 
-            <aside className="admin-sidebar">
-
-                <div className="admin-brand">
-                    <h2>Academic Arc</h2>
-                    <span>ADMIN PANEL</span>
-                </div>
-
-                <nav className="admin-nav">
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin')}
-                    >
-                        <span>▦</span>
-                        Dashboard
-                    </button>
-
-                    <div className="admin-nav-section">
-                        CONTENT
-                    </div>
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin/posts')}
-                    >
-                        <span>◫</span>
-                        Posts
-                    </button>
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin/categories')}
-                    >
-                        <span>◈</span>
-                        Categories
-                    </button>
-
-                    <button
-                        className="admin-nav-item"
-                        onClick={() => navigate('/admin/featured')}
-                    >
-                        <span>★</span>
-                        Featured
-                    </button>
-
-                    <div className="admin-nav-section">
-                        USERS
-                    </div>
-
-                    <button
-                        className="admin-nav-item active"
-                        onClick={() => navigate('/admin/users')}
-                    >
-                        <span>♙</span>
-                        Users
-                    </button>
-
-                    <button className="admin-nav-item">
-                        <span>⚑</span>
-                        Reports
-                    </button>
-
-                    <button className="admin-nav-item">
-                        <span>♟</span>
-                        Admins
-                    </button>
-
-                    <div className="admin-nav-section">
-                        SYSTEM
-                    </div>
-
-                    <button className="admin-nav-item">
-                        <span>⚙</span>
-                        Settings
-                    </button>
-
-                </nav>
-
-                <div className="admin-sidebar-bottom">
-
-                    <div className="admin-user">
-
-                        <div className="admin-avatar">
-                            {admin?.name?.charAt(0)?.toUpperCase()}
-                        </div>
-
-                        <div className="admin-user-info">
-                            <strong>{admin?.name}</strong>
-                            <span>Administrator</span>
-                        </div>
-
-                    </div>
-
-                    <button
-                        className="admin-logout"
-                        onClick={handleLogout}
-                    >
-                        ← Logout
-                    </button>
-
-                </div>
-
-            </aside>
-
+            <AdminSidebar
+                admin={admin}
+                activePage="users"
+                onLogout={handleLogout}
+            />
 
             {/* MAIN CONTENT */}
 

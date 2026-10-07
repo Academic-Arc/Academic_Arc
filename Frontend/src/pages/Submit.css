@@ -27,55 +27,6 @@
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
-
-/* =========================
-   NAV BAR
-   ========================= */
-
-
-.navbar {
-    margin: 0 clamp(24px, 6vw, 250px) 30px;
-    padding: 25px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(216, 138, 53, .6);
-}
-
-.nav-logo {
-    color: #d88a35;
-    font-size: 22px;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.nav-links {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-}
-
-.nav-links a {
-    color: #d88a35;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.nav-links a:hover {
-    color: #dc7615;
-    text-decoration: underline;
-    font-weight: bold;
-}
-
-.nav-links button {
-    background: transparent;
-    border: none;
-    color: #d88a35;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-
 /* =========================
    HEADING
    ========================= */
@@ -600,6 +551,10 @@
 }
 
 @media (max-width: 480px) {
+
+    .submit-page .navbar {
+        margin-top: -15px;
+    }
 
     .content-types {
         grid-template-columns: 1fr;

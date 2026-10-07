@@ -17,6 +17,7 @@ import AdminCategories from './pages/AdminCategories'
 import AdminFeatured from './pages/AdminFeatured'
 import AdminUsers from './pages/AdminUsers'
 import AdminUserView from './pages/AdminUserView'
+import AdminReports from './pages/AdminReports'
 import Footer from './components/Footer'
 import About from './pages/About'
 
@@ -134,6 +135,7 @@ function App() {
         <Route path="/admin/featured" element={<AdminFeatured />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/users/:user_id" element={<AdminUserView />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
       </Routes>
 
       {showFooter && <Footer />}
