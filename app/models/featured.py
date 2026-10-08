@@ -16,7 +16,10 @@ class SpecialFeature(Base):
 
     submission_id = Column(
         Integer,
-        ForeignKey("submissions.id"),
+        ForeignKey(
+            "submissions.id",
+            ondelete="CASCADE"
+        ),
         nullable=False,
         unique=True
     )
