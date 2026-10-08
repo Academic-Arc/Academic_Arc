@@ -111,6 +111,16 @@ function AdminSidebar({ admin, activePage, onLogout }) {
                         <strong>Reports</strong>
                     </button>
 
+                    <button
+                        className={`admin-nav-item ${
+                            activePage === 'feedback' ? 'active' : ''
+                        }`}
+                        onClick={() => handleNavigation('/admin/feedback')}
+                    >
+                        <span>✉</span>
+                        <strong>Feedback</strong>
+                    </button>
+
                     <button className="admin-nav-item">
                         <span>♟</span>
                         <strong>Admins</strong>

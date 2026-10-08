@@ -1,0 +1,179 @@
+/* FEEDBACK LIST */
+
+.admin-feedback-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.admin-feedback-card {
+    background: #ffffff;
+    border: 1px solid #e5e5e2;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.admin-feedback-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eeeeeb;
+}
+
+.admin-feedback-top h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+
+/* STATUS */
+
+.feedback-status {
+    flex-shrink: 0;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.feedback-status-new {
+    background: #f1f1ee;
+    color: #555555;
+}
+
+.feedback-status-read {
+    background: #e9e9e6;
+    color: #666666;
+}
+
+.feedback-status-resolved {
+    background: #dededb;
+    color: #444444;
+}
+
+
+/* INFORMATION */
+
+.admin-feedback-info {
+    padding: 17px 0 4px;
+}
+
+.admin-feedback-info > p {
+    margin: 0 0 9px;
+
+    color: #666666;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.admin-feedback-info strong {
+    color: #333333;
+    font-weight: 600;
+}
+
+.admin-feedback-message {
+    margin-top: 16px;
+    padding: 14px;
+
+    border: 1px solid #eeeeeb;
+    border-radius: 7px;
+
+    background: #fafaf8;
+}
+
+.admin-feedback-message > strong {
+    display: block;
+    margin-bottom: 7px;
+
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888888;
+}
+
+.admin-feedback-message p {
+    margin: 0;
+
+    color: #444444;
+    font-size: 12px;
+    line-height: 1.7;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+
+/* ACTIONS */
+
+.admin-feedback-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin-top: 17px;
+}
+
+.admin-feedback-actions button {
+    border: 1px solid #ddddda;
+    background: #ffffff;
+    color: #444444;
+
+    border-radius: 6px;
+
+    padding: 7px 11px;
+
+    font-family: inherit;
+    font-size: 10px;
+
+    cursor: pointer;
+}
+
+.admin-feedback-actions button:hover {
+    background: #f5f5f3;
+}
+
+.admin-feedback-actions .admin-danger-button {
+    border-color: #e2d5d5;
+    color: #8a5555;
+}
+
+.admin-feedback-actions .admin-danger-button:hover {
+    background: #faf3f3;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 600px) {
+
+    .admin-feedback-card {
+        padding: 16px;
+    }
+
+    .admin-feedback-top {
+        gap: 12px;
+    }
+
+    .admin-feedback-top h2 {
+        font-size: 14px;
+    }
+
+    .feedback-status {
+        padding: 4px 7px;
+        font-size: 8px;
+    }
+
+    .admin-feedback-actions button {
+        flex: 1;
+        min-width: 100px;
+    }
+
+}

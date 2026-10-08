@@ -67,6 +67,23 @@ function Submit() {
         fetchUser()
     }, [token])
 
+    useEffect(() => {
+        const handleProfileClickOutside = (event) => {
+            if (
+                profileMenuRef.current &&
+                !profileMenuRef.current.contains(event.target)
+            ) {
+                setProfileMenuOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleProfileClickOutside)
+
+        return () => {
+            document.removeEventListener('mousedown', handleProfileClickOutside)
+        }
+    }, [])
+
     /*
      * Load existing submission when editing
      */
@@ -477,23 +494,6 @@ function Submit() {
             .charAt(0)
             .toUpperCase()
     }
-
-    useEffect(() => {
-        const handleProfileClickOutside = (event) => {
-            if (
-                profileMenuRef.current &&
-                !profileMenuRef.current.contains(event.target)
-            ) {
-                setProfileMenuOpen(false)
-            }
-        }
-
-        document.addEventListener('mousedown', handleProfileClickOutside)
-
-        return () => {
-            document.removeEventListener('mousedown', handleProfileClickOutside)
-        }
-    }, [])
 
     return (
         <div className="submit-page">
