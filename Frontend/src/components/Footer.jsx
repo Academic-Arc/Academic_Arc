@@ -8,10 +8,26 @@ const Footer = () => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!feedback.trim() || submitting) return;
+
+    const token = localStorage.getItem("access_token");
+
+    // Guests get the option to provide an email.
+    if (!token) {
+      setShowEmailModal(true);
+      return;
+    }
+
+    await submitFeedback(token);
+  };
+
+  const submitFeedback = async (token = null, email = null) => {
     if (!feedback.trim() || submitting) return;
 
     setSubmitting(true);
@@ -19,13 +35,20 @@ const Footer = () => {
     setFeedbackError("");
 
     try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/feedback`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           feedback: feedback.trim(),
+          ...(email ? { email: email.trim() } : {}),
         }),
       });
 
@@ -37,6 +60,8 @@ const Footer = () => {
 
       setSubmitted(true);
       setFeedback("");
+      setGuestEmail("");
+      setShowEmailModal(false);
 
       setTimeout(() => {
         setSubmitted(false);
@@ -47,10 +72,19 @@ const Footer = () => {
       setFeedbackError(
         error.message || "Unable to submit feedback. Please try again."
       );
-
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleGuestFeedbackSubmit = async (e) => {
+    e.preventDefault();
+
+    await submitFeedback(null, guestEmail || null);
+  };
+
+  const handleSkipGuestEmail = async () => {
+    await submitFeedback(null, null);
   };
 
   return (
@@ -243,6 +277,67 @@ const Footer = () => {
           <span>Sitemap</span>
         </div>
       </div>
+
+      {showEmailModal && (
+        <div
+          className="feedback-modal-overlay"
+          onClick={() => {
+            if (!submitting) {
+              setShowEmailModal(false);
+            }
+          }}
+        >
+          <div
+            className="feedback-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="feedback-modal-close"
+              onClick={() => setShowEmailModal(false)}
+              disabled={submitting}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <h3>Would you like a reply?</h3>
+
+            <p>
+              You can optionally provide your email address. We'll use it only
+              to respond to your feedback.
+            </p>
+
+            <form onSubmit={handleGuestFeedbackSubmit}>
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                placeholder="Your email address (optional)"
+                maxLength={255}
+              />
+
+              <button
+                type="submit"
+                className="feedback-modal-submit"
+                disabled={submitting}
+              >
+                {submitting ? "Submitting..." : "Submit Feedback"}
+              </button>
+
+              <button
+                type="button"
+                className="feedback-modal-anonymous"
+                onClick={handleSkipGuestEmail}
+                disabled={submitting}
+              >
+                Continue Anonymously
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
     </footer>
   );
 };

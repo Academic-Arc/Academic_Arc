@@ -211,6 +211,149 @@
   color: #9fcf8a;
 }
 
+/* Feedback Modal */
+
+.feedback-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.feedback-modal {
+  position: relative;
+
+  width: min(420px, 100%);
+  padding: 28px;
+
+  border: 1px solid #34312e;
+  border-radius: 16px;
+
+  background: #171514;
+  color: #e8e5df;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.feedback-modal h3 {
+  margin: 0 35px 8px 0;
+
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.feedback-modal p {
+  margin: 0 0 18px;
+
+  font-size: 12px;
+  line-height: 1.6;
+  color: #bcb9b4;
+}
+
+.feedback-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+
+  width: 30px;
+  height: 30px;
+
+  border: none;
+  background: transparent;
+
+  color: #aaa5a0;
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.feedback-modal-close:hover {
+  color: #ffffff;
+}
+
+.feedback-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedback-modal input {
+  width: 100%;
+  height: 44px;
+
+  box-sizing: border-box;
+  padding: 0 12px;
+
+  border: 1px solid #44403c;
+  border-radius: 9px;
+  outline: none;
+
+  background: #11100f;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.feedback-modal input:focus {
+  border-color: #d9d7d3;
+}
+
+.feedback-modal input::placeholder {
+  color: #77736e;
+}
+
+.feedback-modal-submit,
+.feedback-modal-anonymous {
+  width: 100%;
+  height: 42px;
+
+  border-radius: 9px;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.feedback-modal-submit {
+  border: 1px solid #d9d7d3;
+  background: #d9d7d3;
+  color: #11100f;
+}
+
+.feedback-modal-submit:hover {
+  opacity: 0.9;
+}
+
+.feedback-modal-anonymous {
+  border: 1px solid #44403c;
+  background: transparent;
+  color: #bcb9b4;
+}
+
+.feedback-modal-anonymous:hover {
+  border-color: #77736e;
+  color: #ffffff;
+}
+
+.feedback-modal-submit:disabled,
+.feedback-modal-anonymous:disabled,
+.feedback-modal-close:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* Social Media */
 
 .footer-social {
