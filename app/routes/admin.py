@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.models.user import User
 from app.models.report import Report
 from app.models.student import Student
+from app.models.feedback import Feedback
 from app.models.submission import Submission
 from app.models.featured import SpecialFeature
 from app.models.notification import Notification
@@ -559,4 +560,98 @@ def request_report_changes(
         "message": "Change request sent successfully",
         "report_id": report.id,
         "status": report.status
+    }
+
+@router.get("/feedback")
+def get_admin_feedback(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    feedback_entries = (
+        db.query(Feedback)
+        .order_by(Feedback.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": feedback.id,
+            "user_id": feedback.user_id,
+            "name": feedback.name,
+            "email": feedback.email,
+            "message": feedback.message,
+            "is_anonymous": feedback.is_anonymous,
+            "status": feedback.status,
+            "created_at": feedback.created_at
+        }
+        for feedback in feedback_entries
+    ]
+
+@router.patch("/feedback/{feedback_id}")
+def update_feedback_status(
+    feedback_id: int,
+    status: str,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    allowed_statuses = {
+        "new",
+        "read",
+        "resolved"
+    }
+
+    if status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid feedback status"
+        )
+
+    feedback = (
+        db.query(Feedback)
+        .filter(Feedback.id == feedback_id)
+        .first()
+    )
+
+    if not feedback:
+        raise HTTPException(
+            status_code=404,
+            detail="Feedback not found"
+        )
+
+    feedback.status = status
+
+    db.commit()
+    db.refresh(feedback)
+
+    return {
+        "message": "Feedback status updated successfully",
+        "feedback_id": feedback.id,
+        "status": feedback.status
+    }
+
+
+@router.delete("/feedback/{feedback_id}")
+def delete_feedback(
+    feedback_id: int,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    feedback = (
+        db.query(Feedback)
+        .filter(Feedback.id == feedback_id)
+        .first()
+    )
+
+    if not feedback:
+        raise HTTPException(
+            status_code=404,
+            detail="Feedback not found"
+        )
+
+    db.delete(feedback)
+    db.commit()
+
+    return {
+        "message": "Feedback deleted successfully",
+        "feedback_id": feedback_id
     }
