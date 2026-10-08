@@ -90,10 +90,14 @@
 
 /* Contact */
 
+.footer-contact h3{
+  margin-left: 10px;
+}
+
 .contact-item {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: 3px;
 
   margin-bottom: 9px;
 
@@ -114,8 +118,12 @@
 
   font-size: 8px;
   color: #777;
+}
 
-  background: #f5f3ef;
+.contact-icon img{
+  width: 15px;
+  height: 15px;
+  filter: invert(100%);
 }
 
 /* Feedback */

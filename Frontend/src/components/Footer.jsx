@@ -1,23 +1,56 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 import "./Footer.css";
 
 const Footer = () => {
   const [feedback, setFeedback] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!feedback.trim()) return;
+    if (!feedback.trim() || submitting) return;
 
-    // Backend/API submission will be added later
-    setSubmitted(true);
-    setFeedback("");
+    setSubmitting(true);
+    setSubmitted(false);
+    setFeedbackError("");
 
-    setTimeout(() => {
-      setSubmitted(false);
-    }, 3000);
+    try {
+      const response = await fetch(`${API_URL}/feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          feedback: feedback.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Unable to submit feedback.");
+      }
+
+      setSubmitted(true);
+      setFeedback("");
+
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error("Feedback submission failed:", error);
+      setFeedbackError(
+        error.message || "Unable to submit feedback. Please try again."
+      );
+
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -62,17 +95,32 @@ const Footer = () => {
           <h3>Contact Us</h3>
 
           <div className="contact-item">
-            <span className="contact-icon">Icon</span>
+            <span className="contact-icon">
+              <img src="/Icons/map-pin.svg" alt="Map Pin"/>
+            </span>
             <span>
-            Department of School Education,
-            <br />
-            Bikash Bhavan, Kolkata
+              Rampur, Gaighata
+              <br />
+              24 PGS(N) - 743249
             </span>
           </div>
 
           <div className="contact-item">
-            <span className="contact-icon">Icon</span>
-            <span>email@example.com</span>
+            <span className="contact-icon">
+              <img src="/Icons/map-pin.svg" alt="Map Pin"/>
+            </span>
+            <span>
+                Action Area 1B, Newtown
+                <br />
+                Kolkata - 700156
+            </span>
+          </div>
+
+          <div className="contact-item">
+            <span className="contact-icon">
+              <img src="/Icons/email.svg" alt="Email"/>
+            </span>
+            <span>contact@academicarc.in</span>
           </div>
         </div>
 
@@ -91,10 +139,10 @@ const Footer = () => {
             />
 
             <button
-                type="submit"
-                className="feedback-submit"
-                disabled={!feedback.trim()}
-                aria-label="Submit feedback"
+              type="submit"
+              className="feedback-submit"
+              disabled={!feedback.trim() || submitting}
+              aria-label="Submit feedback"
             >
                 <svg
                 viewBox="0 0 24 24"
@@ -119,9 +167,15 @@ const Footer = () => {
             </div>
 
             {submitted && (
-            <span className="feedback-success">
+              <span className="feedback-success">
                 Feedback submitted!
-            </span>
+              </span>
+            )}
+
+            {feedbackError && (
+              <span className="feedback-error">
+                {feedbackError}
+              </span>
             )}
         </form>
         </div>
