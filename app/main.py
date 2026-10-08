@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.like import PostLike
 from app.models.report import Report
 from app.models.student import Student
+from app.models.feedback import Feedback
 from app.models.submission import Submission
 from app.models.featured import SpecialFeature
 from app.models.notification import Notification
@@ -21,6 +22,7 @@ from app.routes.admin import router as admin_router
 from app.routes.report import router as report_router
 from app.routes.student import router as student_router
 from app.routes.featured import router as featured_router
+from app.routes.feedback import router as feedback_router
 from app.routes.submission import router as submission_router
 from app.routes.notification import router as notification_router
 
@@ -67,6 +69,7 @@ app.include_router(admin_router)
 app.include_router(report_router)
 app.include_router(student_router)
 app.include_router(featured_router)
+app.include_router(feedback_router)
 app.include_router(submission_router)
 app.include_router(notification_router)
 

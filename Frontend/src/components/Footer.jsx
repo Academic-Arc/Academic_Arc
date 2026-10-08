@@ -1,23 +1,90 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 import "./Footer.css";
 
 const Footer = () => {
   const [feedback, setFeedback] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [guestEmail, setGuestEmail] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!feedback.trim()) return;
+    if (!feedback.trim() || submitting) return;
 
-    // Backend/API submission will be added later
-    setSubmitted(true);
-    setFeedback("");
+    const token = localStorage.getItem("access_token");
 
-    setTimeout(() => {
-      setSubmitted(false);
-    }, 3000);
+    // Guests get the option to provide an email.
+    if (!token) {
+      setShowEmailModal(true);
+      return;
+    }
+
+    await submitFeedback(token);
+  };
+
+  const submitFeedback = async (token = null, email = null) => {
+    if (!feedback.trim() || submitting) return;
+
+    setSubmitting(true);
+    setSubmitted(false);
+    setFeedbackError("");
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_URL}/feedback`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          feedback: feedback.trim(),
+          ...(email ? { email: email.trim() } : {}),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Unable to submit feedback.");
+      }
+
+      setSubmitted(true);
+      setFeedback("");
+      setGuestEmail("");
+      setShowEmailModal(false);
+
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error("Feedback submission failed:", error);
+      setFeedbackError(
+        error.message || "Unable to submit feedback. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGuestFeedbackSubmit = async (e) => {
+    e.preventDefault();
+
+    await submitFeedback(null, guestEmail || null);
+  };
+
+  const handleSkipGuestEmail = async () => {
+    await submitFeedback(null, null);
   };
 
   return (
@@ -62,17 +129,32 @@ const Footer = () => {
           <h3>Contact Us</h3>
 
           <div className="contact-item">
-            <span className="contact-icon">Icon</span>
+            <span className="contact-icon">
+              <img src="/Icons/map-pin.svg" alt="Map Pin"/>
+            </span>
             <span>
-            Department of School Education,
-            <br />
-            Bikash Bhavan, Kolkata
+              Rampur, Gaighata
+              <br />
+              24 PGS(N) - 743249
             </span>
           </div>
 
           <div className="contact-item">
-            <span className="contact-icon">Icon</span>
-            <span>email@example.com</span>
+            <span className="contact-icon">
+              <img src="/Icons/map-pin.svg" alt="Map Pin"/>
+            </span>
+            <span>
+                Action Area 1B, Newtown
+                <br />
+                Kolkata - 700156
+            </span>
+          </div>
+
+          <div className="contact-item">
+            <span className="contact-icon">
+              <img src="/Icons/email.svg" alt="Email"/>
+            </span>
+            <span>contact@academicarc.in</span>
           </div>
         </div>
 
@@ -91,10 +173,10 @@ const Footer = () => {
             />
 
             <button
-                type="submit"
-                className="feedback-submit"
-                disabled={!feedback.trim()}
-                aria-label="Submit feedback"
+              type="submit"
+              className="feedback-submit"
+              disabled={!feedback.trim() || submitting}
+              aria-label="Submit feedback"
             >
                 <svg
                 viewBox="0 0 24 24"
@@ -119,9 +201,15 @@ const Footer = () => {
             </div>
 
             {submitted && (
-            <span className="feedback-success">
+              <span className="feedback-success">
                 Feedback submitted!
-            </span>
+              </span>
+            )}
+
+            {feedbackError && (
+              <span className="feedback-error">
+                {feedbackError}
+              </span>
             )}
         </form>
         </div>
@@ -189,6 +277,67 @@ const Footer = () => {
           <span>Sitemap</span>
         </div>
       </div>
+
+      {showEmailModal && (
+        <div
+          className="feedback-modal-overlay"
+          onClick={() => {
+            if (!submitting) {
+              setShowEmailModal(false);
+            }
+          }}
+        >
+          <div
+            className="feedback-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="feedback-modal-close"
+              onClick={() => setShowEmailModal(false)}
+              disabled={submitting}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <h3>Would you like a reply?</h3>
+
+            <p>
+              You can optionally provide your email address. We'll use it only
+              to respond to your feedback.
+            </p>
+
+            <form onSubmit={handleGuestFeedbackSubmit}>
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                placeholder="Your email address (optional)"
+                maxLength={255}
+              />
+
+              <button
+                type="submit"
+                className="feedback-modal-submit"
+                disabled={submitting}
+              >
+                {submitting ? "Submitting..." : "Submit Feedback"}
+              </button>
+
+              <button
+                type="button"
+                className="feedback-modal-anonymous"
+                onClick={handleSkipGuestEmail}
+                disabled={submitting}
+              >
+                Continue Anonymously
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
     </footer>
   );
 };
