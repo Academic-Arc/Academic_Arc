@@ -987,9 +987,31 @@ body.backend-loading {
   }
 
   .dash-profile-avatar {
-      width: 30px;
-      height: 25px;
-      font-size: 9px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    border-radius: 50%;
+
+    font-size: 9px;
+}
+
+  .dash-profile-avatar img {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+      max-width: none;
+
+      object-fit: cover;
+      border-radius: 50%;
   }
 
   .dash-profile-user-name {

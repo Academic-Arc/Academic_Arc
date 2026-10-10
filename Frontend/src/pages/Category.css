@@ -1284,8 +1284,31 @@
   }
 
   .profile-avatar {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    border-radius: 50%;
+
+    font-size: 9px;
+}
+
+  .profile-avatar img {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+      max-width: none;
+
+      object-fit: cover;
+      border-radius: 50%;
   }
 
   .profile-user-name {
