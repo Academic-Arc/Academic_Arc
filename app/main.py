@@ -6,8 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
-from app.database import Base, engine
+from app.database import Base, engine, settings
+
 from app.models.user import User
 from app.models.like import PostLike
 from app.models.report import Report
@@ -16,6 +18,7 @@ from app.models.feedback import Feedback
 from app.models.submission import Submission
 from app.models.featured import SpecialFeature
 from app.models.notification import Notification
+from app.models.oauth_account import OAuthAccount
 
 from app.routes.auth import router as auth_router
 from app.routes.admin import router as admin_router
@@ -46,6 +49,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    same_site="lax",
+    https_only=settings.APP_ENV == "production"
+)
 
 app.state.limiter = limiter
 app.add_exception_handler(

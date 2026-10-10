@@ -6,6 +6,7 @@ import { BackendContext } from './BackendContext'
 
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import OAuthCallback from "./pages/OAuthCallback";
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import Submit from './pages/Submit'
@@ -124,6 +125,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/submit" element={<Submit />} />
         <Route path="/category/:type" element={<Category />} />

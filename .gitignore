@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 node_modules/
 .env.production
+client_secret_893032373900-jl0ur3dmhtklcmt1m3qr93r82b5f8opa.apps.googleusercontent.com.json

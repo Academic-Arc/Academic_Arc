@@ -47,6 +47,17 @@ function Profile() {
     const [searchResults, setSearchResults] = useState([])
     const [allPublicSubmissions, setAllPublicSubmissions] = useState([])
 
+    const isOAuthSetup =
+        new URLSearchParams(location.search).get('oauth_setup') === 'true'
+
+    const [oauthIsStudent, setOauthIsStudent] = useState(false)
+    const [oauthDob, setOauthDob] = useState('')
+    const [oauthSchool, setOauthSchool] = useState('')
+    const [oauthStudentClass, setOauthStudentClass] = useState('')
+    const [oauthPassword, setOauthPassword] = useState('')
+    const [oauthConfirmPassword, setOauthConfirmPassword] = useState('')
+    const [oauthSubmitting, setOauthSubmitting] = useState(false)
+
     if (!token) {
         return <Navigate to="/login" replace />
     }
@@ -729,6 +740,82 @@ function Profile() {
         }
     }
 
+    const handleOAuthSetup = async () => {
+        if (!oauthDob) {
+            alert('Please enter your date of birth.')
+            return
+        }
+
+        if (!oauthPassword || !oauthConfirmPassword) {
+            alert('Please enter and confirm your password.')
+            return
+        }
+
+        if (oauthPassword.length < 8) {
+            alert('Password must be at least 8 characters long.')
+            return
+        }
+
+        if (oauthPassword !== oauthConfirmPassword) {
+            alert('Passwords do not match.')
+            return
+        }
+
+        if (
+            oauthIsStudent &&
+            (!oauthSchool.trim() || !oauthStudentClass.trim())
+        ) {
+            alert('Please enter your school and class.')
+            return
+        }
+
+        setOauthSubmitting(true)
+
+        try {
+            const response = await fetch(
+                `${API_URL}/auth/oauth/setup`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        is_student: oauthIsStudent,
+                        dob: oauthDob,
+                        password: oauthPassword,
+                        school: oauthIsStudent
+                            ? oauthSchool.trim()
+                            : null,
+                        student_class: oauthIsStudent
+                            ? oauthStudentClass.trim()
+                            : null,
+                    }),
+                }
+            )
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(
+                    data.detail ||
+                    'Could not complete account setup.'
+                )
+            }
+
+            localStorage.setItem(
+                'access_token',
+                data.access_token
+            )
+
+            navigate('/dashboard', { replace: true })
+        } catch (err) {
+            alert(err.message)
+        } finally {
+            setOauthSubmitting(false)
+        }
+    }
+
     if (error) {
         return (
             <div className="profile-page">
@@ -751,6 +838,172 @@ function Profile() {
 
     return (
         <div className="profile-page">
+
+            {isOAuthSetup && (
+                <div className="profile-modal-overlay">
+                    <div
+                        className="profile-modal"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="modal-header">
+                            <h2>
+                                Complete Your Profile
+                            </h2>
+                        </div>
+
+                        <div className="modal-content">
+
+                            <p className="profile-edit-note">
+                                Your Google account has been connected.
+                                Please complete these details to finish
+                                setting up your Academic Arc account.
+                            </p>
+
+                            <div className="form-group">
+                                <label>
+                                    Are you a student?
+                                </label>
+
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '10px',
+                                        marginTop: '8px'
+                                    }}
+                                >
+                                    <button
+                                        type="button"
+                                        className={
+                                            oauthIsStudent
+                                                ? 'save-button'
+                                                : 'cancel-button'
+                                        }
+                                        onClick={() =>
+                                            setOauthIsStudent(true)
+                                        }
+                                    >
+                                        Yes
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className={
+                                            !oauthIsStudent
+                                                ? 'save-button'
+                                                : 'cancel-button'
+                                        }
+                                        onClick={() =>
+                                            setOauthIsStudent(false)
+                                        }
+                                    >
+                                        No
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    Date of Birth
+                                </label>
+
+                                <input
+                                    type="date"
+                                    value={oauthDob}
+                                    onChange={(event) =>
+                                        setOauthDob(event.target.value)
+                                    }
+                                />
+                            </div>
+
+                            {oauthIsStudent && (
+                                <>
+                                    <div className="form-group">
+                                        <label>
+                                            School
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            value={oauthSchool}
+                                            onChange={(event) =>
+                                                setOauthSchool(
+                                                    event.target.value
+                                                )
+                                            }
+                                            placeholder="Enter your school"
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>
+                                            Class
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            value={oauthStudentClass}
+                                            onChange={(event) =>
+                                                setOauthStudentClass(
+                                                    event.target.value
+                                                )
+                                            }
+                                            placeholder="Enter your class"
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            <div className="form-group">
+                                <label>
+                                    Create Academic Arc Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    value={oauthPassword}
+                                    onChange={(event) =>
+                                        setOauthPassword(
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="At least 8 characters"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>
+                                    Confirm Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    value={oauthConfirmPassword}
+                                    onChange={(event) =>
+                                        setOauthConfirmPassword(
+                                            event.target.value
+                                        )
+                                    }
+                                    placeholder="Re-enter your password"
+                                />
+                            </div>
+
+                            <div className="modal-actions">
+                                <button
+                                    type="button"
+                                    className="save-button"
+                                    onClick={handleOAuthSetup}
+                                    disabled={oauthSubmitting}
+                                >
+                                    {oauthSubmitting
+                                        ? 'Completing Setup...'
+                                        : 'Complete Setup'}
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <nav className="navbar">
 

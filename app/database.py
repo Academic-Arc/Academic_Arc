@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     EMAIL_ADDRESS: str
     EMAIL_PASSWORD: str
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    FRONTEND_URL: str = "http://localhost:5173"
+    APP_ENV: str = "development"
+    AUTHLIB_INSECURE_TRANSPORT: str | None = None
 
     class Config:
         env_file = ".env"

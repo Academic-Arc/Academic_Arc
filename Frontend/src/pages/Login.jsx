@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL } from "../config";
 import './Login.css'
 
 function Login() {
     const navigate = useNavigate()
+    const location = useLocation()
+    const oauthError =
+        new URLSearchParams(location.search).get('oauth_error')
     const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -147,6 +150,10 @@ function Login() {
         }
     }
 
+    const handleGoogleLogin = () => {
+        window.location.href = `${API_URL}/auth/google`
+    }
+
     const handleLogin = async (e) => {
         e.preventDefault()
 
@@ -237,6 +244,25 @@ function Login() {
                     <p className="login-subtitle">
                         Log in to your account
                     </p>
+
+                    {oauthError === 'account_exists' && (
+                        <div
+                            style={{
+                                background: '#fff3e6',
+                                border: '1px solid #f0c79b',
+                                color: '#8a4b08',
+                                borderRadius: '8px',
+                                padding: '12px 14px',
+                                marginBottom: '16px',
+                                fontSize: '14px',
+                                lineHeight: '1.5',
+                            }}
+                        >
+                            <strong>An account already exists with this email.</strong>
+                            <br />
+                            Please log in with your Academic Arc password.
+                        </div>
+                    )}
 
                     {/* Login / Signup tabs */}
                     <div className="auth-tabs">
@@ -554,6 +580,22 @@ function Login() {
                         >
                             {forgotPassword ? 'Continue' : 'Login'}
                         </button>
+
+                        {!forgotPassword && (
+                            <>
+                                <div className="oauth-divider">
+                                    <span>or</span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="google-login-button"
+                                    onClick={handleGoogleLogin}
+                                >
+                                    Google
+                                </button>
+                            </>
+                        )}
 
                     </form>
 
