@@ -4,7 +4,7 @@ import { API_URL } from "../config";
 import { useBackend } from '../BackendContext'
 import './Dashboard.css'
 import FacebookEmbed from './FacebookEmbed'
-import NotificationBell from '../components/NotificationBell'
+import Navbar from '../components/Navbar'
 
 const isYouTubeUrl = (url) => {
   return url?.includes('youtube.com') || url?.includes('youtu.be')
@@ -384,116 +384,7 @@ function Dashboard() {
         </div>
       )}
 
-      <nav className="dashboard-navbar">
-        <Link to="/" className="dashboard-nav-logo">
-          <img src="/Icons/Logo.svg" alt="Logo" />
-        </Link>
-
-        <div className="dashboard-nav-links">
-
-          <button
-            className="dash-search-button"
-            aria-label="Search"
-            onClick={() => setSearchOpen((prev) => !prev)}
-          >
-            <img src="/Icons/search.svg" alt="Search" />
-          </button>
-
-          <button className="language-button">
-            <img src="/Icons/language.svg" alt="Language" />
-          </button>
-
-          {isLoggedIn ? (
-            <>
-              <Link to="/submit" className="submit-button">
-                Submit
-              </Link>
-
-              <NotificationBell theme="dark" />
-
-              <div className="dash-profile-dropdown" ref={profileMenuRef}>
-
-                <button
-                  className="dash-profile-dropdown-button"
-                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  aria-expanded={profileMenuOpen}
-                >
-                  <div className="dash-profile-avatar">
-                    {user?.profile_picture ? (
-                      <img
-                        src={user.profile_picture}
-                        alt={user.name}
-                      />
-                    ) : (
-                      <span>{getInitials(user?.name)}</span>
-                    )}
-                  </div>
-
-                  <span className="dash-profile-user-name">
-                    {user?.name || 'Profile'}
-                  </span>
-
-                  <img
-                      src="/Icons/dropdown.svg"
-                      alt=""
-                      className={`dash-profile-dropdown-arrow ${
-                          profileMenuOpen ? 'open' : ''
-                      }`}
-                  />
-                </button>
-
-                {profileMenuOpen && (
-                  <div className="dash-profile-dropdown-menu">
-
-                    <Link
-                      to="/profile"
-                      onClick={() => setProfileMenuOpen(false)}
-                    >
-                      <img src="/Icons/profile.svg" alt="Profile" />
-                      <span>My Profile</span>
-                    </Link>
-
-                    {/* MOBILE ONLY */}
-                    <Link
-                        to="/submit"
-                        className="mobile-dropdown-item"
-                        onClick={() => setProfileMenuOpen(false)}
-                    >
-                      <img src="/Icons/submit.svg" alt="Submit" />
-                      <span>Submit</span>
-                    </Link>
-
-                    <button
-                        className="mobile-dropdown-item mobile-language-item"
-                    >
-                        <img src="/Icons/language.svg" alt="Language" />
-                        <span>Language</span>
-                    </button>
-
-                    <button
-                      onClick={logout}
-                    >
-                      <span className="logout-icon">
-                        <img src="/Icons/logout.svg" alt="Logout" />
-                      </span>
-                      <span>Logout</span>
-                    </button>
-
-                  </div>
-                )}
-
-              </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="dash-sign-in-button">
-                Sign In
-              </Link>
-              {/*<Link to="/signup">Sign Up</Link>*/}
-            </>
-          )}
-        </div>
-      </nav>
+      <Navbar theme="dark" />
 
       {searchOpen && (
         <div className="dash-search-overlay">
