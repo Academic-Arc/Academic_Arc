@@ -50,11 +50,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(SecurityHeadersMiddleware)
 
+is_production = settings.FRONTEND_URL.startswith("https://")
+
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
-    same_site="none",
-    https_only=True
+    same_site="none" if is_production else "lax",
+    https_only=is_production
 )
 
 app.state.limiter = limiter
