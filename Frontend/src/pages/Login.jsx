@@ -592,7 +592,7 @@ function Login() {
                                     className="google-login-button"
                                     onClick={handleGoogleLogin}
                                 >
-                                    Google
+                                    <img src="/Icons/google.svg" alt="Google"/>
                                 </button>
                             </>
                         )}
