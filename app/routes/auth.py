@@ -55,7 +55,7 @@ oauth.register(
 
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = request.url_for("google_callback")
+    redirect_uri = "https://api.academicarc.in/auth/google/callback"
     return await oauth.google.authorize_redirect(
         request,
         redirect_uri
