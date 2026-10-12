@@ -981,7 +981,7 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
+    width: 95%;
     max-width: 1100px;
     z-index: 2000;
     background: #f7f5f0;
@@ -1038,8 +1038,8 @@
     top: 120px;
     left: 14px;
 
-    width: 44px;
-    height: 44px;
+    width: 34px;
+    height: 34px;
 
     align-items: center;
     justify-content: center;
@@ -1060,6 +1060,8 @@
   .category-sidebar-toggle img {
     width: 18px;
     height: 18px;
+    filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) 
+            hue-rotate(344deg) brightness(90%) contrast(90%);
   }
 
 
@@ -1067,7 +1069,7 @@
      button sits at the sidebar's top-right */
 
   .category-sidebar-toggle.open {
-    top: 20px;
+    top: 105px;
     left: min(calc(78vw - 58px), 282px);
     right: auto;
   }
