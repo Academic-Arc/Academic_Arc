@@ -54,7 +54,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
     same_site="lax",
-    https_only=settings.APP_ENV == "production"
+    https_only=True
 )
 
 app.state.limiter = limiter
