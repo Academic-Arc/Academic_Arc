@@ -657,385 +657,388 @@ function Category() {
 
       <main className="category-container">
 
-        <div className="category-heading">
-
-          <img
-            src={`/${categoryName.toLowerCase()}.png`}
-            alt={categoryName}
-          />
-
-          <p>
-            Explore student {categoryName.toLowerCase()} submissions.
-          </p>
-
-        </div>
-
         <div className="category-layout">
-
           <CategorySidebar categoryName={categoryName} />
 
-          <div className="submission-scroll-area">
+          <div className="category-main-column">
+            <div className="category-heading">
 
-            {submissions.length === 0 ? (
+              <img
+                src={`/${categoryName.toLowerCase()}.png`}
+                alt={categoryName}
+              />
 
-              <p className="empty-category">
-                No {categoryName.toLowerCase()} submissions yet.
+              <p>
+                Explore student {categoryName.toLowerCase()} submissions.
               </p>
 
-            ) : (
+            </div>
 
-              <div className="submission-feed">
+            <div className="submission-scroll-area">
 
-                {submissions.map((submission) => {
+              {submissions.length === 0 ? (
 
-                  const videoType = isVideoType(submission)
+                <p className="empty-category">
+                  No {categoryName.toLowerCase()} submissions yet.
+                </p>
 
-                  const uploadedVideo = isUploadedVideo(
-                    submission.media_url
-                  )
+              ) : (
 
-                  const embedUrl = getEmbedUrl(
-                    submission.media_url
-                  )
+                <div className="submission-feed">
 
-                  const isOwner = ownSubmissionIds.has(
-                    submission.id
-                  )
+                  {submissions.map((submission) => {
 
-                  return (
+                    const videoType = isVideoType(submission)
 
-                    <article
-                      key={submission.id}
-                      className="submission-card"
-                    >
+                    const uploadedVideo = isUploadedVideo(
+                      submission.media_url
+                    )
 
-                      {/* POST HEADER */}
+                    const embedUrl = getEmbedUrl(
+                      submission.media_url
+                    )
 
-                      <div className="submission-header">
+                    const isOwner = ownSubmissionIds.has(
+                      submission.id
+                    )
 
-                        <div className="submission-avatar">
+                    return (
 
-                          {submission.profile_picture ? (
+                      <article
+                        key={submission.id}
+                        className="submission-card"
+                      >
 
-                            <img
-                              src={submission.profile_picture}
-                              alt={submission.student_name}
-                            />
+                        {/* POST HEADER */}
 
-                          ) : (
+                        <div className="submission-header">
 
-                            submission.student_name
-                              ? submission.student_name
-                                  .charAt(0)
-                                  .toUpperCase()
-                              : 'S'
+                          <div className="submission-avatar">
 
-                          )}
+                            {submission.profile_picture ? (
 
-                        </div>
+                              <img
+                                src={submission.profile_picture}
+                                alt={submission.student_name}
+                              />
 
-                        <div className="submission-meta">
+                            ) : (
 
-                          <strong>
-                            {submission.student_name}
-                          </strong>
+                              submission.student_name
+                                ? submission.student_name
+                                    .charAt(0)
+                                    .toUpperCase()
+                                : 'S'
 
-                          <span>
-                            Class {submission.student_class} • {submission.school}
-                          </span>
+                            )}
 
-                          <small>
-                            Published on{' '}
-                            {submission.created_at &&
-                              new Date(
-                                submission.created_at
-                              ).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                          </small>
+                          </div>
 
-                        </div>
+                          <div className="submission-meta">
 
-                        {/* THREE DOT MENU */}
+                            <strong>
+                              {submission.student_name}
+                            </strong>
 
-                        <div
-                          className="submission-menu-wrapper"
-                          ref={
-                            openMenu === submission.id
-                              ? menuRef
-                              : null
-                          }
-                        >
+                            <span>
+                              Class {submission.student_class} • {submission.school}
+                            </span>
 
-                          <button
-                            type="button"
-                            className="submission-menu-button"
-                            onClick={() =>
-                              handleMenuToggle(submission.id)
-                            }
-                            aria-label="Post options"
-                            aria-expanded={
+                            <small>
+                              Published on{' '}
+                              {submission.created_at &&
+                                new Date(
+                                  submission.created_at
+                                ).toLocaleDateString('en-IN', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                            </small>
+
+                          </div>
+
+                          {/* THREE DOT MENU */}
+
+                          <div
+                            className="submission-menu-wrapper"
+                            ref={
                               openMenu === submission.id
+                                ? menuRef
+                                : null
                             }
                           >
-                            ⋯
-                          </button>
 
-                          {openMenu === submission.id && (
+                            <button
+                              type="button"
+                              className="submission-menu-button"
+                              onClick={() =>
+                                handleMenuToggle(submission.id)
+                              }
+                              aria-label="Post options"
+                              aria-expanded={
+                                openMenu === submission.id
+                              }
+                            >
+                              ⋯
+                            </button>
 
-                            <div className="submission-menu-dropdown">
+                            {openMenu === submission.id && (
 
-                              {isOwner ? (
+                              <div className="submission-menu-dropdown">
 
-                                <>
-                                  <button
+                                {isOwner ? (
+
+                                  <>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setOpenMenu(null)
+                                            navigate(
+                                                `/submit?edit=${submission.id}`
+                                            )
+                                        }}
+                                    >
+                                        ✏️ Edit post
+                                    </button>
+
+                                    <button
                                       type="button"
-                                      onClick={() => {
-                                          setOpenMenu(null)
-                                          navigate(
-                                              `/submit?edit=${submission.id}`
-                                          )
-                                      }}
-                                  >
-                                      ✏️ Edit post
-                                  </button>
+                                      className="delete-option"
+                                      onClick={() =>
+                                        handleDelete(submission.id)
+                                      }
+                                    >
+                                      <img
+                                          src="/Icons/f7_trash.svg"
+                                          alt="Delete"
+                                      /> Delete post
+                                    </button>
+                                  </>
+
+                                ) : (
 
                                   <button
                                     type="button"
-                                    className="delete-option"
-                                    onClick={() =>
-                                      handleDelete(submission.id)
-                                    }
-                                  >
-                                    <img
-                                        src="/Icons/f7_trash.svg"
-                                        alt="Delete"
-                                    /> Delete post
-                                  </button>
-                                </>
+                                    className="report-option"
+                                    onClick={() => {
+                                      if (!isLoggedIn) {
+                                        alert('Please log in to report a post.')
+                                        setOpenMenu(null)
+                                        return
+                                      }
 
-                              ) : (
-
-                                <button
-                                  type="button"
-                                  className="report-option"
-                                  onClick={() => {
-                                    if (!isLoggedIn) {
-                                      alert('Please log in to report a post.')
+                                      setReportSubmission(submission)
+                                      setReportReason('')
+                                      setReportDetails('')
                                       setOpenMenu(null)
-                                      return
-                                    }
+                                    }}
+                                  >
+                                    🚩 Report post
+                                  </button>
 
-                                    setReportSubmission(submission)
-                                    setReportReason('')
-                                    setReportDetails('')
-                                    setOpenMenu(null)
-                                  }}
-                                >
-                                  🚩 Report post
-                                </button>
+                                )}
 
-                              )}
+                              </div>
+
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        {/* IMAGE */}
+
+                        {!videoType &&
+                          submission.media_url && (
+
+                            <div className="submission-image">
+
+                              <img
+                                src={submission.media_url}
+                                alt={submission.heading}
+                              />
 
                             </div>
 
                           )}
 
-                        </div>
+                        {/* NATIVE VIDEO UPLOAD */}
 
-                      </div>
+                        {videoType &&
+                          uploadedVideo && (
 
-                      {/* IMAGE */}
+                            <div className="submission-video">
 
-                      {!videoType &&
-                        submission.media_url && (
+                              <video controls>
 
-                          <div className="submission-image">
+                                <source
+                                  src={submission.media_url}
+                                />
 
-                            <img
-                              src={submission.media_url}
-                              alt={submission.heading}
-                            />
+                                Your browser does not support
+                                video playback.
 
-                          </div>
+                              </video>
 
-                        )}
-
-                      {/* NATIVE VIDEO UPLOAD */}
-
-                      {videoType &&
-                        uploadedVideo && (
-
-                          <div className="submission-video">
-
-                            <video controls>
-
-                              <source
-                                src={submission.media_url}
-                              />
-
-                              Your browser does not support
-                              video playback.
-
-                            </video>
-
-                          </div>
-
-                        )}
-
-                      {/* VIDEO LINK */}
-
-                      {videoType &&
-                        !uploadedVideo &&
-                        embedUrl && (
-
-                          <div className="submission-video">
-
-                            <iframe
-                              src={embedUrl}
-                              title={submission.heading}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
-
-                          </div>
-
-                        )}
-
-                      {/* FACEBOOK */}
-
-                      {videoType &&
-                        !uploadedVideo &&
-                        submission.media_url?.includes(
-                          'facebook.com'
-                        ) && (
-
-                          <div className="submission-video">
-
-                            <FacebookEmbed
-                              url={submission.media_url}
-                            />
-
-                          </div>
-
-                        )}
-
-                      {/* UNSUPPORTED VIDEO LINK */}
-
-                      {videoType &&
-                        !uploadedVideo &&
-                        !embedUrl &&
-                        !submission.media_url?.includes(
-                          'facebook.com'
-                        ) &&
-                        submission.media_url && (
-
-                          <div className="submission-link">
-
-                            <a
-                              href={submission.media_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Open video ↗
-                            </a>
-
-                          </div>
-
-                        )}
-
-                      {/* POST TEXT */}
-
-                      <div className="submission-content">
-
-                        <h2>
-                          {submission.heading}
-                        </h2>
-
-                        {submission.description && (
-
-                          <p>
-                            {submission.description}
-                          </p>
-
-                        )}
-
-                        {/* WRITING / POEM CONTENT */}
-
-                        {submission.written_content && (
-
-                          <div className="written-content-box">
-
-                            <div className="written-content">
-                              {submission.written_content}
                             </div>
 
+                          )}
+
+                        {/* VIDEO LINK */}
+
+                        {videoType &&
+                          !uploadedVideo &&
+                          embedUrl && (
+
+                            <div className="submission-video">
+
+                              <iframe
+                                src={embedUrl}
+                                title={submission.heading}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+
+                            </div>
+
+                          )}
+
+                        {/* FACEBOOK */}
+
+                        {videoType &&
+                          !uploadedVideo &&
+                          submission.media_url?.includes(
+                            'facebook.com'
+                          ) && (
+
+                            <div className="submission-video">
+
+                              <FacebookEmbed
+                                url={submission.media_url}
+                              />
+
+                            </div>
+
+                          )}
+
+                        {/* UNSUPPORTED VIDEO LINK */}
+
+                        {videoType &&
+                          !uploadedVideo &&
+                          !embedUrl &&
+                          !submission.media_url?.includes(
+                            'facebook.com'
+                          ) &&
+                          submission.media_url && (
+
+                            <div className="submission-link">
+
+                              <a
+                                href={submission.media_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open video ↗
+                              </a>
+
+                            </div>
+
+                          )}
+
+                        {/* POST TEXT */}
+
+                        <div className="submission-content">
+
+                          <h2>
+                            {submission.heading}
+                          </h2>
+
+                          {submission.description && (
+
+                            <p>
+                              {submission.description}
+                            </p>
+
+                          )}
+
+                          {/* WRITING / POEM CONTENT */}
+
+                          {submission.written_content && (
+
+                            <div className="written-content-box">
+
+                              <div className="written-content">
+                                {submission.written_content}
+                              </div>
+
+                            </div>
+
+                          )}
+
+                          {/* POST ACTIONS */}
+
+                          <div className="submission-actions">
+
+                            <button
+                              className={`submission-like ${
+                                likeData[submission.id]?.liked_by_user
+                                  ? 'liked'
+                                  : ''
+                              }`}
+                              onClick={() =>
+                                handleLike(submission.id)
+                              }
+                              disabled={
+                                liking[submission.id]
+                              }
+                            >
+
+                              <span className="like-icon">
+                                {likeData[submission.id]
+                                  ?.liked_by_user
+                                  ? '♥'
+                                  : '♡'}
+                              </span>
+
+                              <span>
+                                {likeData[submission.id]
+                                  ?.like_count ?? 0}
+                              </span>
+
+                            </button>
+
+                            {/* SHARE */}
+
+                            <button
+                              className="submission-share"
+                              onClick={() =>
+                                handleShare(submission)
+                              }
+                              aria-label="Share submission"
+                            >
+                              <img
+                                src="/Icons/share.svg"
+                                alt="Share"
+                              />
+                            </button>
+
                           </div>
-
-                        )}
-
-                        {/* POST ACTIONS */}
-
-                        <div className="submission-actions">
-
-                          <button
-                            className={`submission-like ${
-                              likeData[submission.id]?.liked_by_user
-                                ? 'liked'
-                                : ''
-                            }`}
-                            onClick={() =>
-                              handleLike(submission.id)
-                            }
-                            disabled={
-                              liking[submission.id]
-                            }
-                          >
-
-                            <span className="like-icon">
-                              {likeData[submission.id]
-                                ?.liked_by_user
-                                ? '♥'
-                                : '♡'}
-                            </span>
-
-                            <span>
-                              {likeData[submission.id]
-                                ?.like_count ?? 0}
-                            </span>
-
-                          </button>
-
-                          {/* SHARE */}
-
-                          <button
-                            className="submission-share"
-                            onClick={() =>
-                              handleShare(submission)
-                            }
-                            aria-label="Share submission"
-                          >
-                            <img
-                              src="/Icons/share.svg"
-                              alt="Share"
-                            />
-                          </button>
 
                         </div>
 
-                      </div>
+                      </article>
 
-                    </article>
+                    )
+                  })}
 
-                  )
-                })}
+                </div>
 
-              </div>
-
-            )}
+              )}
+            </div>
           </div>
+
+          <div className="category-discovery-space"></div>
         </div>
 
       </main>
