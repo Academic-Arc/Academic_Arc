@@ -41,14 +41,22 @@ function Navbar({ theme = 'light', showLanguage = true }) {
       },
     })
       .then((response) => {
-        if (!response.ok) throw new Error('Failed to fetch user')
+        if (!response.ok) {
+          localStorage.removeItem('access_token')
+          setIsLoggedIn(false)
+          setUser(null)
+          throw new Error('Invalid or expired token')
+        }
+
         return response.json()
       })
       .then((data) => {
         setUser(data)
+        setIsLoggedIn(true)
       })
       .catch(() => {
         setUser(null)
+        setIsLoggedIn(false)
       })
   }, [])
 
@@ -131,42 +139,32 @@ function Navbar({ theme = 'light', showLanguage = true }) {
       <nav className={`navbar navbar-${theme}`}>
         <Link to="/" className="navbar-logo">
           <img
-            src={
-                theme === 'light'
-                ? '/Icons/Logo_Black.svg'
-                : '/Icons/Logo.svg'
-            }
+            src={theme === 'light' ? '/Icons/Logo_Black.svg' : '/Icons/Logo.svg'}
             alt="Logo"
           />
         </Link>
 
-        <div className="navbar-actions">
+        <div className="navbar-search-container"
+          aria-label="Search"
+          onClick={() => setSearchOpen((prev) => !prev)}
+        >
           <button
             className="navbar-search-button"
-            aria-label="Search"
-            onClick={() => setSearchOpen((prev) => !prev)}
           >
             <img src="/Icons/search.svg" alt="Search" />
           </button>
 
-          {showLanguage && (
-            <button className="navbar-language-button">
-                <img src="/Icons/language.svg" alt="Language" />
-            </button>
-          )}
+          <span className="navbar-search-placeholder">
+            Search Academic Arc...
+          </span>
+        </div>
 
+        <div className="navbar-actions">
           {isLoggedIn ? (
             <>
-              <Link to="/submit" className="navbar-submit-button">
-                Submit
-              </Link>
-
               <NotificationBell theme={theme} />
 
-              <div
-                className="navbar-profile-dropdown"
-                ref={profileMenuRef}
-              >
+              <div className="navbar-profile-dropdown" ref={profileMenuRef}>
                 <button
                   className="navbar-profile-button"
                   onClick={() => setProfileMenuOpen((prev) => !prev)}
@@ -174,10 +172,7 @@ function Navbar({ theme = 'light', showLanguage = true }) {
                 >
                   <div className="navbar-profile-avatar">
                     {user?.profile_picture ? (
-                      <img
-                        src={user.profile_picture}
-                        alt={user.name}
-                      />
+                      <img src={user.profile_picture} alt={user.name} />
                     ) : (
                       <span>{getInitials(user?.name)}</span>
                     )}
@@ -208,17 +203,11 @@ function Navbar({ theme = 'light', showLanguage = true }) {
 
                     <Link
                       to="/submit"
-                      className="navbar-mobile-item"
                       onClick={() => setProfileMenuOpen(false)}
                     >
                       <img src="/Icons/submit.svg" alt="Submit" />
                       <span>Submit</span>
                     </Link>
-
-                    <button className="navbar-mobile-item">
-                      <img src="/Icons/language.svg" alt="Language" />
-                      <span>Language</span>
-                    </button>
 
                     <button onClick={logout}>
                       <span className="navbar-logout-icon">
@@ -247,10 +236,7 @@ function Navbar({ theme = 'light', showLanguage = true }) {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 onKeyDown={(event) => {
-                  if (
-                    event.key === 'Enter' &&
-                    searchResults.length > 0
-                  ) {
+                  if (event.key === 'Enter' && searchResults.length > 0) {
                     openSubmission(searchResults[0])
                   }
                 }}
