@@ -585,7 +585,9 @@ function Category() {
   return (
     <div className="category-page">
 
-      <Navbar theme="light" showLanguage={false} />
+      <div className="category-navbar">
+        <Navbar theme="light" showLanguage={false} />
+      </div>
 
       {searchOpen && (
         <div className="search-overlay">
