@@ -53,7 +53,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
-    same_site="lax",
+    same_site="none",
     https_only=True
 )
 
