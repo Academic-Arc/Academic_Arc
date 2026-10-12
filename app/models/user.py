@@ -94,3 +94,9 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+
+    oauth_accounts = relationship(
+        "OAuthAccount",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )

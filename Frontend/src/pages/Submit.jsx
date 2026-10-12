@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { API_URL } from "../config";
 import './Submit.css'
-import NotificationBell from '../components/NotificationBell'
+import Navbar from '../components/Navbar'
 
 function Submit() {
     const navigate = useNavigate()
@@ -14,9 +14,6 @@ function Submit() {
     const token = localStorage.getItem('access_token')
 
     const [user, setUser] = useState(null)
-
-    const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-    const profileMenuRef = useRef(null)
 
     const [contentType, setContentType] = useState('Writing')
     const [studentClass, setStudentClass] = useState('')
@@ -38,11 +35,6 @@ function Submit() {
     )
 
     const [saving, setSaving] = useState(false)
-
-    const logout = () => {
-        localStorage.removeItem('access_token')
-        navigate('/login')
-    }
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -66,23 +58,6 @@ function Submit() {
 
         fetchUser()
     }, [token])
-
-    useEffect(() => {
-        const handleProfileClickOutside = (event) => {
-            if (
-                profileMenuRef.current &&
-                !profileMenuRef.current.contains(event.target)
-            ) {
-                setProfileMenuOpen(false)
-            }
-        }
-
-        document.addEventListener('mousedown', handleProfileClickOutside)
-
-        return () => {
-            document.removeEventListener('mousedown', handleProfileClickOutside)
-        }
-    }, [])
 
     /*
      * Load existing submission when editing
@@ -194,16 +169,7 @@ function Submit() {
         return (
             <div className="submit-page">
 
-                <nav className="navbar">
-
-                    <Link
-                        to="/"
-                        className="nav-logo"
-                    >
-                        Academic Arc
-                    </Link>
-
-                </nav>
+                <Navbar theme="light" showLanguage={false} />
 
                 <div className="submit-card">
                     <p>Loading submission...</p>
@@ -498,141 +464,7 @@ function Submit() {
     return (
         <div className="submit-page">
 
-            <nav className="navbar">
-
-                <Link to="/" className="nav-logo">
-                    <img
-                        src="/Icons/Logo_Black.svg"
-                        alt="Logo"
-                    />
-                </Link>
-
-                <div className="nav-links">
-
-                    {/*<Link to="/">
-                        Home
-                    </Link>*/}
-
-                    <NotificationBell theme="light" />
-
-                    <div
-                        className="profile-dropdown"
-                        ref={profileMenuRef}
-                    >
-
-                        <button
-                            className="profile-dropdown-button"
-                            onClick={() =>
-                                setProfileMenuOpen(
-                                    !profileMenuOpen
-                                )
-                            }
-                            aria-expanded={
-                                profileMenuOpen
-                            }
-                        >
-
-                            <div className="profile-avatar">
-
-                                {user?.profile_picture ? (
-
-                                    <img
-                                        src={
-                                            user.profile_picture
-                                        }
-                                        alt={user.name}
-                                    />
-
-                                ) : (
-
-                                    <span>
-                                        {getInitial()}
-                                    </span>
-
-                                )}
-
-                            </div>
-
-                            <span className="profile-user-name">
-                                {user?.name || 'Profile'}
-                            </span>
-
-                            <img
-                                src="/Icons/dropdown.svg"
-                                alt=""
-                                className={`profile-dropdown-arrow ${
-                                    profileMenuOpen
-                                        ? 'open'
-                                        : ''
-                                }`}
-                            />
-
-                        </button>
-
-                        {profileMenuOpen && (
-
-                            <div className="profile-dropdown-menu">
-
-                                <Link
-                                    to="/profile"
-                                    onClick={() =>
-                                        setProfileMenuOpen(false)
-                                    }
-                                >
-                                    <img
-                                        src="/Icons/profile.svg"
-                                        alt="Profile"
-                                    />
-
-                                    <span>
-                                        My Profile
-                                    </span>
-                                </Link>
-
-                                <Link to="/">
-                                    <img
-                                        src="/Icons/home.svg"
-                                        alt="Home"
-                                    />
-
-                                    <span>
-                                        Home
-                                    </span>
-                                </Link>
-
-                                <button
-                                    onClick={() => {
-                                        localStorage.removeItem(
-                                            'access_token'
-                                        )
-
-                                        setProfileMenuOpen(false)
-
-                                        navigate('/login')
-                                    }}
-                                >
-                                    <span className="logout-icon">
-                                        <img
-                                            src="/Icons/logout.svg"
-                                            alt="Logout"
-                                        />
-                                    </span>
-
-                                    <span>
-                                        Logout
-                                    </span>
-                                </button>
-
-                            </div>
-
-                        )}
-
-                    </div>
-
-                </div>
-
-            </nav>
-
+            <Navbar theme="light" showLanguage={false} />
 
             <div className="submit-card">
 

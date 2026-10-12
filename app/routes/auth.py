@@ -1,22 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 import uuid
 import secrets
 import hashlib
 import io
+import traceback
 
 from PIL import Image
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from app.supabase import supabase
 
-from app.database import get_db
+from authlib.integrations.starlette_client import OAuth
+from app.models.oauth_account import OAuthAccount
+
+from app.database import get_db, settings
 from app.limiter import limiter
 from app.models.user import User
 from app.models.security_question import SecurityQuestion
 from app.models.password_recovery import PasswordRecoverySession
 from app.schemas.user import (UserSignup, UserLogin, UserProfileUpdate, PasswordChange, 
-                              ForgotPasswordRequest, VerifySecurityAnswers, ResetPassword)
+                              ForgotPasswordRequest, VerifySecurityAnswers, ResetPassword,
+                              OAuthSetupRequest)
 
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.student import Student
@@ -28,10 +34,285 @@ from app.services.auth import (
     create_access_token
 )
 
+security = HTTPBearer()
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
+
+oauth = OAuth()
+
+oauth.register(
+    name="google",
+    client_id=settings.GOOGLE_CLIENT_ID,
+    client_secret=settings.GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile"
+    },
+)
+
+@router.get("/google")
+async def google_login(request: Request):
+    redirect_uri = request.url_for("google_callback")
+    return await oauth.google.authorize_redirect(
+        request,
+        redirect_uri
+    )
+
+@router.get("/google/callback")
+async def google_callback(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        print("GOOGLE TOKEN RECEIVED")
+        userinfo = token.get("userinfo")
+        print("GOOGLE USERINFO:", userinfo)
+
+    except Exception:
+        print("GOOGLE OAUTH ERROR:")
+        traceback.print_exc()
+
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?oauth_error=google_auth_failed"
+        )
+
+    userinfo = token.get("userinfo")
+
+    if not userinfo:
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?oauth_error=google_userinfo_failed"
+        )
+
+    google_user_id = userinfo.get("sub")
+    email = userinfo.get("email")
+    email_verified = userinfo.get("email_verified", False)
+
+    if not google_user_id or not email:
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?oauth_error=google_missing_data"
+        )
+
+    if not email_verified:
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/login?oauth_error=google_email_not_verified"
+        )
+
+    # Check whether this Google account is already connected
+    oauth_account = (
+        db.query(OAuthAccount)
+        .filter(
+            OAuthAccount.provider == "google",
+            OAuthAccount.provider_user_id == google_user_id
+        )
+        .first()
+    )
+
+    if oauth_account:
+        user = (
+            db.query(User)
+            .filter(User.id == oauth_account.user_id)
+            .first()
+        )
+
+        if not user:
+            return RedirectResponse(
+                url=f"{settings.FRONTEND_URL}/login?oauth_error=account_not_found"
+            )
+
+        access_token = create_access_token(
+            user.id,
+            user.role,
+            user.token_version
+        )
+
+        return RedirectResponse(
+            url=(
+                f"{settings.FRONTEND_URL}/oauth/callback"
+                f"#access_token={access_token}"
+                f"&setup_required=false"
+            )
+        )
+
+    # Do NOT automatically connect Google to an existing
+    # Academic Arc account just because the email matches.
+    existing_user = (
+        db.query(User)
+        .filter(User.email == email)
+        .first()
+    )
+
+    print(
+        "GOOGLE EXISTING EMAIL MATCH:",
+        existing_user.email if existing_user else None
+    )
+
+    if existing_user:
+        return RedirectResponse(
+            url=(
+                f"{settings.FRONTEND_URL}/login"
+                f"?oauth_error=account_exists"
+            )
+        )
+
+    # Create a brand-new Academic Arc account.
+    # A random password is stored temporarily because
+    # User.password_hash is currently non-nullable.
+    temporary_password = secrets.token_urlsafe(32)
+
+    new_user = User(
+        name=userinfo.get("name") or "Academic Arc User",
+        email=email,
+        is_student=False,
+        password_hash=hash_password(temporary_password),
+        profile_picture=userinfo.get("picture")
+    )
+
+    db.add(new_user)
+    db.flush()
+
+    new_oauth_account = OAuthAccount(
+        user_id=new_user.id,
+        provider="google",
+        provider_user_id=google_user_id,
+        provider_email=email
+    )
+
+    db.add(new_oauth_account)
+    db.commit()
+    db.refresh(new_user)
+
+    access_token = create_access_token(
+        new_user.id,
+        new_user.role,
+        new_user.token_version
+    )
+
+    print("GOOGLE OAUTH SUCCESS - REDIRECTING TO FRONTEND")
+
+    return RedirectResponse(
+        url=(
+            f"{settings.FRONTEND_URL}/oauth/callback"
+            f"#access_token={access_token}"
+            f"&setup_required=true"
+        )
+    )
+
+@router.post("/oauth/setup")
+def oauth_setup(
+    setup_data: OAuthSetupRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if payload.get("token_version") != user.token_version:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    # Make sure this is an OAuth-linked account
+    oauth_account = (
+        db.query(OAuthAccount)
+        .filter(OAuthAccount.user_id == user.id)
+        .first()
+    )
+
+    if not oauth_account:
+        raise HTTPException(
+            status_code=403,
+            detail="OAuth setup is only available for OAuth accounts"
+        )
+
+    # Validate password
+    if len(setup_data.password) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 8 characters long."
+        )
+
+    # Validate student-specific information
+    if setup_data.is_student:
+        if not setup_data.school or not setup_data.student_class:
+            raise HTTPException(
+                status_code=400,
+                detail="School and class are required for students."
+            )
+
+    # Update the existing user
+    user.is_student = setup_data.is_student
+    user.dob = setup_data.dob
+    user.password_hash = hash_password(
+        setup_data.password
+    )
+
+    # Create or update Student record
+    if setup_data.is_student:
+        student = (
+            db.query(Student)
+            .filter(Student.user_id == user.id)
+            .first()
+        )
+
+        if student:
+            student.school = setup_data.school
+            student.student_class = setup_data.student_class
+        else:
+            student = Student(
+                user_id=user.id,
+                school=setup_data.school,
+                student_class=setup_data.student_class
+            )
+
+            db.add(student)
+
+    # Invalidate the temporary OAuth token
+    user.token_version += 1
+
+    db.commit()
+    db.refresh(user)
+
+    # Issue a fresh token
+    access_token = create_access_token(
+        user.id,
+        user.role,
+        user.token_version
+    )
+
+    return {
+        "message": "OAuth account setup completed successfully",
+        "access_token": access_token
+    }
 
 SECURITY_QUESTIONS = {
     "childhood_friend": "What was the name of your childhood best friend?",
@@ -48,8 +329,6 @@ def hash_recovery_token(token: str) -> str:
     return hashlib.sha256(
         token.encode("utf-8")
     ).hexdigest()
-
-security = HTTPBearer()
 
 @router.post("/signup")
 @limiter.limit("5/15minutes")

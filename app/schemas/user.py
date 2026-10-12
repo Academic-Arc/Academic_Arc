@@ -96,3 +96,10 @@ class ResetPassword(BaseModel):
         min_length=8,
         max_length=100
     )
+
+class OAuthSetupRequest(BaseModel):
+    is_student: bool
+    dob: date
+    password: str
+    school: str | None = None
+    student_class: str | None = None
