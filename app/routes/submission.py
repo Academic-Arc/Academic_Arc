@@ -5,6 +5,7 @@ import io
 
 from PIL import Image
 from playwright.async_api import async_playwright
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from sqlalchemy.orm import Session
 
@@ -674,11 +675,14 @@ async def get_facebook_embed(
 
         page = await context.new_page()
 
-        await page.goto(
-            url,
-            wait_until="domcontentloaded",
-            timeout=30000
-        )
+        try:
+            await page.goto(
+                url,
+                wait_until="domcontentloaded",
+                timeout=30000
+            )
+        except PlaywrightTimeoutError:
+            print("Facebook navigation timed out; checking current page URL.")
 
         # Facebook may perform the redirect with JavaScript.
         # Only wait if we are still on the share URL.
