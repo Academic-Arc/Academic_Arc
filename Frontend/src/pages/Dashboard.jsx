@@ -5,6 +5,7 @@ import { useBackend } from '../BackendContext'
 import './Dashboard.css'
 import FacebookEmbed from './FacebookEmbed'
 import Navbar from '../components/Navbar'
+import SkeletonLoader from '../components/SkeletonLoader'
 
 const isYouTubeUrl = (url) => {
   return url?.includes('youtube.com') || url?.includes('youtu.be')
@@ -356,33 +357,6 @@ function Dashboard() {
 
   return (
     <div className="magazine">
-
-      {backendLoading && (
-        <div className="backend-loader">
-          <div className="backend-loader-content">
-
-            {/* FUTURE CUSTOM ANIMATION
-                Replace the spinner below with a custom animation/video
-                if you decide to add one later.
-
-                Example:
-
-                <video
-                  src="/loader-animation.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-            */}
-
-            <div className="backend-loader-spinner"></div>
-
-            <h2>Academic Arc</h2>
-            <p>Waking up the server...</p>
-          </div>
-        </div>
-      )}
 
       <Navbar theme="dark" />
 

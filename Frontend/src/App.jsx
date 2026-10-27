@@ -22,6 +22,7 @@ import AdminReports from './pages/AdminReports'
 import AdminFeedback from './pages/AdminFeedback'
 import Footer from './components/Footer'
 import About from './pages/About'
+import SkeletonLoader from './components/SkeletonLoader'
 
 function App() {
 
@@ -93,54 +94,31 @@ function App() {
   return (
     <BackendContext.Provider value={{ backendLoading }}>
 
-      {backendLoading && (
-        <div className="backend-loader">
-          <div className="backend-loader-content">
+      {backendLoading ? (
+        <SkeletonLoader />
+      ) : (
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/submit" element={<Submit />} />
+          <Route path="/category/:type" element={<Category />} />
+          <Route path="/about" element={<About />} />
 
-            {/* FUTURE CUSTOM ANIMATION
-                Replace the spinner below with a custom animation/video
-                if you decide to add one later.
-
-                Example:
-
-                <video
-                  src="/loader-animation.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-            */}
-
-            <div className="backend-loader-spinner"></div>
-
-            <h2>Academic Arc</h2>
-            <p>Waking up the server...</p>
-          </div>
-        </div>
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/posts" element={<AdminPosts />} />
+          <Route path="/admin/posts/:id" element={<AdminPostView />} />
+          <Route path="/admin/categories" element={<AdminCategories />} />
+          <Route path="/admin/featured" element={<AdminFeatured />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/users/:user_id" element={<AdminUserView />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
+          <Route path="/admin/feedback" element={<AdminFeedback />} />
+        </Routes>
       )}
-
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/oauth/callback" element={<OAuthCallback />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/submit" element={<Submit />} />
-        <Route path="/category/:type" element={<Category />} />
-        <Route path="/about" element={<About />} />
-
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/posts" element={<AdminPosts />} />
-        <Route path="/admin/posts/:id" element={<AdminPostView />} />
-        <Route path="/admin/categories" element={<AdminCategories />} />
-        <Route path="/admin/featured" element={<AdminFeatured />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/users/:user_id" element={<AdminUserView />} />
-        <Route path="/admin/reports" element={<AdminReports />} />
-        <Route path="/admin/feedback" element={<AdminFeedback />} />
-      </Routes>
 
       {showFooter && <Footer />}
     </BackendContext.Provider>
