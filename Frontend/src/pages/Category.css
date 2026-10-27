@@ -634,14 +634,11 @@
 /* Writing / Poem */
 
 .written-content-box {
-  height: 300px;
+  max-height: 600px;
   margin-top: 5px;
-
   padding: 12px 25px;
-
   background: #faf9f6;
   border-radius: 10px;
-
   overflow-y: auto;
 }
 
@@ -1190,7 +1187,7 @@
   }
 
   .written-content-box {
-    height: 260px;
+    max-height: 600px;
     padding: 18px 20px;
   }
 
