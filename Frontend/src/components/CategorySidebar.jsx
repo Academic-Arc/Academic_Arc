@@ -103,14 +103,14 @@ function CategorySidebar({ categoryName }) {
       {/* ========================================================= */}
       <nav className="mobile-bottom-nav" aria-label="Category navigation">
         {/* Home Button */}
-        <Link
+        {/*<Link
           to="/"
           className={`mobile-bottom-nav-item ${isHomeActive ? 'active' : ''}`}
           onClick={() => setMoreOpen(false)}
         >
           <img src="/Icons/home.svg" alt="Home" />
           <span>Home</span>
-        </Link>
+        </Link>*/}
 
         {/* Writing, Drawing, Poetry */}
         {primaryCategories.map((item) => {
