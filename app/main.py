@@ -19,6 +19,7 @@ from app.models.submission import Submission
 from app.models.featured import SpecialFeature
 from app.models.notification import Notification
 from app.models.oauth_account import OAuthAccount
+from app.models.blog import Blog
 
 from app.routes.auth import router as auth_router
 from app.routes.admin import router as admin_router
@@ -28,6 +29,7 @@ from app.routes.featured import router as featured_router
 from app.routes.feedback import router as feedback_router
 from app.routes.submission import router as submission_router
 from app.routes.notification import router as notification_router
+from app.routes.blog import router as blog_router
 
 
 Base.metadata.create_all(bind=engine)
@@ -84,6 +86,7 @@ app.include_router(featured_router)
 app.include_router(feedback_router)
 app.include_router(submission_router)
 app.include_router(notification_router)
+app.include_router(blog_router)
 
 
 @app.get("/")

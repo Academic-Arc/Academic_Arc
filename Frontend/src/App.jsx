@@ -16,6 +16,7 @@ import AdminPosts from './pages/AdminPosts'
 import AdminPostView from './pages/AdminPostView'
 import AdminCategories from './pages/AdminCategories'
 import AdminFeatured from './pages/AdminFeatured'
+import AdminBlogs from './pages/AdminBlogs'
 import AdminUsers from './pages/AdminUsers'
 import AdminUserView from './pages/AdminUserView'
 import AdminReports from './pages/AdminReports'
@@ -23,6 +24,7 @@ import AdminFeedback from './pages/AdminFeedback'
 import Footer from './components/Footer'
 import About from './pages/About'
 import SkeletonLoader from './components/SkeletonLoader'
+import BlogDetail from './pages/BlogDetail'
 
 function App() {
 
@@ -90,7 +92,8 @@ function App() {
       location.pathname === "/profile" ||
       location.pathname === "/submit" ||
       location.pathname === "/about" ||
-      location.pathname.startsWith("/category/");
+      location.pathname.startsWith("/category/") ||
+      location.pathname.startsWith("/blog/");
   return (
     <BackendContext.Provider value={{ backendLoading }}>
 
@@ -107,12 +110,14 @@ function App() {
           <Route path="/submit" element={<Submit />} />
           <Route path="/category/:type" element={<Category />} />
           <Route path="/about" element={<About />} />
+          <Route path="/blog/:id" element={<BlogDetail />} />
 
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/posts" element={<AdminPosts />} />
           <Route path="/admin/posts/:id" element={<AdminPostView />} />
           <Route path="/admin/categories" element={<AdminCategories />} />
           <Route path="/admin/featured" element={<AdminFeatured />} />
+          <Route path="/admin/blogs" element={<AdminBlogs />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/users/:user_id" element={<AdminUserView />} />
           <Route path="/admin/reports" element={<AdminReports />} />
