@@ -30,6 +30,7 @@ from app.routes.feedback import router as feedback_router
 from app.routes.submission import router as submission_router
 from app.routes.notification import router as notification_router
 from app.routes.blog import router as blog_router
+from app.services.facebook import close_facebook_browser
 
 
 Base.metadata.create_all(bind=engine)
@@ -100,3 +101,8 @@ def health():
     return {
         "status": "ok"
     }
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_facebook_browser()
