@@ -86,6 +86,16 @@ function AdminSidebar({ admin, activePage, onLogout }) {
                         <strong>Featured</strong>
                     </button>
 
+                    <button
+                        className={`admin-nav-item ${
+                            activePage === 'blogs' ? 'active' : ''
+                        }`}
+                        onClick={() => handleNavigation('/admin/blogs')}
+                    >
+                        <span>📰</span>
+                        <strong>Editorial Blogs</strong>
+                    </button>
+
 
                     <div className="admin-nav-section">
                         USERS

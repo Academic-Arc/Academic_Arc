@@ -6,6 +6,7 @@ import './Dashboard.css'
 import FacebookEmbed from './FacebookEmbed'
 import Navbar from '../components/Navbar'
 import SkeletonLoader from '../components/SkeletonLoader'
+import BlogSection from '../components/BlogSection'
 
 const isYouTubeUrl = (url) => {
   return url?.includes('youtube.com') || url?.includes('youtu.be')
@@ -590,6 +591,9 @@ function Dashboard() {
 
         </section>
       )}
+
+      {/* EDITORIAL BLOG SECTION (BELOW FEATURED) */}
+      <BlogSection />
     </div>
   )
 }
