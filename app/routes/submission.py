@@ -33,31 +33,11 @@ router = APIRouter(
     tags=["Submissions"]
 )
 
-facebook_playwright = None
-facebook_browser = None
-facebook_browser_lock = asyncio.Lock()
-
-async def get_facebook_browser():
-    global facebook_playwright
-    global facebook_browser
-
-    if facebook_browser:
-        return facebook_browser
-
-    async with facebook_browser_lock:
-
-        if facebook_browser:
-            return facebook_browser
-
-        facebook_playwright = await async_playwright().start()
-
-        facebook_browser = await facebook_playwright.chromium.launch(
-            headless=True
-        )
-
-        print("FACEBOOK PLAYWRIGHT BROWSER STARTED")
-
-        return facebook_browser
+from app.services.facebook import (
+    resolve_facebook_embed_url,
+    validate_facebook_url,
+    get_facebook_browser,
+)
 
 security = HTTPBearer()
 
@@ -647,7 +627,7 @@ def get_shared_submission(
 async def get_facebook_embed(
     url: str
 ):
-    if not validate_external_url(url):
+    if not validate_external_url(url) or not validate_facebook_url(url):
         raise HTTPException(
             status_code=400,
             detail="Invalid Facebook URL."
@@ -659,73 +639,29 @@ async def get_facebook_embed(
             detail="Only Facebook URLs are supported."
         )
 
-    context = None
-    page = None
-
     try:
-        browser = await get_facebook_browser()
-
-        context = await browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/140.0.0.0 Safari/537.36"
-            )
-        )
-
-        page = await context.new_page()
-
-        try:
-            await page.goto(
-                url,
-                wait_until="domcontentloaded",
-                timeout=30000
-            )
-        except PlaywrightTimeoutError:
-            print("Facebook navigation timed out; checking current page URL.")
-
-        # Facebook may perform the redirect with JavaScript.
-        # Only wait if we are still on the share URL.
-        if "/share/" in page.url:
-
-            for _ in range(50):
-                await page.wait_for_timeout(100)
-
-                if "/share/" not in page.url:
-                    break
-
-        final_url = page.url
-
-        print("FACEBOOK ORIGINAL URL:", url)
-        print("FACEBOOK FINAL URL:", final_url)
-
-        if "/share/" in final_url:
+        resolved_url, _ = await resolve_facebook_embed_url(url)
+        return {
+            "url": resolved_url
+        }
+    except (ValueError, RuntimeError) as e:
+        if "did not resolve" in str(e).lower() or isinstance(e, RuntimeError):
             raise HTTPException(
                 status_code=400,
                 detail="Facebook did not resolve the share link."
             )
-
-        return {
-            "url": final_url
-        }
-
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
     except HTTPException:
         raise
-
     except Exception as e:
-        print("Facebook Playwright error:", repr(e))
-
+        print("Facebook resolution error:", repr(e))
         raise HTTPException(
             status_code=500,
             detail="Failed to resolve Facebook video."
         )
-
-    finally:
-        if page:
-            await page.close()
-
-        if context:
-            await context.close()
 
 @router.get("/{submission_id}/media")
 def get_submission_media(
