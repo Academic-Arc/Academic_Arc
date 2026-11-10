@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     APP_ENV: str = "development"
     AUTHLIB_INSECURE_TRANSPORT: str | None = None
+    ACCESS_TOKEN_EXPIRE_DAYS: int = 30
 
     class Config:
         env_file = ".env"

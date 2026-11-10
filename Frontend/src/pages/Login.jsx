@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL } from "../config";
 import './Login.css'
@@ -11,6 +11,7 @@ function Login() {
     const [identifier, setIdentifier] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const [rememberMe, setRememberMe] = useState(true)
     const [forgotPassword, setForgotPassword] = useState(false)
     const [recoveryToken, setRecoveryToken] = useState('')
     const [securityQuestions, setSecurityQuestions] = useState([])
@@ -20,6 +21,39 @@ function Login() {
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
+
+    // Redirect already signed-in users away from the login page
+    useEffect(() => {
+        const token = localStorage.getItem('access_token')
+        if (!token) return
+
+        fetch(`${API_URL}/auth/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => {
+                if (res.ok) {
+                    return res.json()
+                }
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('access_token')
+                    localStorage.removeItem('user_info')
+                }
+                throw new Error('Not authenticated')
+            })
+            .then((data) => {
+                localStorage.setItem('user_info', JSON.stringify(data))
+                if (data.role === 'admin') {
+                    navigate('/admin', { replace: true })
+                } else {
+                    navigate('/dashboard', { replace: true })
+                }
+            })
+            .catch(() => {
+                // Ignore network error or expired token; stay on login page
+            })
+    }, [navigate])
 
     const handleForgotPassword = async (e) => {
         e.preventDefault()
@@ -166,6 +200,7 @@ function Login() {
                 body: JSON.stringify({
                     identifier,
                     password,
+                    remember_me: rememberMe,
                 }),
             })
 
@@ -179,6 +214,13 @@ function Login() {
             }
 
             localStorage.setItem('access_token', data.access_token)
+            localStorage.setItem(
+                'user_info',
+                JSON.stringify({
+                    user_id: data.user_id,
+                    role: data.role,
+                })
+            )
 
             if (data.role === 'admin') {
                 navigate('/admin')
@@ -558,7 +600,11 @@ function Login() {
                             <div className="login-options">
 
                                 <label className="remember-me">
-                                    <input type="checkbox" />
+                                    <input
+                                        type="checkbox"
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                    />
                                     <span>Remember me</span>
                                 </label>
 

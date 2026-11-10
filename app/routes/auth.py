@@ -489,10 +489,18 @@ def login(
         .first()
     )
 
+    expires_days = getattr(settings, "ACCESS_TOKEN_EXPIRE_DAYS", 30)
+    expires_delta = (
+        timedelta(days=expires_days)
+        if getattr(user_data, "remember_me", True)
+        else timedelta(days=1)
+    )
+
     access_token = create_access_token(
         user.id,
         user.role,
-        user.token_version
+        user.token_version,
+        expires_delta=expires_delta
     )
 
     return {
@@ -554,6 +562,7 @@ def get_current_user(
         "email": user.email,
         "phone": user.phone,
         "is_student": user.is_student,
+        "role": user.role,
         "profile_picture": user.profile_picture,
         "district": user.district,
         "village_locality": user.village_locality,

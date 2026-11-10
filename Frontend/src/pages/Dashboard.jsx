@@ -138,6 +138,7 @@ function Dashboard() {
 
   const logout = () => {
     localStorage.removeItem('access_token')
+    localStorage.removeItem('user_info')
     setToken(null)
     setUser(null)
   }
@@ -146,7 +147,14 @@ function Dashboard() {
 
   const [featuredPosts, setFeaturedPosts] = useState([])
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user_info')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
 
   const [searchOpen, setSearchOpen] = useState(false)
   const searchRef = useRef(null)
@@ -170,6 +178,7 @@ function Dashboard() {
       .then((response) => {
         if (response.status === 401 || response.status === 403) {
           localStorage.removeItem('access_token')
+          localStorage.removeItem('user_info')
           setToken(null)
           setUser(null)
           return null
@@ -184,15 +193,11 @@ function Dashboard() {
       .then((data) => {
         if (data) {
           setUser(data)
+          localStorage.setItem('user_info', JSON.stringify(data))
         }
       })
       .catch((error) => {
         console.error('Error fetching user profile:', error)
-
-        localStorage.removeItem('access_token')
-        setToken(null)
-        setUser(null)
-        setProfileMenuOpen(false)
       })
   }, [token, backendLoading])
 

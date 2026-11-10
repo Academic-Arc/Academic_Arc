@@ -369,6 +369,7 @@ function Category() {
 
   const logout = () => {
     localStorage.removeItem('access_token')
+    localStorage.removeItem('user_info')
     setUser(null)
     setProfileMenuOpen(false)
     navigate('/login')

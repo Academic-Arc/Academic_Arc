@@ -1,10 +1,43 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from "../config";
 import './Signup.css'
 
 function Signup() {
     const navigate = useNavigate()
+
+    // Redirect already signed-in users away from the signup page
+    useEffect(() => {
+        const token = localStorage.getItem('access_token')
+        if (!token) return
+
+        fetch(`${API_URL}/auth/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => {
+                if (res.ok) {
+                    return res.json()
+                }
+                if (res.status === 401 || res.status === 403) {
+                    localStorage.removeItem('access_token')
+                    localStorage.removeItem('user_info')
+                }
+                throw new Error('Not authenticated')
+            })
+            .then((data) => {
+                localStorage.setItem('user_info', JSON.stringify(data))
+                if (data.role === 'admin') {
+                    navigate('/admin', { replace: true })
+                } else {
+                    navigate('/dashboard', { replace: true })
+                }
+            })
+            .catch(() => {
+                // Ignore network error or expired token; stay on signup page
+            })
+    }, [navigate])
 
     const [formData, setFormData] = useState({
         name: '',
