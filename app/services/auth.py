@@ -20,7 +20,7 @@ if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY is not set")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_DAYS = int(os.getenv("ACCESS_TOKEN_EXPIRE_DAYS", "30"))
 
 
 pwd_context = CryptContext(
@@ -42,10 +42,16 @@ def verify_password(
         hashed_password
     )
 
-def create_access_token(user_id: int, role: str, token_version: int):
-    expire = datetime.utcnow() + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+def create_access_token(
+    user_id: int,
+    role: str,
+    token_version: int,
+    expires_delta: timedelta | None = None
+):
+    if expires_delta is not None:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
 
     payload = {
         "user_id": user_id,

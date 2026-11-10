@@ -49,6 +49,7 @@ class UserSignup(BaseModel):
 class UserLogin(BaseModel):
     identifier: str
     password: str
+    remember_me: bool = True
 
 class UserProfileUpdate(BaseModel):
     name: str = Field(

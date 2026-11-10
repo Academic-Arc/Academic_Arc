@@ -5,8 +5,15 @@ import NotificationBell from './NotificationBell'
 import './Navbar.css'
 
 function Navbar({ theme = 'light', showLanguage = true }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('access_token'))
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user_info')
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -28,12 +35,14 @@ function Navbar({ theme = 'light', showLanguage = true }) {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
-    setIsLoggedIn(!!token)
 
     if (!token) {
+      setIsLoggedIn(false)
       setUser(null)
       return
     }
+
+    setIsLoggedIn(true)
 
     fetch(`${API_URL}/auth/me`, {
       headers: {
@@ -41,11 +50,16 @@ function Navbar({ theme = 'light', showLanguage = true }) {
       },
     })
       .then((response) => {
-        if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
           localStorage.removeItem('access_token')
+          localStorage.removeItem('user_info')
           setIsLoggedIn(false)
           setUser(null)
           throw new Error('Invalid or expired token')
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load profile')
         }
 
         return response.json()
@@ -53,10 +67,11 @@ function Navbar({ theme = 'light', showLanguage = true }) {
       .then((data) => {
         setUser(data)
         setIsLoggedIn(true)
+        localStorage.setItem('user_info', JSON.stringify(data))
       })
-      .catch(() => {
-        setUser(null)
-        setIsLoggedIn(false)
+      .catch((err) => {
+        // Do not clear access_token on network error or server glitch
+        console.error('Navbar profile fetch error:', err)
       })
   }, [])
 
@@ -122,6 +137,7 @@ function Navbar({ theme = 'light', showLanguage = true }) {
 
   const logout = () => {
     localStorage.removeItem('access_token')
+    localStorage.removeItem('user_info')
     setIsLoggedIn(false)
     setUser(null)
     setProfileMenuOpen(false)
