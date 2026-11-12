@@ -12,6 +12,7 @@ from app.database import Base, engine, settings
 
 from app.models.user import User
 from app.models.like import PostLike
+from app.models.comment import PostComment
 from app.models.report import Report
 from app.models.student import Student
 from app.models.feedback import Feedback

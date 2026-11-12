@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { API_URL } from '../config'
 import Navbar from '../components/Navbar'
+import { usePrompt } from '../context/PromptContext'
 import './EditProfile.css'
 
 function EditProfile() {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
+    const { showConfirm } = usePrompt()
 
     const token = localStorage.getItem('access_token')
 
@@ -165,7 +167,10 @@ function EditProfile() {
     }
 
     const handleRemovePicture = async () => {
-        if (!window.confirm('Are you sure you want to remove your profile picture?')) {
+        const confirmed = await showConfirm(
+            'Are you sure you want to remove your profile picture?'
+        )
+        if (!confirmed) {
             return
         }
 
@@ -291,7 +296,10 @@ function EditProfile() {
     }
 
     const handleDisconnectGoogle = async () => {
-        if (!window.confirm('Are you sure you want to disconnect your Google account?')) {
+        const confirmed = await showConfirm(
+            'Are you sure you want to disconnect your Google account?'
+        )
+        if (!confirmed) {
             return
         }
 

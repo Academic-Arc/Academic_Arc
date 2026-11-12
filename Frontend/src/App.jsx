@@ -27,6 +27,7 @@ import About from './pages/About'
 import Policy from './pages/Policy'
 import SkeletonLoader from './components/SkeletonLoader'
 import BlogDetail from './pages/BlogDetail'
+import { PromptProvider } from './context/PromptContext'
 
 function App() {
 
@@ -101,39 +102,40 @@ function App() {
       location.pathname.startsWith("/blog/");
   return (
     <BackendContext.Provider value={{ backendLoading }}>
+      <PromptProvider>
+        {backendLoading ? (
+          <SkeletonLoader />
+        ) : (
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/submit" element={<Submit />} />
+            <Route path="/category/:type" element={<Category />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/policy" element={<Policy />} />
+            <Route path="/privacy-policy" element={<Policy />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
 
-      {backendLoading ? (
-        <SkeletonLoader />
-      ) : (
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/oauth/callback" element={<OAuthCallback />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/submit" element={<Submit />} />
-          <Route path="/category/:type" element={<Category />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/policy" element={<Policy />} />
-          <Route path="/privacy-policy" element={<Policy />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/posts" element={<AdminPosts />} />
+            <Route path="/admin/posts/:id" element={<AdminPostView />} />
+            <Route path="/admin/categories" element={<AdminCategories />} />
+            <Route path="/admin/featured" element={<AdminFeatured />} />
+            <Route path="/admin/blogs" element={<AdminBlogs />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/users/:user_id" element={<AdminUserView />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/feedback" element={<AdminFeedback />} />
+          </Routes>
+        )}
 
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/posts" element={<AdminPosts />} />
-          <Route path="/admin/posts/:id" element={<AdminPostView />} />
-          <Route path="/admin/categories" element={<AdminCategories />} />
-          <Route path="/admin/featured" element={<AdminFeatured />} />
-          <Route path="/admin/blogs" element={<AdminBlogs />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/users/:user_id" element={<AdminUserView />} />
-          <Route path="/admin/reports" element={<AdminReports />} />
-          <Route path="/admin/feedback" element={<AdminFeedback />} />
-        </Routes>
-      )}
-
-      {showFooter && <Footer />}
+        {showFooter && <Footer />}
+      </PromptProvider>
     </BackendContext.Provider>
   )
 }

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { API_URL } from "../config";
 import './AdminFeatured.css'
 import AdminSidebar from '../components/AdminSidebar'
+import { usePrompt } from '../context/PromptContext'
 
 function AdminFeatured() {
     const navigate = useNavigate()
+    const { showAlert, showToast } = usePrompt()
 
     const [admin, setAdmin] = useState(null)
     const [featuredPosts, setFeaturedPosts] = useState([])
@@ -104,9 +106,11 @@ function AdminFeatured() {
             const data = await response.json()
 
             if (!response.ok) {
-                alert(data.detail || 'Failed to add special mention')
+                showAlert(data.detail || 'Failed to add special mention', 'error')
                 return
             }
+
+            showToast('Special mention added successfully!', 'success')
 
             // Reload featured posts
             const featuredResponse = await fetch(
@@ -125,7 +129,7 @@ function AdminFeatured() {
 
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         } finally {
             setAddingPost(null)
         }
@@ -168,7 +172,7 @@ function AdminFeatured() {
 
             if (!response.ok) {
                 const data = await response.json()
-                alert(data.detail || 'Failed to remove special mention')
+                showAlert(data.detail || 'Failed to remove special mention', 'error')
                 return
             }
 
@@ -177,10 +181,11 @@ function AdminFeatured() {
                     (post) => post.submission_id !== submissionId
                 )
             )
+            showToast('Special mention removed.', 'info')
 
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 

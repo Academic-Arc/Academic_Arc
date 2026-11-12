@@ -7,6 +7,7 @@ from PIL import Image
 from playwright.async_api import async_playwright
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
@@ -20,7 +21,10 @@ from app.schemas.submission import SubmissionCreate, SubmissionUpdate
 
 from app.models.user import User
 from app.models.like import PostLike
+from app.models.comment import PostComment
+from app.models.notification import Notification
 from app.models.student import Student
+from app.schemas.comment import CommentCreate
 
 from app.services.auth import get_current_user, decode_access_token
 
@@ -581,6 +585,18 @@ def get_public_submissions(
         .all()
     )
 
+    like_counts = dict(
+        db.query(PostLike.submission_id, func.count(PostLike.id))
+        .group_by(PostLike.submission_id)
+        .all()
+    )
+
+    comment_counts = dict(
+        db.query(PostComment.submission_id, func.count(PostComment.id))
+        .group_by(PostComment.submission_id)
+        .all()
+    )
+
     results = []
 
     for submission, user, student in submissions:
@@ -612,6 +628,8 @@ def get_public_submissions(
             "media_url": submission.media_url,
             "media_type": submission.media_type,
             "created_at": submission.created_at,
+            "like_count": like_counts.get(submission.id, 0),
+            "comment_count": comment_counts.get(submission.id, 0),
         })
 
     return results
@@ -899,4 +917,267 @@ def get_submission_likes(
         "submission_id": submission_id,
         "like_count": like_count,
         "liked_by_user": user_like is not None
+    }
+
+
+COMMENT_PRESETS = {
+    "positive": [
+        "Amazing work! Keep shining!",
+        "Fantastic creativity and brilliant execution!",
+        "Outstanding effort, absolutely loved this!",
+        "Super talented! This is truly wonderful.",
+        "Exceptionally beautiful and well thought out!",
+        "Masterpiece! Really proud of your work!",
+    ],
+    "satisfactory": [
+        "Good effort! Keep it up!",
+        "Nicely done! Shows good potential.",
+        "Great attempt, nicely presented!",
+        "Neat work! You are on the right track.",
+        "Well executed, good attention to detail.",
+    ],
+    "motivating": [
+        "Great start! Keep practicing and you will get even better.",
+        "Good attempt! Focus on the finer details next time.",
+        "Don't stop here, every practice makes you stronger!",
+        "Unique idea! With a little more polish, it will shine.",
+        "Keep trying, persistence leads to greatness!",
+        "Never give up, you learn something new with every attempt!",
+    ],
+}
+
+
+def normalize_preset_category(category: str) -> str | None:
+    cat = (category or "").strip().lower()
+    if cat in ("positive",):
+        return "positive"
+    if cat in ("satisfactory",):
+        return "satisfactory"
+    if cat in ("motivating", "negetive(motivating)", "negative", "negative(motivating)", "negetive"):
+        return "motivating"
+    return None
+
+
+@router.get("/comment-presets")
+def get_comment_presets():
+    return {
+        "presets": COMMENT_PRESETS,
+        "categories": [
+            {
+                "id": "positive",
+                "label": "Positive",
+                "icon": "🌟",
+                "description": "Appreciative and inspiring feedback",
+                "options": COMMENT_PRESETS["positive"]
+            },
+            {
+                "id": "satisfactory",
+                "label": "Satisfactory",
+                "icon": "👍",
+                "description": "Constructive and acknowledging feedback",
+                "options": COMMENT_PRESETS["satisfactory"]
+            },
+            {
+                "id": "motivating",
+                "label": "Negative (Motivating)",
+                "icon": "💪",
+                "description": "Encouraging persistence and growth",
+                "options": COMMENT_PRESETS["motivating"]
+            }
+        ]
+    }
+
+
+@router.get("/{submission_id}/comments")
+def get_submission_comments(
+    submission_id: int,
+    db: Session = Depends(get_db)
+):
+    submission = (
+        db.query(Submission)
+        .filter(Submission.id == submission_id)
+        .first()
+    )
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found"
+        )
+
+    comments = (
+        db.query(PostComment, User)
+        .join(User, User.id == PostComment.user_id)
+        .filter(PostComment.submission_id == submission_id)
+        .order_by(PostComment.created_at.desc())
+        .all()
+    )
+
+    results = []
+    for comment, user in comments:
+        results.append({
+            "id": comment.id,
+            "submission_id": comment.submission_id,
+            "user_id": comment.user_id,
+            "user_name": user.name,
+            "profile_picture": user.profile_picture,
+            "category": comment.category,
+            "comment_text": comment.comment_text,
+            "created_at": (
+                comment.created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+                if comment.created_at
+                else None
+            ),
+        })
+
+    return {
+        "submission_id": submission_id,
+        "count": len(results),
+        "comments": results
+    }
+
+
+@router.post("/{submission_id}/comments")
+def add_submission_comment(
+    submission_id: int,
+    comment_data: CommentCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    submission = (
+        db.query(Submission)
+        .filter(Submission.id == submission_id)
+        .first()
+    )
+
+    if not submission:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found"
+        )
+
+    normalized_cat = normalize_preset_category(comment_data.category)
+    if not normalized_cat or normalized_cat not in COMMENT_PRESETS:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid comment category. Allowed: positive, satisfactory, or negetive(motivating)."
+        )
+
+    clean_text = comment_data.comment_text.strip()
+    allowed_list = COMMENT_PRESETS[normalized_cat]
+    if clean_text not in allowed_list:
+        raise HTTPException(
+            status_code=400,
+            detail="Only fixed preset comments can be used."
+        )
+
+    new_comment = PostComment(
+        submission_id=submission_id,
+        user_id=current_user.id,
+        category=normalized_cat,
+        comment_text=clean_text
+    )
+
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+
+    # Notify author if not commenting on own submission
+    if submission.user_id != current_user.id:
+        try:
+            notification = Notification(
+                user_id=submission.user_id,
+                submission_id=submission.id,
+                notification_type="new_comment",
+                title="New comment on your post",
+                message=f'{current_user.name} commented on your post: "{clean_text}"'
+            )
+            db.add(notification)
+            db.commit()
+        except Exception as e:
+            print("Failed to dispatch comment notification:", e)
+
+    count = (
+        db.query(PostComment)
+        .filter(PostComment.submission_id == submission_id)
+        .count()
+    )
+
+    return {
+        "message": "Comment posted successfully",
+        "comment": {
+            "id": new_comment.id,
+            "submission_id": new_comment.submission_id,
+            "user_id": new_comment.user_id,
+            "user_name": current_user.name,
+            "profile_picture": current_user.profile_picture,
+            "category": new_comment.category,
+            "comment_text": new_comment.comment_text,
+            "created_at": (
+                new_comment.created_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+                if new_comment.created_at
+                else None
+            ),
+        },
+        "count": count
+    }
+
+
+@router.delete("/{submission_id}/comments/{comment_id}")
+def delete_submission_comment(
+    submission_id: int,
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    comment = (
+        db.query(PostComment)
+        .filter(
+            PostComment.id == comment_id,
+            PostComment.submission_id == submission_id
+        )
+        .first()
+    )
+
+    if not comment:
+        raise HTTPException(
+            status_code=404,
+            detail="Comment not found"
+        )
+
+    if comment.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="You can only delete your own comment"
+        )
+
+    # Remove corresponding notification if present
+    try:
+        orphan_notification = (
+            db.query(Notification)
+            .filter(
+                Notification.submission_id == submission_id,
+                Notification.notification_type == "new_comment",
+                Notification.message.like(f'%"{comment.comment_text}"%')
+            )
+            .first()
+        )
+        if orphan_notification:
+            db.delete(orphan_notification)
+    except Exception as e:
+        print("Failed to remove comment notification:", e)
+
+    db.delete(comment)
+    db.commit()
+
+    count = (
+        db.query(PostComment)
+        .filter(PostComment.submission_id == submission_id)
+        .count()
+    )
+
+    return {
+        "message": "Comment deleted successfully",
+        "submission_id": submission_id,
+        "count": count
     }

@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { API_URL } from "../config";
 import './AdminPosts.css'
 import AdminSidebar from '../components/AdminSidebar'
+import { usePrompt } from '../context/PromptContext'
 
 function AdminPosts() {
     const navigate = useNavigate()
+    const { showAlert, showConfirm, showToast } = usePrompt()
 
     const [admin, setAdmin] = useState(null)
 
@@ -77,7 +79,7 @@ function AdminPosts() {
     }
 
     const handleDelete = async (postId) => {
-        const confirmed = window.confirm(
+        const confirmed = await showConfirm(
             'Are you sure you want to delete this post? This action cannot be undone.'
         )
 
@@ -103,7 +105,7 @@ function AdminPosts() {
                 : await response.json()
 
             if (!response.ok) {
-                alert(data.detail || 'Failed to delete post')
+                showAlert(data.detail || 'Failed to delete post', 'error')
                 return
             }
 
@@ -112,10 +114,11 @@ function AdminPosts() {
                     (post) => post.id !== postId
                 )
             )
+            showToast('Post deleted successfully.', 'info')
 
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 

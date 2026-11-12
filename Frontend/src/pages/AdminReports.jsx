@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../config'
 import './AdminReports.css'
 import AdminSidebar from '../components/AdminSidebar'
+import { usePrompt } from '../context/PromptContext'
 
 function AdminReports() {
     const navigate = useNavigate()
+    const { showAlert, showConfirm, showToast } = usePrompt()
 
     const [admin, setAdmin] = useState(null)
 
@@ -89,7 +91,7 @@ function AdminReports() {
             )
         } catch (error) {
             console.error(error)
-            alert(error.message)
+            showAlert(error.message, 'error')
         }
     }
 
@@ -138,17 +140,17 @@ function AdminReports() {
             setSelectedReport(null)
             setChangeMessage('')
 
-            alert('Change request sent successfully.')
+            showToast('Change request sent successfully.', 'success')
         } catch (error) {
             console.error(error)
-            alert(error.message)
+            showAlert(error.message, 'error')
         } finally {
             setRequestingChanges(false)
         }
     }
 
     const handleDeletePost = async (submissionId) => {
-        const confirmed = window.confirm(
+        const confirmed = await showConfirm(
             'Are you sure you want to permanently delete this post?'
         )
 
@@ -182,10 +184,10 @@ function AdminReports() {
                 )
             )
 
-            alert('Post deleted successfully.')
+            showToast('Post deleted successfully.', 'info')
         } catch (error) {
             console.error(error)
-            alert(error.message)
+            showAlert(error.message, 'error')
         }
     }
 

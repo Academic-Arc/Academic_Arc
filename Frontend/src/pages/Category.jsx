@@ -5,17 +5,84 @@ import './Category.css'
 import FacebookEmbed from './FacebookEmbed'
 import CategorySidebar from '../components/CategorySidebar'
 import Navbar from '../components/Navbar'
+import { usePrompt } from '../context/PromptContext'
+
+const COMMENT_PRESETS = {
+  positive: [
+    'Amazing work! Keep shining!',
+    'Fantastic creativity and brilliant execution!',
+    'Outstanding effort, absolutely loved this!',
+    'Super talented! This is truly wonderful.',
+    'Exceptionally beautiful and well thought out!',
+    'Masterpiece! Really proud of your work!',
+  ],
+  satisfactory: [
+    'Good effort! Keep it up!',
+    'Nicely done! Shows good potential.',
+    'Great attempt, nicely presented!',
+    'Neat work! You are on the right track.',
+    'Well executed, good attention to detail.',
+  ],
+  motivating: [
+    'Great start! Keep practicing and you will get even better.',
+    'Good attempt! Focus on the finer details next time.',
+    "Don't stop here, every practice makes you stronger!",
+    'Unique idea! With a little more polish, it will shine.',
+    'Keep trying, persistence leads to greatness!',
+    'Never give up, you learn something new with every attempt!',
+  ],
+}
+
+const PRESET_CATEGORIES = [
+  { id: 'positive', label: 'Positive', icon: '🌟' },
+  { id: 'satisfactory', label: 'Satisfactory', icon: '👍' },
+  { id: 'motivating', label: 'Negative (Motivating)', icon: '💪' },
+]
+
+const getCategoryBadge = (cat) => {
+  if (cat === 'positive') return { label: 'Positive', icon: '🌟', className: 'pill-positive' }
+  if (cat === 'satisfactory') return { label: 'Satisfactory', icon: '👍', className: 'pill-satisfactory' }
+  return { label: 'Motivating', icon: '💪', className: 'pill-motivating' }
+}
+
+const formatCommentTime = (dateStr) => {
+  if (!dateStr) return ''
+  let isoStr = typeof dateStr === 'string' ? dateStr.trim() : ''
+  if (isoStr && !isoStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(isoStr)) {
+    isoStr += 'Z'
+  }
+  const date = new Date(isoStr)
+  const now = new Date()
+  const diffSec = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000))
+  if (diffSec < 60) return 'Just now'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHours = Math.floor(diffMin / 60)
+  if (diffHours < 24) return `${diffHours}h ago`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+}
 
 function Category() {
   const { type } = useParams()
   const navigate = useNavigate()
   const categoryName = decodeURIComponent(type)
+  const { showAlert, showConfirm, showToast } = usePrompt()
 
   const isLoggedIn = !!localStorage.getItem('access_token')
 
   const [submissions, setSubmissions] = useState([])
   const [likeData, setLikeData] = useState({})
   const [liking, setLiking] = useState({})
+  const [commentCounts, setCommentCounts] = useState({})
+
+  const [activeComments, setActiveComments] = useState([])
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [isPresetOpen, setIsPresetOpen] = useState(false)
+  const [activePresetCategory, setActivePresetCategory] = useState('positive')
+  const [selectedPreset, setSelectedPreset] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
 
   const [ownSubmissionIds, setOwnSubmissionIds] = useState(new Set())
   const [openMenu, setOpenMenu] = useState(null)
@@ -140,6 +207,14 @@ function Category() {
           )
 
         setSubmissions(filtered)
+
+        const initialCommentCounts = {}
+        data.forEach((sub) => {
+          if (sub.id) {
+            initialCommentCounts[sub.id] = sub.comment_count ?? 0
+          }
+        })
+        setCommentCounts((prev) => ({ ...initialCommentCounts, ...prev }))
       })
       .catch((error) => {
         console.error('Error fetching submissions:', error)
@@ -191,6 +266,7 @@ function Category() {
 
     if (submission) {
       setSelectedSubmission(submission);
+      loadComments(submission.id);
     }
   }, [searchParams, submissions])
 
@@ -306,7 +382,7 @@ function Category() {
     const token = localStorage.getItem('access_token')
 
     if (!token) {
-      alert('Please log in to like a post.')
+      showAlert('Please log in to like a post.', 'info')
       return
     }
 
@@ -390,7 +466,7 @@ function Category() {
         await navigator.share(shareData)
       } else {
         await navigator.clipboard.writeText(shareUrl)
-        alert('Link copied to clipboard!')
+        showToast('Link copied to clipboard!', 'success')
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -399,11 +475,129 @@ function Category() {
     }
   }
 
+  const loadComments = async (submissionId) => {
+    setCommentsLoading(true)
+    try {
+      const response = await fetch(`${API_URL}/submissions/${submissionId}/comments`)
+      if (response.ok) {
+        const data = await response.json()
+        setActiveComments(data.comments || [])
+        setCommentCounts((prev) => ({
+          ...prev,
+          [submissionId]: data.count ?? (data.comments?.length || 0),
+        }))
+      }
+    } catch (err) {
+      console.error('Error loading comments:', err)
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  const openPostPopup = (submission, openPresets = false) => {
+    setSelectedSubmission(submission)
+    setIsPresetOpen(openPresets)
+    setSelectedPreset('')
+    setActivePresetCategory('positive')
+    loadComments(submission.id)
+    fetchLikes(submission.id)
+  }
+
+  const handlePostComment = async () => {
+    if (!selectedSubmission || !selectedPreset) return
+    if (!isLoggedIn) {
+      showToast('Please sign in to post a comment.', 'error')
+      return
+    }
+
+    setSubmittingComment(true)
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_URL}/submissions/${selectedSubmission.id}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          category: activePresetCategory,
+          comment_text: selectedPreset,
+        }),
+      })
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.detail || 'Could not post comment.')
+      }
+
+      const data = await response.json()
+      showToast('Comment posted successfully!', 'success')
+
+      setActiveComments((prev) => [data.comment, ...prev])
+      setCommentCounts((prev) => ({
+        ...prev,
+        [selectedSubmission.id]: data.count,
+      }))
+      setSelectedPreset('')
+      setIsPresetOpen(false)
+    } catch (err) {
+      console.error('Error posting comment:', err)
+      showToast(err.message || 'Failed to post comment.', 'error')
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    if (!selectedSubmission) return
+    const confirmed = await showConfirm(
+      'Are you sure you want to delete this comment?',
+      'Delete Comment',
+      'Delete',
+      'Cancel'
+    )
+    if (!confirmed) return
+
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(
+        `${API_URL}/submissions/${selectedSubmission.id}/comments/${commentId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.detail || 'Could not delete comment.')
+      }
+
+      const data = await response.json()
+      showToast('Comment deleted.', 'success')
+
+      setActiveComments((prev) => prev.filter((c) => c.id !== commentId))
+      setCommentCounts((prev) => ({
+        ...prev,
+        [selectedSubmission.id]: data.count,
+      }))
+    } catch (err) {
+      console.error('Error deleting comment:', err)
+      showToast(err.message || 'Failed to delete comment.', 'error')
+    }
+  }
+
   const closeSubmissionViewer = () => {
     setSelectedSubmission(null)
+    setActiveComments([])
+    setIsPresetOpen(false)
+    setSelectedPreset('')
 
     const newParams = new URLSearchParams(searchParams)
     newParams.delete('post')
+    newParams.delete('submission')
 
     setSearchParams(newParams, { replace: true })
   }
@@ -415,7 +609,7 @@ function Category() {
   }
 
   const handleDelete = async (submissionId) => {
-    const confirmed = window.confirm(
+    const confirmed = await showConfirm(
       'Are you sure you want to delete this submission? This cannot be undone.'
     )
 
@@ -424,7 +618,7 @@ function Category() {
     const token = localStorage.getItem('access_token')
 
     if (!token) {
-      alert('Please log in to delete your post.')
+      showAlert('Please log in to delete your post.', 'warning')
       return
     }
 
@@ -460,9 +654,10 @@ function Category() {
       })
 
       setOpenMenu(null)
+      showToast('Submission deleted successfully.', 'info')
     } catch (error) {
       console.error('Error deleting submission:', error)
-      alert(error.message)
+      showAlert(error.message, 'error')
     }
   }
 
@@ -472,7 +667,7 @@ function Category() {
     const token = localStorage.getItem('access_token')
 
     if (!token) {
-      alert('Please log in to report a post.')
+      showAlert('Please log in to report a post.', 'warning')
       return
     }
 
@@ -506,7 +701,11 @@ function Category() {
         )
       }
 
-      alert('Thank you. Your report has been submitted.')
+      showAlert({
+        title: 'Report Submitted',
+        message: 'Thank you. Your report has been submitted for review.',
+        type: 'success'
+      })
 
       setReportSubmission(null)
       setReportReason('')
@@ -515,7 +714,7 @@ function Category() {
 
     } catch (error) {
       console.error('Error submitting report:', error)
-      alert(error.message)
+      showAlert(error.message, 'error')
     } finally {
       setReportSubmitting(false)
     }
@@ -605,7 +804,7 @@ function Category() {
                   if (event.key === 'Enter' && searchResults.length > 0) {
                     const submission = searchResults[0]
 
-                    setSelectedSubmission(submission)
+                    openPostPopup(submission, false)
                     setSearchOpen(false)
                     setSearchQuery('')
                   }
@@ -635,7 +834,7 @@ function Category() {
                       type="button"
                       className="search-result-item"
                       onClick={() => {
-                        setSelectedSubmission(submission)
+                        openPostPopup(submission, false)
                         setSearchOpen(false)
                         setSearchQuery('')
                       }}
@@ -831,7 +1030,7 @@ function Category() {
                                     className="report-option"
                                     onClick={() => {
                                       if (!isLoggedIn) {
-                                        alert('Please log in to report a post.')
+                                        showAlert('Please log in to report a post.', 'info')
                                         setOpenMenu(null)
                                         return
                                       }
@@ -860,7 +1059,11 @@ function Category() {
                         {!videoType &&
                           submission.media_url && (
 
-                            <div className="submission-image">
+                            <div
+                              className="submission-image"
+                              onClick={() => openPostPopup(submission, false)}
+                              style={{ cursor: 'pointer' }}
+                            >
 
                               <img
                                 src={submission.media_url}
@@ -958,7 +1161,10 @@ function Category() {
 
                         <div className="submission-content">
 
-                          <h2>
+                          <h2
+                            onClick={() => openPostPopup(submission, false)}
+                            style={{ cursor: 'pointer' }}
+                          >
                             {submission.heading}
                           </h2>
 
@@ -974,7 +1180,11 @@ function Category() {
 
                           {submission.written_content && (
 
-                            <div className="written-content-box">
+                            <div
+                              className="written-content-box"
+                              onClick={() => openPostPopup(submission, false)}
+                              style={{ cursor: 'pointer' }}
+                            >
 
                               <div className="written-content">
                                 {submission.written_content}
@@ -1000,20 +1210,47 @@ function Category() {
                               disabled={
                                 liking[submission.id]
                               }
+                              aria-label="Like post"
                             >
 
-                              <span className="like-icon">
-                                {likeData[submission.id]
-                                  ?.liked_by_user
-                                  ? '♥'
-                                  : '♡'}
+                              <span className="like-icon-svg">
+                                <img
+                                  src={
+                                    likeData[submission.id]?.liked_by_user
+                                      ? '/Icons/LIKE.svg'
+                                      : '/Icons/DISLIKE.svg'
+                                  }
+                                  alt={
+                                    likeData[submission.id]?.liked_by_user
+                                      ? 'Liked'
+                                      : 'Like'
+                                  }
+                                />
                               </span>
 
                               <span>
-                                {likeData[submission.id]
-                                  ?.like_count ?? 0}
+                                {likeData[submission.id]?.like_count ?? 0}
                               </span>
 
+                            </button>
+
+                            {/* COMMENT */}
+
+                            <button
+                              className="submission-comment"
+                              onClick={() =>
+                                openPostPopup(submission, true)
+                              }
+                              aria-label="Comment on submission"
+                            >
+                              <img
+                                src="/Icons/comment.svg"
+                                alt="Comment"
+                                className="submission-comment-icon"
+                              />
+                              <span>
+                                {commentCounts[submission.id] ?? submission.comment_count ?? 0}
+                              </span>
                             </button>
 
                             {/* SHARE */}
@@ -1350,6 +1587,220 @@ function Category() {
                   Open original ↗
                 </a>
               )}
+
+              {/* POPUP POST ACTIONS (LIKE & SHARE) */}
+              <div className="viewer-actions-bar">
+                <button
+                  className={`submission-like ${
+                    likeData[selectedSubmission.id]?.liked_by_user
+                      ? 'liked'
+                      : ''
+                  }`}
+                  onClick={() =>
+                    handleLike(selectedSubmission.id)
+                  }
+                  disabled={
+                    liking[selectedSubmission.id]
+                  }
+                  aria-label="Like post"
+                >
+                  <span className="like-icon-svg">
+                    <img
+                      src={
+                        likeData[selectedSubmission.id]?.liked_by_user
+                          ? '/Icons/LIKE.svg'
+                          : '/Icons/DISLIKE.svg'
+                      }
+                      alt={
+                        likeData[selectedSubmission.id]?.liked_by_user
+                          ? 'Liked'
+                          : 'Like'
+                      }
+                    />
+                  </span>
+                  <span>
+                    {likeData[selectedSubmission.id]?.like_count ?? 0}
+                  </span>
+                </button>
+
+                <button
+                  className="submission-share"
+                  onClick={() =>
+                    handleShare(selectedSubmission)
+                  }
+                  aria-label="Share submission"
+                >
+                  <img
+                    src="/Icons/share.svg"
+                    alt="Share"
+                  />
+                  <span>Share</span>
+                </button>
+              </div>
+
+              {/* COMMENTS SECTION */}
+              <div className="viewer-comments-section">
+                <div className="viewer-comments-header">
+                  <h3>
+                    <span>💬 Comments</span>
+                    <span className="viewer-comments-count-badge">
+                      {activeComments.length}
+                    </span>
+                  </h3>
+                </div>
+
+                {/* COMMENTS LIST */}
+                <div className="viewer-comments-list">
+                  {commentsLoading ? (
+                    <div className="viewer-comments-loading">Loading comments...</div>
+                  ) : activeComments.length === 0 ? (
+                    <div className="viewer-comments-empty">
+                      <p>No comments yet</p>
+                      <span>Select a preset comment below to share encouraging feedback!</span>
+                    </div>
+                  ) : (
+                    activeComments.map((comment) => {
+                      const badge = getCategoryBadge(comment.category)
+                      const isOwner = user && (user.id === comment.user_id || user.role === 'admin')
+                      return (
+                        <div key={comment.id} className="viewer-comment-item">
+                          <div className="comment-user-avatar">
+                            {comment.profile_picture ? (
+                              <img src={comment.profile_picture} alt={comment.user_name} />
+                            ) : (
+                              comment.user_name?.charAt(0).toUpperCase() || 'U'
+                            )}
+                          </div>
+                          <div className="comment-body">
+                            <div className="comment-meta">
+                              <strong className="comment-author">{comment.user_name}</strong>
+                              <span className={`comment-category-pill ${badge.className}`}>
+                                {badge.icon} {badge.label}
+                              </span>
+                              <span className="comment-time">
+                                {formatCommentTime(comment.created_at)}
+                              </span>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  className="comment-delete-btn"
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  title="Delete comment"
+                                >
+                                  <img src="/Icons/f7_trash.svg" alt="Delete" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="comment-text-bubble">
+                              {comment.comment_text}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+
+                {/* ADD COMMENT PRESET PICKER */}
+                <div className="viewer-add-comment-wrapper">
+                  {!isLoggedIn ? (
+                    <div className="viewer-comment-signin-prompt">
+                      <span>Log in to share encouraging feedback!</span>
+                      <button
+                        type="button"
+                        className="signin-to-comment-btn"
+                        onClick={() => navigate('/login', { state: { from: location.pathname } })}
+                      >
+                        Sign In
+                      </button>
+                    </div>
+                  ) : !isPresetOpen ? (
+                    <button
+                      type="button"
+                      className="open-presets-trigger-btn"
+                      onClick={() => setIsPresetOpen(true)}
+                    >
+                      <span className="open-presets-icon">💬</span>
+                      <span className="open-presets-placeholder">Choose a preset comment to share...</span>
+                      <span className="open-presets-action-label">Add Comment</span>
+                    </button>
+                  ) : (
+                    <div className="preset-picker-panel">
+                      <div className="preset-picker-header">
+                        <span className="preset-picker-title">Select a preset comment:</span>
+                        <button
+                          type="button"
+                          className="preset-picker-close-btn"
+                          onClick={() => {
+                            setIsPresetOpen(false)
+                            setSelectedPreset('')
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Category tabs */}
+                      <div className="preset-category-tabs">
+                        {PRESET_CATEGORIES.map((cat) => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            className={`preset-tab tab-${cat.id} ${
+                              activePresetCategory === cat.id ? 'active' : ''
+                            }`}
+                            onClick={() => {
+                              setActivePresetCategory(cat.id)
+                              setSelectedPreset('')
+                            }}
+                          >
+                            <span>{cat.icon}</span> {cat.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Presets list */}
+                      <div className="preset-options-list">
+                        {COMMENT_PRESETS[activePresetCategory]?.map((presetText) => {
+                          const isSelected = selectedPreset === presetText
+                          return (
+                            <button
+                              key={presetText}
+                              type="button"
+                              className={`preset-option-chip ${isSelected ? 'selected' : ''}`}
+                              onClick={() => setSelectedPreset(presetText)}
+                            >
+                              <span className="preset-check-icon">
+                                {isSelected ? '✓' : '•'}
+                              </span>
+                              <span className="preset-chip-text">{presetText}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="preset-picker-footer">
+                        <div className="preset-selected-preview">
+                          {selectedPreset ? (
+                            <span className="preview-text">"{selectedPreset}"</span>
+                          ) : (
+                            <span className="preview-prompt">Tap a preset above to choose it</span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="post-comment-btn"
+                          disabled={!selectedPreset || submittingComment}
+                          onClick={handlePostComment}
+                        >
+                          {submittingComment ? 'Posting...' : 'Post Comment'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
             </div>
 

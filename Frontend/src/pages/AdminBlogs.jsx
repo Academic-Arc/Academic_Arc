@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../config'
 import AdminSidebar from '../components/AdminSidebar'
+import { usePrompt } from '../context/PromptContext'
 import './AdminBlogs.css'
 
 function AdminBlogs() {
   const navigate = useNavigate()
+  const { showAlert, showConfirm } = usePrompt()
 
   const [admin, setAdmin] = useState(null)
   const [blogs, setBlogs] = useState([])
@@ -205,7 +207,10 @@ function AdminBlogs() {
   }
 
   const handleDelete = async (blogId) => {
-    if (!window.confirm('Are you sure you want to delete this editorial article?')) return
+    const confirmed = await showConfirm(
+      'Are you sure you want to delete this editorial article?'
+    )
+    if (!confirmed) return
 
     try {
       const res = await fetch(`${API_URL}/blogs/admin/${blogId}`, {
@@ -222,7 +227,7 @@ function AdminBlogs() {
       setSuccessMsg('Blog post deleted successfully')
       verifyAdminAndLoad()
     } catch (err) {
-      alert(err.message)
+      showAlert(err.message, 'error')
     }
   }
 

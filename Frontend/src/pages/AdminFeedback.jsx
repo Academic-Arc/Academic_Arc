@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { API_URL } from '../config'
 import './AdminFeedback.css'
 import AdminSidebar from '../components/AdminSidebar'
+import { usePrompt } from '../context/PromptContext'
 
 function AdminFeedback() {
     const navigate = useNavigate()
+    const { showAlert, showConfirm, showToast } = usePrompt()
 
     const [admin, setAdmin] = useState(null)
     const [feedback, setFeedback] = useState([])
@@ -88,12 +90,12 @@ function AdminFeedback() {
             )
         } catch (error) {
             console.error(error)
-            alert(error.message)
+            showAlert(error.message, 'error')
         }
     }
 
     const handleDeleteFeedback = async (feedbackId) => {
-        const confirmed = window.confirm(
+        const confirmed = await showConfirm(
             'Are you sure you want to permanently delete this feedback?'
         )
 
@@ -127,10 +129,10 @@ function AdminFeedback() {
                 )
             )
 
-            alert('Feedback deleted successfully.')
+            showToast('Feedback deleted successfully.', 'info')
         } catch (error) {
             console.error(error)
-            alert(error.message)
+            showAlert(error.message, 'error')
         }
     }
 
