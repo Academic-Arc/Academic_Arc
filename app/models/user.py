@@ -6,6 +6,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 from app.models.security_question import SecurityQuestion
+from app.models.student import Student
+from app.models.oauth_account import OAuthAccount
 
 
 class User(Base):

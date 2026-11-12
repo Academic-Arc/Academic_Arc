@@ -110,6 +110,8 @@ def get_public_featured(db: Session = Depends(get_db)):
 
         results.append({
             "id": submission.id,
+            "user_id": submission.user_id,
+            "share_token": submission.share_token,
             "content_type": submission.content_type,
             "student_name": user.name,
             "student_class": submission.student_class,
@@ -159,6 +161,8 @@ def get_public_featured(db: Session = Depends(get_db)):
 
         results.append({
             "id": submission.id,
+            "user_id": submission.user_id,
+            "share_token": submission.share_token,
             "content_type": submission.content_type,
             "student_name": user.name,
             "student_class": submission.student_class,

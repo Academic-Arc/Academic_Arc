@@ -34,7 +34,10 @@ from app.routes.blog import router as blog_router
 from app.services.facebook import close_facebook_browser
 
 
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print("Warning: Base.metadata.create_all error:", e)
 
 
 app = FastAPI(
