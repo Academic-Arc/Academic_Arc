@@ -10,6 +10,7 @@ import traceback
 
 from PIL import Image
 from datetime import datetime, timedelta, date
+from urllib.parse import urlparse
 from app.supabase import supabase
 
 from authlib.integrations.starlette_client import OAuth
@@ -54,11 +55,20 @@ oauth.register(
 )
 
 @router.get("/google")
-async def google_login(request: Request):
+async def google_login(request: Request, link_token: str | None = None):
     if settings.FRONTEND_URL.startswith("https://"):
         redirect_uri = "https://api.academicarc.in/auth/google/callback"
     else:
         redirect_uri = str(request.url_for("google_callback"))
+
+    if link_token:
+        payload = decode_access_token(link_token)
+        if payload and payload.get("user_id"):
+            request.session["link_user_id"] = payload.get("user_id")
+        else:
+            request.session.pop("link_user_id", None)
+    else:
+        request.session.pop("link_user_id", None)
         
     return await oauth.google.authorize_redirect(
         request,
@@ -103,6 +113,48 @@ async def google_callback(
     if not email_verified:
         return RedirectResponse(
             url=f"{settings.FRONTEND_URL}/login?oauth_error=google_email_not_verified"
+        )
+
+    # Check if this flow is linking to an existing logged-in user
+    link_user_id = request.session.pop("link_user_id", None)
+
+    if link_user_id:
+        target_user = db.query(User).filter(User.id == link_user_id).first()
+        if not target_user:
+            return RedirectResponse(
+                url=f"{settings.FRONTEND_URL}/profile/edit?oauth_error=user_not_found"
+            )
+
+        existing_oauth = (
+            db.query(OAuthAccount)
+            .filter(
+                OAuthAccount.provider == "google",
+                OAuthAccount.provider_user_id == google_user_id
+            )
+            .first()
+        )
+
+        if existing_oauth:
+            if existing_oauth.user_id != target_user.id:
+                return RedirectResponse(
+                    url=f"{settings.FRONTEND_URL}/profile/edit?oauth_error=already_linked_to_other"
+                )
+            else:
+                return RedirectResponse(
+                    url=f"{settings.FRONTEND_URL}/profile/edit?oauth_info=already_linked"
+                )
+
+        new_oauth = OAuthAccount(
+            user_id=target_user.id,
+            provider="google",
+            provider_user_id=google_user_id,
+            provider_email=email
+        )
+        db.add(new_oauth)
+        db.commit()
+
+        return RedirectResponse(
+            url=f"{settings.FRONTEND_URL}/profile/edit?oauth_success=google_connected"
         )
 
     # Check whether this Google account is already connected
@@ -316,6 +368,68 @@ def oauth_setup(
     return {
         "message": "OAuth account setup completed successfully",
         "access_token": access_token
+    }
+
+@router.delete("/google/disconnect")
+def disconnect_google(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    oauth_account = (
+        db.query(OAuthAccount)
+        .filter(
+            OAuthAccount.user_id == user.id,
+            OAuthAccount.provider == "google"
+        )
+        .first()
+    )
+
+    if not oauth_account:
+        raise HTTPException(
+            status_code=404,
+            detail="Google account is not connected"
+        )
+
+    # Security check: User must have a set password so they are not locked out
+    if not user.password_hash:
+        raise HTTPException(
+            status_code=400,
+            detail="You must set a password before disconnecting your Google account."
+        )
+
+    db.delete(oauth_account)
+    db.commit()
+
+    return {
+        "message": "Google account disconnected successfully"
     }
 
 SECURITY_QUESTIONS = {
@@ -556,6 +670,15 @@ def get_current_user(
         .first()
     )
 
+    oauth_google = (
+        db.query(OAuthAccount)
+        .filter(
+            OAuthAccount.user_id == user.id,
+            OAuthAccount.provider == "google"
+        )
+        .first()
+    )
+
     return {
         "user_id": user.id,
         "name": user.name,
@@ -572,7 +695,9 @@ def get_current_user(
             "student_id": student.id,
             "school": student.school,
             "student_class": student.student_class
-        } if student else None
+        } if student else None,
+        "is_google_connected": oauth_google is not None,
+        "google_email": oauth_google.provider_email if oauth_google else None,
     }
 
 @router.put("/profile")
@@ -653,11 +778,110 @@ def update_profile(
     user.district = profile_data.district
     user.village_locality = profile_data.village_locality
 
+    if profile_data.dob is not None:
+        user.dob = profile_data.dob
+
+    if profile_data.is_student is not None:
+        user.is_student = profile_data.is_student
+
+        if user.is_student:
+            if not profile_data.school or not profile_data.school.strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="School name is required for students."
+                )
+            if not profile_data.student_class or not profile_data.student_class.strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="Class is required for students."
+                )
+
+            student = (
+                db.query(Student)
+                .filter(Student.user_id == user.id)
+                .first()
+            )
+
+            if student:
+                student.school = profile_data.school.strip()
+                student.student_class = profile_data.student_class.strip()
+            else:
+                student = Student(
+                    user_id=user.id,
+                    school=profile_data.school.strip(),
+                    student_class=profile_data.student_class.strip()
+                )
+                db.add(student)
+        else:
+            student = (
+                db.query(Student)
+                .filter(Student.user_id == user.id)
+                .first()
+            )
+            if student:
+                db.delete(student)
+
     db.commit()
     db.refresh(user)
 
     return {
         "message": "Profile updated successfully"
+    }
+
+@router.delete("/profile-picture")
+def delete_profile_picture(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    payload = decode_access_token(credentials.credentials)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user_id = payload.get("user_id")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    old_picture = user.profile_picture
+
+    if old_picture and "/storage/v1/object/public/profile-pictures/" in old_picture:
+        try:
+            parsed_url = urlparse(old_picture)
+            file_name = parsed_url.path.split(
+                "/storage/v1/object/public/profile-pictures/",
+                1
+            )[1]
+
+            if file_name:
+                supabase.storage.from_("profile-pictures").remove([file_name])
+        except Exception as error:
+            print("Error deleting old profile picture:", repr(error))
+
+    user.profile_picture = None
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "Profile picture removed successfully"
     }
 
 @router.post("/profile-picture")

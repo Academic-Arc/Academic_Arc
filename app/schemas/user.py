@@ -75,6 +75,20 @@ class UserProfileUpdate(BaseModel):
         max_length=200
     )
 
+    dob: date | None = None
+
+    is_student: bool | None = None
+
+    school: str | None = Field(
+        default=None,
+        max_length=200
+    )
+
+    student_class: str | None = Field(
+        default=None,
+        max_length=50
+    )
+
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str = Field(

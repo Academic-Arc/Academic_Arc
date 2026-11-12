@@ -9,6 +9,7 @@ import Signup from './pages/Signup'
 import OAuthCallback from "./pages/OAuthCallback";
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
+import EditProfile from './pages/EditProfile'
 import Submit from './pages/Submit'
 import Category from './pages/Category'
 import AdminDashboard from './pages/AdminDashboard'
@@ -91,6 +92,7 @@ function App() {
       location.pathname === "/" ||
       location.pathname === "/dashboard" ||
       location.pathname === "/profile" ||
+      location.pathname === "/profile/edit" ||
       location.pathname === "/submit" ||
       location.pathname === "/about" ||
       location.pathname === "/policy" ||
@@ -110,6 +112,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/submit" element={<Submit />} />
           <Route path="/category/:type" element={<Category />} />
           <Route path="/about" element={<About />} />

@@ -615,6 +615,11 @@
     border: none !important;
 }
 
+.facebook-grid-embed.fb-landscape iframe {
+    transform-origin: top center !important;
+    transform: translateX(-50%) scale(1.78) !important;
+}
+
 .viewer-writing {
     width: 100%;
     height: 100%;
