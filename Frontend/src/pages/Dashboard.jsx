@@ -7,6 +7,7 @@ import FacebookEmbed from './FacebookEmbed'
 import Navbar from '../components/Navbar'
 import SkeletonLoader from '../components/SkeletonLoader'
 import BlogSection from '../components/BlogSection'
+import SubmissionModal from '../components/SubmissionModal'
 
 const isYouTubeUrl = (url) => {
   return url?.includes('youtube.com') || url?.includes('youtu.be')
@@ -44,9 +45,13 @@ const isFacebookUrl = (url) => {
   return url?.includes('facebook.com') || url?.includes('fb.watch')
 }
 
-function FeaturedCard({ post }) {
+function FeaturedCard({ post, onCardClick }) {
   return (
-    <article key={post.id} className="featured-card">
+    <article
+      key={post.id}
+      className="featured-card"
+      onClick={() => onCardClick?.(post)}
+    >
 
       {post.also_top_post && (
         <div className="featured-card-badge">
@@ -151,6 +156,7 @@ function Dashboard() {
   const isLoggedIn = !!token
 
   const [featuredPosts, setFeaturedPosts] = useState([])
+  const [selectedSubmission, setSelectedSubmission] = useState(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [user, setUser] = useState(() => {
     try {
@@ -533,6 +539,7 @@ function Dashboard() {
                   <FeaturedCard
                     key={post.id}
                     post={post}
+                    onCardClick={setSelectedSubmission}
                   />
                 ))}
               </div>
@@ -592,6 +599,7 @@ function Dashboard() {
                   <FeaturedCard
                     key={post.id}
                     post={post}
+                    onCardClick={setSelectedSubmission}
                   />
                 ))}
               </div>
@@ -604,6 +612,14 @@ function Dashboard() {
 
       {/* EDITORIAL BLOG SECTION (BELOW FEATURED) */}
       <BlogSection />
+
+      {/* SUBMISSION VIEWER POPUP MODAL */}
+      {selectedSubmission && (
+        <SubmissionModal
+          submission={selectedSubmission}
+          onClose={() => setSelectedSubmission(null)}
+        />
+      )}
     </div>
   )
 }
