@@ -118,6 +118,29 @@ function NotificationBell({ theme = 'light' }) {
     }
   };
 
+  const handleMarkAllAsRead = async (e) => {
+    e.stopPropagation();
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/notifications/read-all`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setNotifications((prev) =>
+          prev.map((item) => ({ ...item, is_read: true }))
+        );
+      }
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
   return (
     <div
       className={`notification-wrapper notification-${theme}`}
@@ -144,6 +167,15 @@ function NotificationBell({ theme = 'light' }) {
         <div className="notification-dropdown">
           <div className="notification-header">
             <span>Notifications</span>
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                className="notification-mark-all"
+                onClick={handleMarkAllAsRead}
+              >
+                Mark all as read
+              </button>
+            )}
           </div>
 
           {notifications.length === 0 ? (
