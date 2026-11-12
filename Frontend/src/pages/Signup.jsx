@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_URL } from "../config";
+import { usePrompt } from '../context/PromptContext'
 import './Signup.css'
 
 function Signup() {
     const navigate = useNavigate()
+    const { showAlert } = usePrompt()
 
     // Redirect already signed-in users away from the signup page
     useEffect(() => {
@@ -149,7 +151,7 @@ function Signup() {
         e.preventDefault()
 
         if (!formData.email && !formData.phone) {
-            alert('Please enter either an email address or phone number')
+            showAlert('Please enter either an email address or phone number', 'warning')
             return
         }
 
@@ -197,17 +199,21 @@ function Signup() {
 
             if (!response.ok) {
                 console.error('Signup error:', data)
-                alert(JSON.stringify(data.detail, null, 2))
+                showAlert(data.detail || 'Signup failed. Please check your information.', 'error')
                 return
             }
 
             localStorage.setItem('access_token', data.access_token)
 
-            alert('Signup successful!')
+            await showAlert({
+                title: 'Welcome to Academic Arc!',
+                message: 'Your account has been created successfully.',
+                type: 'success'
+            })
             navigate('/')
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 

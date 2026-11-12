@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL } from "../config";
+import { usePrompt } from '../context/PromptContext'
 import './Login.css'
 
 function Login() {
     const navigate = useNavigate()
     const location = useLocation()
+    const { showAlert, showToast } = usePrompt()
     const oauthError =
         new URLSearchParams(location.search).get('oauth_error')
     const [identifier, setIdentifier] = useState('')
@@ -59,7 +61,7 @@ function Login() {
         e.preventDefault()
 
         if (!identifier) {
-            alert('Please enter your email or phone number')
+            showAlert('Please enter your email or phone number', 'warning')
             return
         }
 
@@ -80,7 +82,7 @@ function Login() {
             const data = await response.json()
 
             if (!response.ok) {
-                alert(data.detail || 'Could not start password recovery')
+                showAlert(data.detail || 'Could not start password recovery', 'error')
                 return
             }
 
@@ -97,7 +99,7 @@ function Login() {
 
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 
@@ -129,7 +131,7 @@ function Login() {
             const data = await response.json()
 
             if (!response.ok) {
-                alert(data.detail || 'Incorrect security answers')
+                showAlert(data.detail || 'Incorrect security answers', 'error')
                 return
             }
 
@@ -138,7 +140,7 @@ function Login() {
 
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 
@@ -163,11 +165,15 @@ function Login() {
             const data = await response.json()
 
             if (!response.ok) {
-                alert(data.detail || 'Could not reset password')
+                showAlert(data.detail || 'Could not reset password', 'error')
                 return
             }
 
-            alert('Password reset successfully!')
+            showAlert({
+                title: 'Password Reset',
+                message: 'Password reset successfully! You can now log in with your new password.',
+                type: 'success'
+            })
 
             setForgotPassword(false)
             setResetMode(false)
@@ -180,7 +186,7 @@ function Login() {
 
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 
@@ -209,7 +215,7 @@ function Login() {
             console.log(data)
 
             if (!response.ok) {
-                alert(data.detail || 'Login failed')
+                showAlert(data.detail || 'Login failed', 'error')
                 return
             }
 
@@ -229,7 +235,7 @@ function Login() {
             }
         } catch (error) {
             console.error(error)
-            alert('Could not connect to the backend')
+            showAlert('Could not connect to the backend', 'error')
         }
     }
 
