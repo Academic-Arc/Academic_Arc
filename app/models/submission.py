@@ -15,7 +15,7 @@ class Submission(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    student_class = Column(String(50), nullable=False)
+    student_class = Column(String(50), nullable=True)
 
     heading = Column(String(200), nullable=False)
 

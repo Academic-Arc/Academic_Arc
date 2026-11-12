@@ -9,6 +9,7 @@ import Signup from './pages/Signup'
 import OAuthCallback from "./pages/OAuthCallback";
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
+import EditProfile from './pages/EditProfile'
 import Submit from './pages/Submit'
 import Category from './pages/Category'
 import AdminDashboard from './pages/AdminDashboard'
@@ -23,6 +24,7 @@ import AdminReports from './pages/AdminReports'
 import AdminFeedback from './pages/AdminFeedback'
 import Footer from './components/Footer'
 import About from './pages/About'
+import Policy from './pages/Policy'
 import SkeletonLoader from './components/SkeletonLoader'
 import BlogDetail from './pages/BlogDetail'
 
@@ -90,8 +92,11 @@ function App() {
       location.pathname === "/" ||
       location.pathname === "/dashboard" ||
       location.pathname === "/profile" ||
+      location.pathname === "/profile/edit" ||
       location.pathname === "/submit" ||
       location.pathname === "/about" ||
+      location.pathname === "/policy" ||
+      location.pathname === "/privacy-policy" ||
       location.pathname.startsWith("/category/") ||
       location.pathname.startsWith("/blog/");
   return (
@@ -107,9 +112,12 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/submit" element={<Submit />} />
           <Route path="/category/:type" element={<Category />} />
           <Route path="/about" element={<About />} />
+          <Route path="/policy" element={<Policy />} />
+          <Route path="/privacy-policy" element={<Policy />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
 
           <Route path="/admin" element={<AdminDashboard />} />

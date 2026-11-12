@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class SubmissionCreate(BaseModel):
     content_type: str
-    student_class: str
+    student_class: str | None = None
     heading: str = Field(max_length=200)
     description: str
     written_content: str | None = None
@@ -12,7 +12,7 @@ class SubmissionCreate(BaseModel):
 
 class SubmissionUpdate(BaseModel):
     content_type: str
-    student_class: str
+    student_class: str | None = None
     heading: str = Field(max_length=200)
     description: str
     written_content: str | None = None

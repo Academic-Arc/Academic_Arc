@@ -157,12 +157,57 @@ function FacebookEmbed({ url, className = '' }) {
 
         containerRef.current.appendChild(video)
 
+        const detectOrientation = () => {
+          if (cancelled || !containerRef.current) return
+          const span = containerRef.current.querySelector('span')
+          const iframe = containerRef.current.querySelector('iframe')
+
+          let width = 0
+          let height = 0
+
+          if (span && span.style) {
+            const spanH = parseFloat(span.style.height)
+            const spanW = parseFloat(span.style.width)
+            if (spanH && spanW) {
+              height = spanH
+              width = spanW
+            }
+          }
+
+          if (!height && iframe) {
+            const hAttr = parseFloat(iframe.getAttribute('height'))
+            const wAttr = parseFloat(iframe.getAttribute('width'))
+            if (hAttr && wAttr) {
+              height = hAttr
+              width = wAttr
+            }
+          }
+
+          if (!height && iframe) {
+            height = iframe.clientHeight
+            width = iframe.clientWidth
+          }
+
+          if (width && height) {
+            if (width > height * 1.15) {
+              containerRef.current.classList.add('fb-landscape')
+              containerRef.current.classList.remove('fb-portrait')
+            } else {
+              containerRef.current.classList.add('fb-portrait')
+              containerRef.current.classList.remove('fb-landscape')
+            }
+          }
+        }
+
         FB.XFBML.parse(containerRef.current, () => {
           if (!cancelled && import.meta.env.DEV) {
             console.log(
               `[FacebookEmbed] Video rendered in ${(performance.now() - tStartRender).toFixed(1)}ms`
             )
           }
+          detectOrientation()
+          setTimeout(detectOrientation, 500)
+          setTimeout(detectOrientation, 1500)
         })
       } catch (err) {
         if (!cancelled) {

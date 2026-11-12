@@ -118,9 +118,14 @@ function FeaturedCard({ post }) {
 
           <div>
             <strong>{post.student_name}</strong>
-            <span>
-              Class {post.student_class} • {post.school}
-            </span>
+            {(post.student_class || post.school) && (
+              <span>
+                {[
+                  post.student_class ? `Class ${post.student_class}` : null,
+                  post.school
+                ].filter(Boolean).join(' • ')}
+              </span>
+            )}
           </div>
         </div>
       </div>

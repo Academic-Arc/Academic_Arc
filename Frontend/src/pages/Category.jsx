@@ -743,9 +743,14 @@ function Category() {
                               {submission.student_name}
                             </strong>
 
-                            <span>
-                              Class {submission.student_class} • {submission.school}
-                            </span>
+                            {(submission.student_class || submission.school) && (
+                              <span>
+                                {[
+                                  submission.student_class ? `Class ${submission.student_class}` : null,
+                                  submission.school
+                                ].filter(Boolean).join(' • ')}
+                              </span>
+                            )}
 
                             <small>
                               Published on{' '}
