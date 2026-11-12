@@ -1442,7 +1442,14 @@ function Profile() {
                             <div className="submission-viewer-header">
 
                                 <div className="viewer-avatar">
-                                    {getInitial()}
+                                    {(user?.profile_picture || selectedSubmission?.profile_picture) ? (
+                                        <img
+                                            src={user?.profile_picture || selectedSubmission?.profile_picture}
+                                            alt={user?.name || selectedSubmission?.student_name || 'Profile'}
+                                        />
+                                    ) : (
+                                        getInitial()
+                                    )}
                                 </div>
 
                                 <div>
