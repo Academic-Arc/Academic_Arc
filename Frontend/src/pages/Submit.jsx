@@ -33,10 +33,12 @@ function Submit() {
     const [loadingSubmission, setLoadingSubmission] = useState(
         isEditMode
     )
+    const [loadingUser, setLoadingUser] = useState(true)
 
     const [saving, setSaving] = useState(false)
 
     useEffect(() => {
+        let isMounted = true
         const fetchUser = async () => {
             try {
                 const response = await fetch(`${API_URL}/auth/me`, {
@@ -50,14 +52,29 @@ function Submit() {
                 }
 
                 const data = await response.json()
+                if (!isMounted) return
                 setUser(data)
+
+                if (!isEditMode && data?.is_student && data?.student?.student_class) {
+                    setStudentClass((prev) => prev || data.student.student_class)
+                }
             } catch (error) {
                 console.error('Error fetching user profile:', error)
+            } finally {
+                if (isMounted) setLoadingUser(false)
             }
         }
 
-        fetchUser()
-    }, [token])
+        if (token) {
+            fetchUser()
+        } else {
+            setLoadingUser(false)
+        }
+
+        return () => {
+            isMounted = false
+        }
+    }, [token, isEditMode])
 
     /*
      * Load existing submission when editing
@@ -165,7 +182,7 @@ function Submit() {
         return <Navigate to="/login" replace />
     }
 
-    if (loadingSubmission) {
+    if (loadingSubmission || loadingUser) {
         return (
             <div className="submit-page">
 
@@ -231,6 +248,11 @@ function Submit() {
             return
         }
 
+        if (user?.is_student && !studentClass.trim()) {
+            setMessage('Please enter your class.')
+            return
+        }
+
         setSaving(true)
 
         try {
@@ -286,7 +308,7 @@ function Submit() {
                         },
                         body: JSON.stringify({
                             content_type: contentType,
-                            student_class: studentClass,
+                            student_class: user?.is_student ? (studentClass.trim() || null) : null,
                             heading: heading,
                             description: description,
                             written_content:
@@ -374,7 +396,7 @@ function Submit() {
                     },
                     body: JSON.stringify({
                         content_type: contentType,
-                        student_class: studentClass,
+                        student_class: user?.is_student ? (studentClass.trim() || null) : null,
                         heading: heading,
                         description: description,
                         written_content:
@@ -487,37 +509,39 @@ function Submit() {
 
                     {/* YOUR DETAILS */}
 
-                    <section className="submit-section">
+                    {user?.is_student && (
+                        <section className="submit-section">
 
-                        <div className="section-title">
-                            <span>♙</span>
-                            <h2>Your Details</h2>
-                        </div>
+                            <div className="section-title">
+                                <span>♙</span>
+                                <h2>Your Details</h2>
+                            </div>
 
-                        <div className="form-field">
+                            <div className="form-field">
 
-                            <label>
-                                Class
-                                <span className="required">
-                                    *
-                                </span>
-                            </label>
+                                <label>
+                                    Class
+                                    <span className="required">
+                                        *
+                                    </span>
+                                </label>
 
-                            <input
-                                type="text"
-                                value={studentClass}
-                                onChange={(e) =>
-                                    setStudentClass(
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="Enter your class"
-                                required
-                            />
+                                <input
+                                    type="text"
+                                    value={studentClass}
+                                    onChange={(e) =>
+                                        setStudentClass(
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder="Enter your class"
+                                    required
+                                />
 
-                        </div>
+                            </div>
 
-                    </section>
+                        </section>
+                    )}
 
 
                     {/* CONTENT DETAILS */}

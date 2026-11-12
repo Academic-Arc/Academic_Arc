@@ -92,6 +92,24 @@ def create_submission(
             detail="Invalid token"
         )
 
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if user.is_student:
+        if not submission_data.student_class or not submission_data.student_class.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Class is required for students."
+            )
+        final_student_class = submission_data.student_class.strip()
+    else:
+        final_student_class = None
+
     if submission_data.media_url:
         if not validate_external_url(submission_data.media_url):
             raise HTTPException(
@@ -110,7 +128,7 @@ def create_submission(
     new_submission = Submission(
         content_type=submission_data.content_type,
         user_id=user_id,
-        student_class=submission_data.student_class,
+        student_class=final_student_class,
         heading=submission_data.heading,
         description=submission_data.description,
         written_content=submission_data.written_content,
@@ -370,6 +388,14 @@ def update_submission(
             detail="Invalid token"
         )
 
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
     submission = db.query(Submission).filter(
         Submission.id == submission_id,
         Submission.user_id == user_id
@@ -380,6 +406,16 @@ def update_submission(
             status_code=404,
             detail="Submission not found or you do not have permission to edit it."
         )
+
+    if user.is_student:
+        if not submission_data.student_class or not submission_data.student_class.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Class is required for students."
+            )
+        updated_student_class = submission_data.student_class.strip()
+    else:
+        updated_student_class = None
 
     # Validate external media URL if one is supplied.
     # Supabase-hosted media URLs are also valid because they
@@ -418,7 +454,7 @@ def update_submission(
 
     # Update normal fields
     submission.content_type = submission_data.content_type
-    submission.student_class = submission_data.student_class
+    submission.student_class = updated_student_class
     submission.heading = submission_data.heading
     submission.description = submission_data.description
     submission.written_content = submission_data.written_content
@@ -557,9 +593,9 @@ def get_public_submissions(
             "student_name": user.name,
 
             "student_class": (
-                student.student_class
-                if student
-                else None
+                submission.student_class
+                if submission.student_class
+                else (student.student_class if student else None)
             ),
 
             "school": (
@@ -586,8 +622,12 @@ def get_shared_submission(
     db: Session = Depends(get_db)
 ):
     result = (
-        db.query(Submission, Student)
+        db.query(Submission, User, Student)
         .join(
+            User,
+            User.id == Submission.user_id
+        )
+        .outerjoin(
             Student,
             Student.user_id == Submission.user_id
         )
@@ -603,17 +643,17 @@ def get_shared_submission(
             detail="Submission not found"
         )
 
-    submission, student = result
+    submission, user, student = result
 
     return {
         "id": submission.id,
         "share_token": submission.share_token,
         "content_type": submission.content_type,
         "user_id": submission.user_id,
-        "student_name": student.user.name,
-        "student_class": submission.student_class,
-        "school": student.school,
-        "profile_picture": student.user.profile_picture,
+        "student_name": user.name,
+        "student_class": submission.student_class if submission.student_class else (student.student_class if student else None),
+        "school": student.school if student else None,
+        "profile_picture": user.profile_picture,
         "heading": submission.heading,
         "description": submission.description,
         "written_content": submission.written_content,
