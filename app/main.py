@@ -104,6 +104,19 @@ def health():
     }
 
 
+@app.on_event("startup")
+def startup_event():
+    from app.database import SessionLocal
+    from app.routes.notification import cleanup_expired_read_notifications
+    db = SessionLocal()
+    try:
+        cleanup_expired_read_notifications(db)
+    except Exception as e:
+        print("Startup notification cleanup error:", e)
+    finally:
+        db.close()
+
+
 @app.on_event("shutdown")
 async def shutdown_event():
     await close_facebook_browser()

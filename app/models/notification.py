@@ -64,6 +64,12 @@ class Notification(Base):
         nullable=False
     )
 
+    read_at = Column(
+        DateTime,
+        nullable=True,
+        index=True
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow,

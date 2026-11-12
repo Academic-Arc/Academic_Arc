@@ -345,6 +345,10 @@ def get_submissions(
             detail="Invalid token"
         )
 
+    user = db.query(User).filter(User.id == user_id).first()
+    profile_picture = user.profile_picture if user else None
+    student_name = user.name if user else None
+
     submissions = db.query(Submission).filter(
         Submission.user_id == user_id
     ).all()
@@ -357,6 +361,8 @@ def get_submissions(
             "id": submission.id,
             "content_type": submission.content_type,
             "user_id": submission.user_id,
+            "student_name": student_name,
+            "profile_picture": profile_picture,
             "share_token": submission.share_token,
             "student_class": submission.student_class,
             "heading": submission.heading,
