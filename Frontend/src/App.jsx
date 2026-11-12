@@ -23,6 +23,7 @@ import AdminReports from './pages/AdminReports'
 import AdminFeedback from './pages/AdminFeedback'
 import Footer from './components/Footer'
 import About from './pages/About'
+import Policy from './pages/Policy'
 import SkeletonLoader from './components/SkeletonLoader'
 import BlogDetail from './pages/BlogDetail'
 
@@ -92,6 +93,8 @@ function App() {
       location.pathname === "/profile" ||
       location.pathname === "/submit" ||
       location.pathname === "/about" ||
+      location.pathname === "/policy" ||
+      location.pathname === "/privacy-policy" ||
       location.pathname.startsWith("/category/") ||
       location.pathname.startsWith("/blog/");
   return (
@@ -110,6 +113,8 @@ function App() {
           <Route path="/submit" element={<Submit />} />
           <Route path="/category/:type" element={<Category />} />
           <Route path="/about" element={<About />} />
+          <Route path="/policy" element={<Policy />} />
+          <Route path="/privacy-policy" element={<Policy />} />
           <Route path="/blog/:id" element={<BlogDetail />} />
 
           <Route path="/admin" element={<AdminDashboard />} />
