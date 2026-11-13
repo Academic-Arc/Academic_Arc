@@ -1632,38 +1632,7 @@
         font-size: 18px;
     }
 
-    .submission-viewer-overlay {
-        padding: 12px;
-    }
 
-    .submission-viewer {
-        width: 100%;
-        height: auto;
-        max-height: 94vh;
-
-        display: flex;
-        flex-direction: column;
-    }
-
-    .submission-viewer-media {
-        height: 55vh;
-        min-height: 280px;
-    }
-
-    .submission-viewer-details {
-        max-height: 35vh;
-
-        padding: 18px;
-    }
-
-    .submission-viewer-details h2 {
-        margin-top: 16px;
-        font-size: 18px;
-    }
-
-    .viewer-description {
-        font-size: 12px;
-    }
 
 }
 

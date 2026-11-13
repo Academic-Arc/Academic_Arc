@@ -2097,36 +2097,4 @@
   cursor: not-allowed;
 }
 
-/* Responsive adjustment for popup */
-@media (max-width: 768px) {
-  .submission-viewer-overlay {
-    padding: 10px;
-  }
 
-  .submission-viewer {
-    width: 100%;
-    height: auto;
-    max-height: 94vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .submission-viewer-media {
-    height: 42vh;
-    min-height: 200px;
-  }
-
-  .submission-viewer-details {
-    max-height: 52vh;
-    padding: 16px;
-  }
-
-  .submission-viewer-details h2 {
-    font-size: 17px;
-    margin: 12px 0 6px;
-  }
-
-  .viewer-comments-list {
-    max-height: 180px;
-  }
-}

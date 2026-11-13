@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL } from '../config'
 import FacebookEmbed from '../pages/FacebookEmbed'
@@ -144,6 +144,18 @@ function SubmissionModal({
   // 3-dots Menu & Report states
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
+  const [mobileActiveTab, setMobileActiveTab] = useState('content') // 'content' | 'comments'
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  )
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
@@ -163,6 +175,65 @@ function SubmissionModal({
   const [activePresetCategory, setActivePresetCategory] = useState('positive')
   const [selectedPreset, setSelectedPreset] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Media continuation from card to popup
+  const desktopMediaSlotRef = useRef(null)
+  const mobileMediaSlotRef = useRef(null)
+  const borrowedNodeRef = useRef(null)
+  const originalSlotRef = useRef(null)
+
+  const [hasBorrowedMedia] = useState(() => {
+    if (typeof document === 'undefined') return false
+    const slot = document.getElementById(`card-media-${submission.id}`)
+    return Boolean(slot && slot.firstElementChild)
+  })
+
+  useLayoutEffect(() => {
+    const cardSlot = document.getElementById(`card-media-${submission.id}`)
+    const targetSlot = isMobile ? mobileMediaSlotRef.current : desktopMediaSlotRef.current
+
+    if (cardSlot && cardSlot.firstElementChild && targetSlot) {
+      const mediaEl = cardSlot.firstElementChild
+      borrowedNodeRef.current = mediaEl
+      originalSlotRef.current = cardSlot
+
+      try {
+        if (typeof targetSlot.moveBefore === 'function') {
+          targetSlot.moveBefore(mediaEl, null)
+        } else {
+          targetSlot.appendChild(mediaEl)
+        }
+      } catch (err) {
+        targetSlot.appendChild(mediaEl)
+      }
+
+      // If it is a native video, ensure playback continues without stopping
+      const v = mediaEl.tagName === 'VIDEO' ? mediaEl : mediaEl.querySelector('video')
+      if (v && !v.paused) {
+        v.play().catch(() => {})
+      }
+    }
+
+    return () => {
+      if (borrowedNodeRef.current && originalSlotRef.current) {
+        const node = borrowedNodeRef.current
+        const slot = originalSlotRef.current
+        try {
+          if (typeof slot.moveBefore === 'function') {
+            slot.moveBefore(node, null)
+          } else {
+            slot.appendChild(node)
+          }
+        } catch (err) {
+          try {
+            slot.appendChild(node)
+          } catch (_) {}
+        }
+        borrowedNodeRef.current = null
+        originalSlotRef.current = null
+      }
+    }
+  }, [submission.id, isMobile])
 
   // Keep callback references stable across parent re-renders to prevent effect loops
   const onCommentCountUpdateRef = useRef(onCommentCountUpdate)
@@ -413,7 +484,7 @@ function SubmissionModal({
   // Close dropdown on click outside
   useEffect(() => {
     const handleMenuOutsideClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+      if (!e.target.closest('.submission-viewer-menu-wrapper')) {
         setMenuOpen(false)
       }
     }
@@ -535,35 +606,281 @@ function SubmissionModal({
       })
     : ''
 
+  const handleCloseModal = () => {
+    setMobileActiveTab('content')
+    setIsPresetOpen(false)
+    setMenuOpen(false)
+    onClose()
+  }
+
+  const renderMediaContent = () => {
+    if (isUploadedVideo(submission.media_url)) {
+      return (
+        <video
+          src={submission.media_url}
+          controls
+          autoPlay
+          playsInline
+          preload="metadata"
+        />
+      )
+    }
+    if (submission.media_url?.includes('facebook.com')) {
+      return <FacebookEmbed url={submission.media_url} />
+    }
+    if (getEmbedUrl(submission.media_url)) {
+      return (
+        <iframe
+          src={getEmbedUrl(submission.media_url)}
+          title={submission.heading || 'Submission preview'}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      )
+    }
+    if (submission.media_url) {
+      return <img src={submission.media_url} alt={submission.heading || 'Submission'} />
+    }
+    if (submission.written_content) {
+      return <div className="viewer-writing">{submission.written_content}</div>
+    }
+    return <div className="viewer-no-media">No preview available</div>
+  }
+
+  const renderMenuDropdown = () => (
+    <div className="submission-viewer-dropdown">
+      {isPostOwner ? (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              handleCloseModal()
+              navigate(`/submit?edit=${submission.id}`)
+            }}
+          >
+            ✏️ Edit post
+          </button>
+          <button
+            type="button"
+            className="share-option"
+            onClick={() => {
+              setMenuOpen(false)
+              handleShare()
+            }}
+          >
+            <img src="/Icons/share.svg" alt="Share" /> Share
+          </button>
+          <button
+            type="button"
+            className="delete-option"
+            onClick={() => {
+              setMenuOpen(false)
+              handleDeletePost()
+            }}
+          >
+            <img src="/Icons/f7_trash.svg" alt="Delete" /> Delete post
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="report-option"
+          onClick={() => {
+            setMenuOpen(false)
+            if (!isLoggedIn) {
+              showAlert('Please log in to report a post.', 'info')
+              return
+            }
+            setReportModalOpen(true)
+          }}
+        >
+          🚩 Report post
+        </button>
+      )}
+    </div>
+  )
+
+  const renderCommentsSection = (isMobile = false) => (
+    <div className={`viewer-comments-section ${isMobile ? 'mobile-comments-section' : ''}`}>
+      <div className="viewer-comments-header">
+        <h3>
+          <span>💬 Comments</span>
+          <span className="viewer-comments-count-badge">
+            {comments.length}
+          </span>
+        </h3>
+      </div>
+
+      {/* COMMENTS LIST */}
+      <div className={`viewer-comments-list ${isMobile ? 'mobile-comments-list' : ''}`}>
+        {commentsLoading ? (
+          <div className="viewer-comments-loading">Loading comments...</div>
+        ) : comments.length === 0 ? (
+          <div className="viewer-comments-empty">
+            <p>No comments yet</p>
+            <span>Select a preset comment below to share encouraging feedback!</span>
+          </div>
+        ) : (
+          comments.map((comment) => {
+            const badge = getCategoryBadge(comment.category)
+            const isOwner =
+              currentUser &&
+              (currentUser.user_id === comment.user_id ||
+                currentUser.id === comment.user_id ||
+                currentUser.role === 'admin')
+            return (
+              <div key={comment.id} className="viewer-comment-item">
+                <div className="comment-user-avatar">
+                  {comment.profile_picture ? (
+                    <img src={comment.profile_picture} alt={comment.user_name} />
+                  ) : (
+                    comment.user_name?.charAt(0).toUpperCase() || 'U'
+                  )}
+                </div>
+                <div className="comment-body">
+                  <div className="comment-meta">
+                    <strong className="comment-author">{comment.user_name}</strong>
+                    <span className={`comment-category-pill ${badge.className}`}>
+                      {badge.icon} {badge.label}
+                    </span>
+                    <span className="comment-time">
+                      {formatCommentTime(comment.created_at)}
+                    </span>
+                    {isOwner && (
+                      <button
+                        type="button"
+                        className="comment-delete-btn"
+                        onClick={() => handleDeleteComment(comment.id)}
+                        title="Delete comment"
+                      >
+                        <img src="/Icons/f7_trash.svg" alt="Delete" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="comment-text-bubble">
+                    {comment.comment_text}
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* ADD COMMENT PRESET PICKER */}
+      <div className={`viewer-add-comment-wrapper ${isMobile ? 'mobile-add-comment-wrapper' : ''}`}>
+        {!isLoggedIn ? (
+          <div className="viewer-comment-signin-prompt">
+            <span>Log in to share encouraging feedback!</span>
+            <button
+              type="button"
+              className="signin-to-comment-btn"
+              onClick={() => navigate('/login', { state: { from: location.pathname } })}
+            >
+              Sign In
+            </button>
+          </div>
+        ) : !isPresetOpen ? (
+          <button
+            type="button"
+            className="open-presets-trigger-btn"
+            onClick={() => setIsPresetOpen(true)}
+          >
+            <span className="open-presets-icon">💬</span>
+            <span className="open-presets-placeholder">Choose a preset comment to share...</span>
+            <span className="open-presets-action-label">Add Comment</span>
+          </button>
+        ) : (
+          <div className="preset-picker-panel">
+            <div className="preset-picker-header">
+              <span className="preset-picker-title">Select a preset comment:</span>
+              <button
+                type="button"
+                className="preset-picker-close-btn"
+                onClick={() => {
+                  setIsPresetOpen(false)
+                  setSelectedPreset('')
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Category tabs */}
+            <div className="preset-category-tabs">
+              {PRESET_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`preset-tab tab-${cat.id} ${
+                    activePresetCategory === cat.id ? 'active' : ''
+                  }`}
+                  onClick={() => {
+                    setActivePresetCategory(cat.id)
+                    setSelectedPreset('')
+                  }}
+                >
+                  <span>{cat.icon}</span> {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Presets list */}
+            <div className="preset-options-list">
+              {COMMENT_PRESETS[activePresetCategory].map((presetText) => {
+                const isSelected = selectedPreset === presetText
+                return (
+                  <button
+                    key={presetText}
+                    type="button"
+                    className={`preset-option-chip ${isSelected ? 'selected' : ''}`}
+                    onClick={() => setSelectedPreset(presetText)}
+                  >
+                    <span className="preset-check-icon">
+                      {isSelected ? '✓' : '•'}
+                    </span>
+                    <span className="preset-chip-text">{presetText}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="preset-picker-footer">
+              <div className="preset-selected-preview">
+                {selectedPreset ? (
+                  <span className="preview-text">"{selectedPreset}"</span>
+                ) : (
+                  <span className="preview-prompt">Tap a preset above to choose it</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="post-comment-btn"
+                disabled={!selectedPreset || submittingComment}
+                onClick={handlePostComment}
+              >
+                {submittingComment ? 'Posting...' : 'Post Comment'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   return (
-    <div className="submission-viewer-overlay" onClick={onClose}>
-      <div className="submission-viewer" onClick={(e) => e.stopPropagation()}>
+    <div className="submission-viewer-overlay" onClick={handleCloseModal}>
+      {!isMobile ? (
+        /* DESKTOP MODAL LAYOUT */
+        <div className="submission-viewer desktop-viewer" onClick={(e) => e.stopPropagation()}>
         {/* MEDIA SECTION (LEFT) */}
-        <div className={`submission-viewer-media ${!submission.media_url && submission.written_content ? 'is-writing' : ''}`}>
-          {isUploadedVideo(submission.media_url) ? (
-            <video
-              src={submission.media_url}
-              controls
-              autoPlay
-              playsInline
-              preload="metadata"
-            />
-          ) : submission.media_url?.includes('facebook.com') ? (
-            <FacebookEmbed url={submission.media_url} />
-          ) : getEmbedUrl(submission.media_url) ? (
-            <iframe
-              src={getEmbedUrl(submission.media_url)}
-              title={submission.heading || 'Submission preview'}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          ) : submission.media_url ? (
-            <img src={submission.media_url} alt={submission.heading || 'Submission'} />
-          ) : submission.written_content ? (
-            <div className="viewer-writing">{submission.written_content}</div>
-          ) : (
-            <div className="viewer-no-media">No preview available</div>
-          )}
+        <div
+          ref={desktopMediaSlotRef}
+          className={`submission-viewer-media ${!submission.media_url && submission.written_content ? 'is-writing' : ''}`}
+        >
+          {!hasBorrowedMedia && renderMediaContent()}
         </div>
 
         {/* DETAILS SECTION (RIGHT) */}
@@ -608,65 +925,13 @@ function SubmissionModal({
                   </svg>
                 </button>
 
-                {menuOpen && (
-                  <div className="submission-viewer-dropdown">
-                    {isPostOwner ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuOpen(false)
-                            onClose()
-                            navigate(`/submit?edit=${submission.id}`)
-                          }}
-                        >
-                          ✏️ Edit post
-                        </button>
-                        <button
-                          type="button"
-                          className="share-option"
-                          onClick={() => {
-                            setMenuOpen(false)
-                            handleShare()
-                          }}
-                        >
-                          <img src="/Icons/share.svg" alt="Share" /> Share
-                        </button>
-                        <button
-                          type="button"
-                          className="delete-option"
-                          onClick={() => {
-                            setMenuOpen(false)
-                            handleDeletePost()
-                          }}
-                        >
-                          <img src="/Icons/f7_trash.svg" alt="Delete" /> Delete post
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        className="report-option"
-                        onClick={() => {
-                          setMenuOpen(false)
-                          if (!isLoggedIn) {
-                            showAlert('Please log in to report a post.', 'info')
-                            return
-                          }
-                          setReportModalOpen(true)
-                        }}
-                      >
-                        🚩 Report post
-                      </button>
-                    )}
-                  </div>
-                )}
+                {menuOpen && renderMenuDropdown()}
               </div>
 
               <button
                 type="button"
                 className="submission-viewer-close"
-                onClick={onClose}
+                onClick={handleCloseModal}
                 aria-label="Close viewer"
               >
                 <svg
@@ -722,174 +987,181 @@ function SubmissionModal({
           </div>
 
           {/* COMMENTS SECTION */}
-          <div className="viewer-comments-section">
-            <div className="viewer-comments-header">
-              <h3>
-                <span>💬 Comments</span>
-                <span className="viewer-comments-count-badge">
-                  {comments.length}
-                </span>
-              </h3>
-            </div>
-
-            {/* COMMENTS LIST */}
-            <div className="viewer-comments-list">
-              {commentsLoading ? (
-                <div className="viewer-comments-loading">Loading comments...</div>
-              ) : comments.length === 0 ? (
-                <div className="viewer-comments-empty">
-                  <p>No comments yet</p>
-                  <span>Select a preset comment below to share encouraging feedback!</span>
-                </div>
-              ) : (
-                comments.map((comment) => {
-                  const badge = getCategoryBadge(comment.category)
-                  const isOwner =
-                    currentUser &&
-                    (currentUser.user_id === comment.user_id ||
-                      currentUser.id === comment.user_id ||
-                      currentUser.role === 'admin')
-                  return (
-                    <div key={comment.id} className="viewer-comment-item">
-                      <div className="comment-user-avatar">
-                        {comment.profile_picture ? (
-                          <img src={comment.profile_picture} alt={comment.user_name} />
-                        ) : (
-                          comment.user_name?.charAt(0).toUpperCase() || 'U'
-                        )}
-                      </div>
-                      <div className="comment-body">
-                        <div className="comment-meta">
-                          <strong className="comment-author">{comment.user_name}</strong>
-                          <span className={`comment-category-pill ${badge.className}`}>
-                            {badge.icon} {badge.label}
-                          </span>
-                          <span className="comment-time">
-                            {formatCommentTime(comment.created_at)}
-                          </span>
-                          {isOwner && (
-                            <button
-                              type="button"
-                              className="comment-delete-btn"
-                              onClick={() => handleDeleteComment(comment.id)}
-                              title="Delete comment"
-                            >
-                              <img src="/Icons/f7_trash.svg" alt="Delete" />
-                            </button>
-                          )}
-                        </div>
-                        <div className="comment-text-bubble">
-                          {comment.comment_text}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-
-            {/* ADD COMMENT PRESET PICKER */}
-            <div className="viewer-add-comment-wrapper">
-              {!isLoggedIn ? (
-                <div className="viewer-comment-signin-prompt">
-                  <span>Log in to share encouraging feedback!</span>
-                  <button
-                    type="button"
-                    className="signin-to-comment-btn"
-                    onClick={() => navigate('/login', { state: { from: location.pathname } })}
-                  >
-                    Sign In
-                  </button>
-                </div>
-              ) : !isPresetOpen ? (
-                <button
-                  type="button"
-                  className="open-presets-trigger-btn"
-                  onClick={() => setIsPresetOpen(true)}
-                >
-                  <span className="open-presets-icon">💬</span>
-                  <span className="open-presets-placeholder">Choose a preset comment to share...</span>
-                  <span className="open-presets-action-label">Add Comment</span>
-                </button>
-              ) : (
-                <div className="preset-picker-panel">
-                  <div className="preset-picker-header">
-                    <span className="preset-picker-title">Select a preset comment:</span>
-                    <button
-                      type="button"
-                      className="preset-picker-close-btn"
-                      onClick={() => {
-                        setIsPresetOpen(false)
-                        setSelectedPreset('')
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Category tabs */}
-                  <div className="preset-category-tabs">
-                    {PRESET_CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        className={`preset-tab tab-${cat.id} ${
-                          activePresetCategory === cat.id ? 'active' : ''
-                        }`}
-                        onClick={() => {
-                          setActivePresetCategory(cat.id)
-                          setSelectedPreset('')
-                        }}
-                      >
-                        <span>{cat.icon}</span> {cat.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Presets list */}
-                  <div className="preset-options-list">
-                    {COMMENT_PRESETS[activePresetCategory]?.map((presetText) => {
-                      const isSelected = selectedPreset === presetText
-                      return (
-                        <button
-                          key={presetText}
-                          type="button"
-                          className={`preset-option-chip ${isSelected ? 'selected' : ''}`}
-                          onClick={() => setSelectedPreset(presetText)}
-                        >
-                          <span className="preset-check-icon">
-                            {isSelected ? '✓' : '•'}
-                          </span>
-                          <span className="preset-chip-text">{presetText}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="preset-picker-footer">
-                    <div className="preset-selected-preview">
-                      {selectedPreset ? (
-                        <span className="preview-text">"{selectedPreset}"</span>
-                      ) : (
-                        <span className="preview-prompt">Tap a preset above to choose it</span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="post-comment-btn"
-                      disabled={!selectedPreset || submittingComment}
-                      onClick={handlePostComment}
-                    >
-                      {submittingComment ? 'Posting...' : 'Post Comment'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {renderCommentsSection(false)}
         </div>
       </div>
+
+      ) : (
+        /* RESPONSIVE MOBILE MODAL LAYOUT */
+        <div
+          className={`mobile-viewer ${
+            mobileActiveTab === 'comments' ? 'is-comments-view' : 'is-content-view'
+          } ${!submission.media_url && submission.written_content ? 'is-writing-post' : ''}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+        {/* MOBILE TOP HEADER */}
+        <div className="mobile-viewer-header">
+          <div className="mobile-viewer-header-left">
+            {mobileActiveTab === 'comments' && (
+              <button
+                type="button"
+                className="mobile-back-to-content-btn"
+                onClick={() => setMobileActiveTab('content')}
+                aria-label="Back to post content"
+                title="Back to post"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )}
+
+            <div className="viewer-avatar">
+              {authorAvatar ? (
+                <img src={authorAvatar} alt={authorName} />
+              ) : (
+                authorInitial
+              )}
+            </div>
+
+            <div className="viewer-author-meta">
+              <strong>{authorName}</strong>
+              <span>
+                {submission.content_type || 'Creative Work'}
+                {formattedDate && ` · ${formattedDate}`}
+              </span>
+            </div>
+          </div>
+
+          <div className="submission-viewer-controls">
+            <div className="submission-viewer-menu-wrapper">
+              <button
+                type="button"
+                className="submission-viewer-menu-btn"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-label="Post options"
+                aria-expanded={menuOpen}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="currentColor"
+                >
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
+
+              {menuOpen && renderMenuDropdown()}
+            </div>
+
+            <button
+              type="button"
+              className="submission-viewer-close"
+              onClick={handleCloseModal}
+              aria-label="Close viewer"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* MOBILE BODY: TAB CONTENT */}
+        {mobileActiveTab === 'content' ? (
+          <>
+            {/* MIDDLE: CONTENT */}
+            <div
+              ref={mobileMediaSlotRef}
+              className={`mobile-viewer-content ${!submission.media_url && submission.written_content ? 'is-writing' : ''}`}
+            >
+              {!hasBorrowedMedia && renderMediaContent()}
+            </div>
+
+            {/* BOTTOM: TITLE & ACTIONS */}
+            <div className="mobile-viewer-footer">
+              <div className="mobile-viewer-title-row">
+                <h2>{submission.heading}</h2>
+                {submission.description && (
+                  <p className="mobile-viewer-desc">{submission.description}</p>
+                )}
+              </div>
+
+              <div className="mobile-viewer-actions">
+                <button
+                  type="button"
+                  className={`mobile-action-btn mobile-like-btn ${likeState.liked_by_user ? 'liked' : ''}`}
+                  onClick={handleLike}
+                  disabled={liking}
+                  aria-label="Like post"
+                >
+                  <span className="mobile-action-icon">
+                    <img
+                      src={likeState.liked_by_user ? '/Icons/LIKE.svg' : '/Icons/DISLIKE.svg'}
+                      alt={likeState.liked_by_user ? 'Liked' : 'Like'}
+                    />
+                  </span>
+                  <span>{likeState.like_count}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="mobile-action-btn mobile-comment-btn"
+                  onClick={() => setMobileActiveTab('comments')}
+                  aria-label="View comments"
+                >
+                  <span className="mobile-action-icon">
+                    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  </span>
+                  <span>{comments.length}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="mobile-action-btn mobile-share-btn"
+                  onClick={handleShare}
+                  aria-label="Share post"
+                >
+                  <span className="mobile-action-icon">
+                    <img src="/Icons/share.svg" alt="Share" />
+                  </span>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* MOBILE COMMENTS VIEW */
+          <div className="mobile-viewer-comments-pane">
+            {renderCommentsSection(true)}
+          </div>
+        )}
+      </div>
+      )}
 
       {/* REPORT POST MODAL */}
       {reportModalOpen && (

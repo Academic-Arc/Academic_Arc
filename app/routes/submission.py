@@ -928,6 +928,11 @@ def get_submission_likes(
 
 COMMENT_PRESETS = {
     "positive": [
+        "Amazing work! Loved the creativity here.",
+        "Brilliant effort, keep up the fantastic work!",
+        "So inspiring! Truly exceptional talent.",
+        "Beautifully done, this really made my day!",
+        "Outstanding presentation and great attention to detail!",
         "Amazing work! Keep shining!",
         "Fantastic creativity and brilliant execution!",
         "Outstanding effort, absolutely loved this!",
@@ -936,6 +941,10 @@ COMMENT_PRESETS = {
         "Masterpiece! Really proud of your work!",
     ],
     "satisfactory": [
+        "Good effort, keep practicing!",
+        "Nice attempt, you are definitely on the right track.",
+        "Well done! Looking forward to seeing your next piece.",
+        "Good work! Practice will make it even better.",
         "Good effort! Keep it up!",
         "Nicely done! Shows good potential.",
         "Great attempt, nicely presented!",
@@ -943,12 +952,14 @@ COMMENT_PRESETS = {
         "Well executed, good attention to detail.",
     ],
     "motivating": [
-        "Great start! Keep practicing and you will get even better.",
-        "Good attempt! Focus on the finer details next time.",
-        "Don't stop here, every practice makes you stronger!",
+        "Good attempt, keep practicing and you will get better!",
+        "Every mistake is a stepping stone to mastery. Keep pushing!",
         "Unique idea! With a little more polish, it will shine.",
         "Keep trying, persistence leads to greatness!",
         "Never give up, you learn something new with every attempt!",
+        "Great start! Keep practicing and you will get even better.",
+        "Good attempt! Focus on the finer details next time.",
+        "Don't stop here, every practice makes you stronger!",
     ],
 }
 
@@ -1071,7 +1082,20 @@ def add_submission_comment(
 
     clean_text = comment_data.comment_text.strip()
     allowed_list = COMMENT_PRESETS[normalized_cat]
-    if clean_text not in allowed_list:
+
+    # Look for matching preset in the target category (normalized comparison)
+    matched_preset = next((p for p in allowed_list if p.strip().lower() == clean_text.lower()), None)
+
+    # If not found in target category, search all categories
+    if not matched_preset:
+        for cat_key, preset_list in COMMENT_PRESETS.items():
+            matched = next((p for p in preset_list if p.strip().lower() == clean_text.lower()), None)
+            if matched:
+                matched_preset = matched
+                normalized_cat = cat_key
+                break
+
+    if not matched_preset:
         raise HTTPException(
             status_code=400,
             detail="Only fixed preset comments can be used."
@@ -1081,7 +1105,7 @@ def add_submission_comment(
         submission_id=submission_id,
         user_id=current_user.id,
         category=normalized_cat,
-        comment_text=clean_text
+        comment_text=matched_preset
     )
 
     db.add(new_comment)
@@ -1096,7 +1120,7 @@ def add_submission_comment(
                 submission_id=submission.id,
                 notification_type="new_comment",
                 title="New comment on your post",
-                message=f'{current_user.name} commented on your post: "{clean_text}"'
+                message=f'{current_user.name} commented on your post: "{matched_preset}"'
             )
             db.add(notification)
             db.commit()
