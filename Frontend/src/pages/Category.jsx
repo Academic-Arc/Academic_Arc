@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, memo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { API_URL } from "../config"
 import './Category.css'
@@ -7,6 +7,42 @@ import CategorySidebar from '../components/CategorySidebar'
 import Navbar from '../components/Navbar'
 import { usePrompt } from '../context/PromptContext'
 import SubmissionModal from '../components/SubmissionModal'
+
+
+const CardVideoMedia = memo(function CardVideoMedia({
+  submissionId,
+  mediaUrl,
+  uploadedVideo,
+  embedUrl,
+  isFacebook,
+}) {
+  return (
+    <div className="submission-video" id={`card-media-${submissionId}`}>
+      {uploadedVideo ? (
+        <video
+          controls
+          onPlay={(e) => {
+            document.querySelectorAll('video').forEach((v) => {
+              if (v !== e.target && !v.paused) v.pause()
+            })
+          }}
+        >
+          <source src={mediaUrl} />
+          Your browser does not support video playback.
+        </video>
+      ) : isFacebook ? (
+        <FacebookEmbed url={mediaUrl} />
+      ) : embedUrl ? (
+        <iframe
+          src={embedUrl}
+          title="Video preview"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : null}
+    </div>
+  )
+})
 
 function Category() {
   const { type } = useParams()
@@ -918,64 +954,16 @@ function Category() {
 
                           )}
 
-                        {/* NATIVE VIDEO UPLOAD */}
-
-                        {videoType &&
-                          uploadedVideo && (
-
-                            <div className="submission-video">
-
-                              <video controls>
-
-                                <source
-                                  src={submission.media_url}
-                                />
-
-                                Your browser does not support
-                                video playback.
-
-                              </video>
-
-                            </div>
-
-                          )}
-
-                        {/* VIDEO LINK */}
-
-                        {videoType &&
-                          !uploadedVideo &&
-                          embedUrl && (
-
-                            <div className="submission-video">
-
-                              <iframe
-                                src={embedUrl}
-                                title={submission.heading}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                              />
-
-                            </div>
-
-                          )}
-
-                        {/* FACEBOOK */}
-
-                        {videoType &&
-                          !uploadedVideo &&
-                          submission.media_url?.includes(
-                            'facebook.com'
-                          ) && (
-
-                            <div className="submission-video">
-
-                              <FacebookEmbed
-                                url={submission.media_url}
-                              />
-
-                            </div>
-
-                          )}
+                        {/* VIDEO CONTENT (NATIVE / IFRAME / FACEBOOK) */}
+                        {videoType && (uploadedVideo || embedUrl || submission.media_url?.includes('facebook.com')) && (
+                          <CardVideoMedia
+                            submissionId={submission.id}
+                            mediaUrl={submission.media_url}
+                            uploadedVideo={uploadedVideo}
+                            embedUrl={embedUrl}
+                            isFacebook={Boolean(submission.media_url?.includes('facebook.com'))}
+                          />
+                        )}
 
                         {/* UNSUPPORTED VIDEO LINK */}
 
