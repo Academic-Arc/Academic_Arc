@@ -194,6 +194,43 @@
   color: #3a3733;
 }
 
+.navbar-profile-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.navbar-profile-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e53935;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: none; /* hidden on desktop */
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  z-index: 5;
+  border: 2px solid #ffffff;
+}
+
+.navbar-dark .navbar-profile-badge {
+  border-color: #23211f;
+}
+
+.navbar-light .navbar-profile-badge {
+  border-color: #ffffff;
+}
+
 .navbar-profile-avatar {
   width: 28px;
   height: 28px;
@@ -321,6 +358,43 @@
 .navbar-logout-icon img {
   width: 17px;
   height: 17px;
+}
+
+.navbar-profile-menu-divider {
+  height: 1px;
+  margin: 6px 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+}
+
+.navbar-light .navbar-profile-menu-divider {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.navbar-profile-notif-btn {
+  justify-content: space-between !important;
+}
+
+.navbar-profile-notif-label {
+  flex: 1;
+  text-align: left;
+}
+
+.navbar-profile-menu-alert {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e53935;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  box-sizing: border-box;
 }
 
 .navbar-mobile-item {
@@ -466,6 +540,14 @@
     margin-left: -5px;
   }
 
+  .navbar-desktop-bell {
+    display: contents;
+  }
+
+  .navbar-desktop-bell .notification-button {
+    display: none !important;
+  }
+
   .navbar-logo img {
     width: 120px;
   }
@@ -485,10 +567,15 @@
     height: 40px;
     padding: 5px;
     justify-content: center;
+    position: relative;
+  }
+
+  .navbar-profile-badge {
+    display: flex;
   }
 
   .navbar-profile-menu {
-    width: 190px;
+    width: 200px;
   }
 
   .navbar-mobile-item {

@@ -1,6 +1,6 @@
 .policy-page {
   min-height: 100vh;
-  padding: 0 clamp(20px, 6vw, 180px) 50px;
+  padding: 0 clamp(24px, 8vw, 250px) 50px;
   background: #f7f5f1;
   color: #242424;
   font-family: inherit;
@@ -8,13 +8,13 @@
 
 /* Navigation */
 .policy-navbar {
-  width: min(1000px, 100%);
+  width: 100%;
   margin: 0 auto 36px;
   padding: 24px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #d97745;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .policy-logo img {

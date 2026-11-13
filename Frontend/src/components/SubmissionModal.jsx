@@ -35,6 +35,16 @@ const PRESET_CATEGORIES = [
   { id: 'motivating', label: 'Negative (Motivating)', icon: '💪' },
 ]
 
+const REPORT_REASONS = [
+  'Inappropriate or offensive content',
+  'Harassment or bullying',
+  'Copyright infringement',
+  'Spam or misleading content',
+  'Sexual or inappropriate content involving minors',
+  'Violence or dangerous content',
+  'Other',
+]
+
 const getCategoryBadge = (cat) => {
   if (cat === 'positive') return { label: 'Positive', icon: '🌟', className: 'pill-positive' }
   if (cat === 'satisfactory') return { label: 'Satisfactory', icon: '👍', className: 'pill-satisfactory' }
@@ -112,6 +122,8 @@ function SubmissionModal({
   onClose,
   onLikeToggle,
   onCommentCountUpdate,
+  onDelete,
+  isOwner,
   initialOpenPresets = false,
 }) {
   const navigate = useNavigate()
@@ -128,6 +140,14 @@ function SubmissionModal({
   } catch {
     currentUser = null
   }
+
+  // 3-dots Menu & Report states
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+  const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
+  const [reportSubmitting, setReportSubmitting] = useState(false)
 
   // Likes state
   const [likeState, setLikeState] = useState({
@@ -390,6 +410,114 @@ function SubmissionModal({
     }
   }
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleMenuOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleMenuOutsideClick)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleMenuOutsideClick)
+    }
+  }, [menuOpen])
+
+  // Delete post handler
+  const handleDeletePost = async () => {
+    const confirmed = await showConfirm(
+      'Are you sure you want to delete this submission? This cannot be undone.',
+      'Delete Submission',
+      'Delete',
+      'Cancel'
+    )
+    if (!confirmed) return
+
+    if (!token) {
+      showAlert('Please log in to delete your post.', 'warning')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/submissions/${submission.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.detail || 'Unable to delete submission')
+      }
+
+      showToast('Submission deleted successfully.', 'info')
+      if (onDelete) {
+        onDelete(submission.id)
+      }
+      onClose()
+    } catch (err) {
+      console.error('Error deleting submission:', err)
+      showAlert(err.message, 'error')
+    }
+  }
+
+  // Report post handler
+  const handleReportSubmit = async () => {
+    if (!reportReason) return
+    if (!token) {
+      showAlert('Please log in to report a post.', 'warning')
+      return
+    }
+
+    setReportSubmitting(true)
+    try {
+      const params = new URLSearchParams({
+        submission_id: String(submission.id),
+        reason: reportReason,
+      })
+      if (reportDetails.trim()) {
+        params.append('details', reportDetails.trim())
+      }
+
+      const response = await fetch(`${API_URL}/reports/?${params.toString()}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.detail || 'Unable to submit report')
+      }
+
+      showAlert({
+        title: 'Report Submitted',
+        message: 'Thank you. Your report has been submitted for review.',
+        type: 'success',
+      })
+      setReportModalOpen(false)
+      setReportReason('')
+      setReportDetails('')
+    } catch (err) {
+      console.error('Error submitting report:', err)
+      showAlert(err.message, 'error')
+    } finally {
+      setReportSubmitting(false)
+    }
+  }
+
+  const isPostOwner =
+    isOwner !== undefined
+      ? isOwner
+      : Boolean(currentUser) &&
+        (currentUser.id === submission.user_id ||
+          currentUser.user_id === submission.user_id ||
+          currentUser.role === 'admin')
+
   const authorName = submission.student_name || submission.user_name || 'Academic Arc Author'
   const authorAvatar =
     submission.profile_picture ||
@@ -410,17 +538,8 @@ function SubmissionModal({
   return (
     <div className="submission-viewer-overlay" onClick={onClose}>
       <div className="submission-viewer" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className="submission-viewer-close"
-          onClick={onClose}
-          aria-label="Close viewer"
-        >
-          ×
-        </button>
-
         {/* MEDIA SECTION (LEFT) */}
-        <div className="submission-viewer-media">
+        <div className={`submission-viewer-media ${!submission.media_url && submission.written_content ? 'is-writing' : ''}`}>
           {isUploadedVideo(submission.media_url) ? (
             <video
               src={submission.media_url}
@@ -449,7 +568,7 @@ function SubmissionModal({
 
         {/* DETAILS SECTION (RIGHT) */}
         <div className="submission-viewer-details">
-          {/* AUTHOR HEADER */}
+          {/* AUTHOR HEADER & TOP CONTROLS */}
           <div className="submission-viewer-header">
             <div className="viewer-avatar">
               {authorAvatar ? (
@@ -459,12 +578,111 @@ function SubmissionModal({
               )}
             </div>
 
-            <div>
+            <div className="viewer-author-meta">
               <strong>{authorName}</strong>
               <span>
                 {submission.content_type || 'Creative Work'}
                 {formattedDate && ` · ${formattedDate}`}
               </span>
+            </div>
+
+            {/* 3-DOTS MENU & CLOSE BUTTON */}
+            <div className="submission-viewer-controls">
+              <div className="submission-viewer-menu-wrapper" ref={menuRef}>
+                <button
+                  type="button"
+                  className="submission-viewer-menu-btn"
+                  onClick={() => setMenuOpen((prev) => !prev)}
+                  aria-label="Post options"
+                  aria-expanded={menuOpen}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="currentColor"
+                  >
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
+                  </svg>
+                </button>
+
+                {menuOpen && (
+                  <div className="submission-viewer-dropdown">
+                    {isPostOwner ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuOpen(false)
+                            onClose()
+                            navigate(`/submit?edit=${submission.id}`)
+                          }}
+                        >
+                          ✏️ Edit post
+                        </button>
+                        <button
+                          type="button"
+                          className="share-option"
+                          onClick={() => {
+                            setMenuOpen(false)
+                            handleShare()
+                          }}
+                        >
+                          <img src="/Icons/share.svg" alt="Share" /> Share
+                        </button>
+                        <button
+                          type="button"
+                          className="delete-option"
+                          onClick={() => {
+                            setMenuOpen(false)
+                            handleDeletePost()
+                          }}
+                        >
+                          <img src="/Icons/f7_trash.svg" alt="Delete" /> Delete post
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="report-option"
+                        onClick={() => {
+                          setMenuOpen(false)
+                          if (!isLoggedIn) {
+                            showAlert('Please log in to report a post.', 'info')
+                            return
+                          }
+                          setReportModalOpen(true)
+                        }}
+                      >
+                        🚩 Report post
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="submission-viewer-close"
+                onClick={onClose}
+                aria-label="Close viewer"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="15"
+                  height="15"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -472,17 +690,6 @@ function SubmissionModal({
 
           {submission.description && (
             <p className="viewer-description">{submission.description}</p>
-          )}
-
-          {submission.media_url && (
-            <a
-              className="viewer-open-link"
-              href={submission.media_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open original ↗
-            </a>
           )}
 
           {/* ACTIONS BAR (LIKE & SHARE) */}
@@ -683,6 +890,104 @@ function SubmissionModal({
           </div>
         </div>
       </div>
+
+      {/* REPORT POST MODAL */}
+      {reportModalOpen && (
+        <div
+          className="report-modal-overlay"
+          onClick={() => {
+            if (!reportSubmitting) {
+              setReportModalOpen(false)
+              setReportReason('')
+              setReportDetails('')
+            }
+          }}
+        >
+          <div className="report-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="report-modal-header">
+              <div>
+                <h2>Report this post</h2>
+                <p>Help us understand what's wrong with this submission.</p>
+              </div>
+              <button
+                type="button"
+                className="report-modal-close"
+                onClick={() => {
+                  if (!reportSubmitting) {
+                    setReportModalOpen(false)
+                    setReportReason('')
+                    setReportDetails('')
+                  }
+                }}
+                disabled={reportSubmitting}
+                aria-label="Close report modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="report-reasons">
+              {REPORT_REASONS.map((reason) => (
+                <label
+                  key={reason}
+                  className={`report-reason ${reportReason === reason ? 'selected' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="modal-report-reason"
+                    value={reason}
+                    checked={reportReason === reason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    disabled={reportSubmitting}
+                  />
+                  <span>{reason}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="report-details">
+              <label htmlFor="modal-report-details-input">
+                Additional details
+                <span> (optional)</span>
+              </label>
+              <textarea
+                id="modal-report-details-input"
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                placeholder="Tell us anything else that may help us review this report..."
+                maxLength={1000}
+                disabled={reportSubmitting}
+              />
+              <small>{reportDetails.length}/1000</small>
+            </div>
+
+            <div className="report-modal-actions">
+              <button
+                type="button"
+                className="report-cancel-button"
+                onClick={() => {
+                  if (!reportSubmitting) {
+                    setReportModalOpen(false)
+                    setReportReason('')
+                    setReportDetails('')
+                  }
+                }}
+                disabled={reportSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="report-submit-button"
+                onClick={handleReportSubmit}
+                disabled={!reportReason || reportSubmitting}
+              >
+                {reportSubmitting ? 'Submitting...' : 'Submit report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

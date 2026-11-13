@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { API_URL } from "../config"
 import './Category.css'
@@ -204,7 +204,6 @@ function Category() {
 
     if (submission) {
       setSelectedSubmission(submission);
-      loadComments(submission.id);
     }
   }, [searchParams, submissions])
 
@@ -231,9 +230,13 @@ function Category() {
         return response.json()
       })
       .then((data) => {
-        setOwnSubmissionIds(
-          new Set(data.map((submission) => submission.id))
-        )
+        if (Array.isArray(data)) {
+          setOwnSubmissionIds(
+            new Set(data.map((submission) => submission.id))
+          )
+        } else {
+          setOwnSubmissionIds(new Set())
+        }
       })
       .catch((error) => {
         console.error('Error fetching own submissions:', error)
@@ -608,6 +611,20 @@ function Category() {
 
     return null
   }
+
+  const handleLikeToggle = useCallback((id, liked, count) => {
+    setLikeData((prev) => ({
+      ...prev,
+      [id]: { liked_by_user: liked, like_count: count },
+    }))
+  }, [])
+
+  const handleCommentCountUpdate = useCallback((id, count) => {
+    setCommentCounts((prev) => ({
+      ...prev,
+      [id]: count,
+    }))
+  }, [])
 
   return (
     <div className="category-page">
@@ -1269,18 +1286,17 @@ function Category() {
         <SubmissionModal
           submission={selectedSubmission}
           initialOpenPresets={isPresetOpen}
+          isOwner={ownSubmissionIds.has(selectedSubmission.id)}
           onClose={closeSubmissionViewer}
-          onLikeToggle={(id, liked, count) => {
-            setLikeData((prev) => ({
-              ...prev,
-              [id]: { liked_by_user: liked, like_count: count },
-            }))
-          }}
-          onCommentCountUpdate={(id, count) => {
-            setCommentCounts((prev) => ({
-              ...prev,
-              [id]: count,
-            }))
+          onLikeToggle={handleLikeToggle}
+          onCommentCountUpdate={handleCommentCountUpdate}
+          onDelete={(id) => {
+            setSubmissions((prev) => prev.filter((s) => s.id !== id))
+            setLikeData((prev) => {
+              const copy = { ...prev }
+              delete copy[id]
+              return copy
+            })
           }}
         />
       )}

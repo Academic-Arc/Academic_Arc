@@ -4,7 +4,7 @@
 
 .blog-detail-page {
   min-height: 100vh;
-  padding: 0 clamp(20px, 6vw, 180px) 80px;
+  padding: 0 clamp(24px, 8vw, 250px) 80px;
   background: #f7f5f0;
   color: #181817;
   font-family: Inter, system-ui, -apple-system, sans-serif;

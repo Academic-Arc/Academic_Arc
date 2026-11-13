@@ -8,15 +8,15 @@
 /* About Navigation */
 
 .about-navbar {
-    width: min(1100px, calc(100% - 40px));
-    margin: 0 auto 40px;
+    width: 100%;
+    margin: 0 auto 70px;
     padding: 25px 0;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    border-bottom: 1px solid #d97745;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .about-logo img {
@@ -207,7 +207,7 @@
 @media (max-width: 600px) {
 
     .about-navbar {
-        width: calc(100% - 30px);
+        width: 100%;
         margin-bottom: 40px;
     }
 
