@@ -1311,7 +1311,11 @@ function Profile() {
                         student_name: selectedSubmission.student_name || user?.name,
                         profile_picture: selectedSubmission.profile_picture || user?.profile_picture,
                     }}
+                    isOwner={true}
                     onClose={closeSubmissionViewer}
+                    onDelete={(id) => {
+                        setSubmissions((prev) => prev.filter((s) => s.id !== id))
+                    }}
                 />
             )}
 

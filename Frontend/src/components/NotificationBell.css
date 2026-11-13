@@ -224,6 +224,41 @@
   justify-content: space-between;
 }
 
+.notification-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #888;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.notification-close-btn:hover {
+  color: #111;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.notification-dark .notification-close-btn {
+  color: #aaa;
+}
+
+.notification-dark .notification-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .notification-mark-all {
   background: transparent;
   border: none;
@@ -315,15 +350,17 @@
    MOBILE
    ========================================================= */
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .notification-dropdown {
     position: fixed;
 
-    top: 70px;
+    top: 75px;
     left: 15px;
     right: 15px;
 
     width: auto;
     max-width: none;
+    z-index: 2100;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
   }
 }

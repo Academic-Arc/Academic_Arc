@@ -492,10 +492,6 @@ function Submit() {
 
                 <div className="submit-heading">
 
-                    <span className="section-icon">
-                        ✎
-                    </span>
-
                     <h1>
                         {isEditMode
                             ? 'Edit Your Submission'

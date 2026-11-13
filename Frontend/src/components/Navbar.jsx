@@ -15,6 +15,8 @@ function Navbar({ theme = 'light', showLanguage = true }) {
     }
   })
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [notifOpen, setNotifOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -140,6 +142,8 @@ function Navbar({ theme = 'light', showLanguage = true }) {
     localStorage.removeItem('user_info')
     setIsLoggedIn(false)
     setUser(null)
+    setUnreadCount(0)
+    setNotifOpen(false)
     setProfileMenuOpen(false)
     window.location.href = '/'
   }
@@ -148,6 +152,17 @@ function Navbar({ theme = 'light', showLanguage = true }) {
     window.location.href = `/category/${encodeURIComponent(
       submission.content_type
     )}?post=${submission.share_token}`
+  }
+
+  const handleProfileButtonClick = () => {
+    setNotifOpen(false)
+    setProfileMenuOpen((prev) => !prev)
+  }
+
+  const handleOpenNotifications = (e) => {
+    e.stopPropagation()
+    setProfileMenuOpen(false)
+    setNotifOpen(true)
   }
 
   return (
@@ -162,7 +177,11 @@ function Navbar({ theme = 'light', showLanguage = true }) {
 
         <div className="navbar-search-container"
           aria-label="Search"
-          onClick={() => setSearchOpen((prev) => !prev)}
+          onClick={() => {
+            setNotifOpen(false)
+            setProfileMenuOpen(false)
+            setSearchOpen((prev) => !prev)
+          }}
         >
           <button
             className="navbar-search-button"
@@ -178,19 +197,33 @@ function Navbar({ theme = 'light', showLanguage = true }) {
         <div className="navbar-actions">
           {isLoggedIn ? (
             <>
-              <NotificationBell theme={theme} />
+              <div className="navbar-desktop-bell">
+                <NotificationBell
+                  theme={theme}
+                  isOpen={notifOpen}
+                  setIsOpen={setNotifOpen}
+                  onUnreadCountChange={setUnreadCount}
+                />
+              </div>
 
               <div className="navbar-profile-dropdown" ref={profileMenuRef}>
                 <button
                   className="navbar-profile-button"
-                  onClick={() => setProfileMenuOpen((prev) => !prev)}
+                  onClick={handleProfileButtonClick}
                   aria-expanded={profileMenuOpen}
                 >
-                  <div className="navbar-profile-avatar">
-                    {user?.profile_picture ? (
-                      <img src={user.profile_picture} alt={user.name} />
-                    ) : (
-                      <span>{getInitials(user?.name)}</span>
+                  <div className="navbar-profile-avatar-wrap">
+                    <div className="navbar-profile-avatar">
+                      {user?.profile_picture ? (
+                        <img src={user.profile_picture} alt={user.name} />
+                      ) : (
+                        <span>{getInitials(user?.name)}</span>
+                      )}
+                    </div>
+                    {unreadCount > 0 && (
+                      <span className="navbar-profile-badge">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
                     )}
                   </div>
 
@@ -217,6 +250,20 @@ function Navbar({ theme = 'light', showLanguage = true }) {
                       <span>My Profile</span>
                     </Link>
 
+                    <button
+                      type="button"
+                      className="navbar-profile-item navbar-mobile-item navbar-profile-notif-btn"
+                      onClick={handleOpenNotifications}
+                    >
+                      <img src="/Icons/notification.svg" alt="Notifications" />
+                      <span className="navbar-profile-notif-label">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="navbar-profile-menu-alert">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+
                     <Link
                       to="/submit"
                       onClick={() => setProfileMenuOpen(false)}
@@ -224,6 +271,8 @@ function Navbar({ theme = 'light', showLanguage = true }) {
                       <img src="/Icons/submit.svg" alt="Submit" />
                       <span>Submit</span>
                     </Link>
+
+                    <div className="navbar-profile-menu-divider" />
 
                     <button onClick={logout}>
                       <span className="navbar-logout-icon">

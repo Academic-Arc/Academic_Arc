@@ -618,6 +618,10 @@ function Dashboard() {
         <SubmissionModal
           submission={selectedSubmission}
           onClose={() => setSelectedSubmission(null)}
+          onDelete={(id) => {
+            setSpecialPosts((prev) => prev.filter((p) => p.id !== id))
+            setAutomaticPosts((prev) => prev.filter((p) => p.id !== id))
+          }}
         />
       )}
     </div>

@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
 import './NotificationBell.css';
 
-function NotificationBell({ theme = 'light' }) {
+function NotificationBell({
+  theme = 'light',
+  isOpen: controlledIsOpen,
+  setIsOpen: controlledSetIsOpen,
+  onUnreadCountChange,
+}) {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = controlledSetIsOpen || setInternalIsOpen;
 
   const notificationRef = useRef(null);
 
@@ -15,6 +23,7 @@ function NotificationBell({ theme = 'light' }) {
 
     if (!token) {
       setNotifications([]);
+      if (onUnreadCountChange) onUnreadCountChange(0);
       return;
     }
 
@@ -31,6 +40,10 @@ function NotificationBell({ theme = 'light' }) {
 
       const data = await response.json();
       setNotifications(data);
+      const count = Array.isArray(data)
+        ? data.filter((item) => !item.is_read).length
+        : 0;
+      if (onUnreadCountChange) onUnreadCountChange(count);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -38,13 +51,41 @@ function NotificationBell({ theme = 'light' }) {
 
   useEffect(() => {
     fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 45000);
+    const onFocus = () => fetchNotifications();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [isOpen]);
+
+  const unreadCount = notifications.filter(
+    (notification) => !notification.is_read
+  ).length;
+
+  useEffect(() => {
+    if (onUnreadCountChange) {
+      onUnreadCountChange(unreadCount);
+    }
+  }, [unreadCount, onUnreadCountChange]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event) => {
       if (
         notificationRef.current &&
-        !notificationRef.current.contains(event.target)
+        !notificationRef.current.contains(event.target) &&
+        !event.target.closest('.navbar-profile-notif-btn')
       ) {
         setIsOpen(false);
       }
@@ -55,11 +96,7 @@ function NotificationBell({ theme = 'light' }) {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
-
-  const unreadCount = notifications.filter(
-    (notification) => !notification.is_read
-  ).length;
+  }, [isOpen, setIsOpen]);
 
   const handleToggle = () => {
     if (!isOpen) {
@@ -93,13 +130,14 @@ function NotificationBell({ theme = 'light' }) {
           throw new Error('Failed to mark notification as read');
         }
 
-        setNotifications((prevNotifications) =>
-          prevNotifications.map((item) =>
-            item.id === notification.id
-              ? { ...item, is_read: true }
-              : item
-          )
-        );
+        setNotifications((prevNotifications) => {
+          const updated = prevNotifications.map((item) =>
+            item.id === notification.id ? { ...item, is_read: true } : item
+          );
+          const newCount = updated.filter((item) => !item.is_read).length;
+          if (onUnreadCountChange) onUnreadCountChange(newCount);
+          return updated;
+        });
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -132,9 +170,11 @@ function NotificationBell({ theme = 'light' }) {
       });
 
       if (response.ok) {
-        setNotifications((prev) =>
-          prev.map((item) => ({ ...item, is_read: true }))
-        );
+        setNotifications((prev) => {
+          const updated = prev.map((item) => ({ ...item, is_read: true }));
+          if (onUnreadCountChange) onUnreadCountChange(0);
+          return updated;
+        });
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -167,15 +207,25 @@ function NotificationBell({ theme = 'light' }) {
         <div className="notification-dropdown">
           <div className="notification-header">
             <span>Notifications</span>
-            {unreadCount > 0 && (
+            <div className="notification-header-actions">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  className="notification-mark-all"
+                  onClick={handleMarkAllAsRead}
+                >
+                  Mark all as read
+                </button>
+              )}
               <button
                 type="button"
-                className="notification-mark-all"
-                onClick={handleMarkAllAsRead}
+                className="notification-close-btn"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close notifications"
               >
-                Mark all as read
+                ×
               </button>
-            )}
+            </div>
           </div>
 
           {notifications.length === 0 ? (
