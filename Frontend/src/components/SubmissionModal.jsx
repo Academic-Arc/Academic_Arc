@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { API_URL } from '../config'
 import FacebookEmbed from '../pages/FacebookEmbed'
@@ -144,6 +144,22 @@ function SubmissionModal({
   const [selectedPreset, setSelectedPreset] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
 
+  // Keep callback references stable across parent re-renders to prevent effect loops
+  const onCommentCountUpdateRef = useRef(onCommentCountUpdate)
+  useEffect(() => {
+    onCommentCountUpdateRef.current = onCommentCountUpdate
+  }, [onCommentCountUpdate])
+
+  const onLikeToggleRef = useRef(onLikeToggle)
+  useEffect(() => {
+    onLikeToggleRef.current = onLikeToggle
+  }, [onLikeToggle])
+
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   // Lock body scroll and handle Escape key
   useEffect(() => {
     const prevOverflow = document.body.style.overflow
@@ -151,7 +167,7 @@ function SubmissionModal({
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current?.()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -160,7 +176,7 @@ function SubmissionModal({
       document.body.style.overflow = prevOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onClose])
+  }, [])
 
   // Fetch likes on mount
   useEffect(() => {
@@ -204,8 +220,8 @@ function SubmissionModal({
           const data = await response.json()
           if (isMounted) {
             setComments(data.comments || [])
-            if (onCommentCountUpdate) {
-              onCommentCountUpdate(submission.id, data.count || (data.comments || []).length)
+            if (onCommentCountUpdateRef.current) {
+              onCommentCountUpdateRef.current(submission.id, data.count ?? (data.comments || []).length)
             }
           }
         }
@@ -220,7 +236,7 @@ function SubmissionModal({
     return () => {
       isMounted = false
     }
-  }, [submission?.id, onCommentCountUpdate])
+  }, [submission?.id])
 
   // Like toggle handler
   const handleLike = async () => {
@@ -252,8 +268,8 @@ function SubmissionModal({
         like_count: newCount,
       })
 
-      if (onLikeToggle) {
-        onLikeToggle(submission.id, newLiked, newCount)
+      if (onLikeToggleRef.current) {
+        onLikeToggleRef.current(submission.id, newLiked, newCount)
       }
     } catch (err) {
       console.error('Like error:', err)
@@ -323,8 +339,8 @@ function SubmissionModal({
       setSelectedPreset('')
       setIsPresetOpen(false)
 
-      if (onCommentCountUpdate) {
-        onCommentCountUpdate(submission.id, data.count)
+      if (onCommentCountUpdateRef.current) {
+        onCommentCountUpdateRef.current(submission.id, data.count)
       }
     } catch (err) {
       console.error('Error posting comment:', err)
@@ -365,8 +381,8 @@ function SubmissionModal({
 
       setComments((prev) => prev.filter((c) => c.id !== commentId))
 
-      if (onCommentCountUpdate) {
-        onCommentCountUpdate(submission.id, data.count)
+      if (onCommentCountUpdateRef.current) {
+        onCommentCountUpdateRef.current(submission.id, data.count)
       }
     } catch (err) {
       console.error('Error deleting comment:', err)
