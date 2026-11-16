@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { API_URL } from "../config";
 import { useBackend } from '../BackendContext'
@@ -178,10 +178,19 @@ function Dashboard() {
   const automaticCarouselRef = useRef(null)
   const profileMenuRef = useRef(null)
   const categorySliderRef = useRef(null)
+  const progressBarRef = useRef(null)
   const isDraggingRef = useRef(false)
   const dragStartXRef = useRef(0)
   const dragScrollLeftRef = useRef(0)
   const hasDraggedRef = useRef(false)
+
+  const updateProgressBar = useCallback(() => {
+    const slider = categorySliderRef.current
+    if (!slider || !progressBarRef.current) return
+    const maxScroll = slider.scrollWidth - slider.clientWidth
+    const progress = maxScroll > 0 ? slider.scrollLeft / maxScroll : 0
+    progressBarRef.current.style.transform = `scaleX(${Math.min(1, Math.max(0, progress))})`
+  }, [])
 
   const scrollCategorySlider = (direction) => {
     if (!categorySliderRef.current) return
@@ -209,12 +218,13 @@ function Dashboard() {
     const slider = categorySliderRef.current
     if (!slider) return
     const diff = e.clientX - dragStartXRef.current
-    if (Math.abs(diff) > 5) {
+    if (Math.abs(diff) > 4) {
       hasDraggedRef.current = true
       slider.style.scrollBehavior = 'auto'
       slider.style.scrollSnapType = 'none'
       slider.classList.add('is-dragging')
       slider.scrollLeft = dragScrollLeftRef.current - diff
+      updateProgressBar()
     }
   }
 
@@ -226,11 +236,18 @@ function Dashboard() {
       slider.classList.remove('is-dragging')
       slider.style.scrollBehavior = 'smooth'
       slider.style.scrollSnapType = 'x mandatory'
+      updateProgressBar()
     }
     setTimeout(() => {
       hasDraggedRef.current = false
     }, 80)
   }
+
+  useEffect(() => {
+    updateProgressBar()
+    window.addEventListener('resize', updateProgressBar)
+    return () => window.removeEventListener('resize', updateProgressBar)
+  }, [updateProgressBar])
 
   useEffect(() => {
     if (!token || backendLoading) return
@@ -540,76 +557,70 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* SLIDER SECTION (3 CARDS VISIBLE + SWIPE/DRAG) */}
+          {/* SLIDER SECTION (3 CARDS VISIBLE + DRAG/SWIPE + ARROWS BESIDE CARDS) */}
           <div className="showcase-slider-container">
-            <button
-              type="button"
-              className="showcase-slider-arrow showcase-slider-prev"
-              onClick={() => scrollCategorySlider(-1)}
-              aria-label="Previous categories"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
+            <div className="showcase-slider-wrapper">
+              <button
+                type="button"
+                className="showcase-slider-arrow showcase-slider-prev"
+                onClick={() => scrollCategorySlider(-1)}
+                aria-label="Previous categories"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
 
-            <div
-              className="showcase-slider"
-              ref={categorySliderRef}
-              onPointerDown={handleSliderPointerDown}
-              onPointerMove={handleSliderPointerMove}
-              onPointerUp={handleSliderPointerUp}
-              onPointerCancel={handleSliderPointerUp}
-              onMouseLeave={handleSliderPointerUp}
-            >
-              {categories.map((category) => (
-                <Link
-                  key={category.type}
-                  to={`/category/${encodeURIComponent(category.type)}`}
-                  className="showcase-category-card"
-                  style={{ backgroundImage: `url(${category.image})` }}
-                  onClick={(e) => {
-                    if (hasDraggedRef.current) {
-                      e.preventDefault()
-                    }
-                  }}
-                >
-                  <div className="showcase-card-overlay" />
+              <div
+                className="showcase-slider"
+                ref={categorySliderRef}
+                onScroll={updateProgressBar}
+                onPointerDown={handleSliderPointerDown}
+                onPointerMove={handleSliderPointerMove}
+                onPointerUp={handleSliderPointerUp}
+                onPointerCancel={handleSliderPointerUp}
+                onMouseLeave={handleSliderPointerUp}
+              >
+                {categories.map((category) => (
+                  <Link
+                    key={category.type}
+                    to={`/category/${encodeURIComponent(category.type)}`}
+                    className="showcase-category-card"
+                    style={{ backgroundImage: `url(${category.image})` }}
+                    onClick={(e) => {
+                      if (hasDraggedRef.current) {
+                        e.preventDefault()
+                      }
+                    }}
+                  >
+                    <div className="showcase-card-overlay" />
 
-                  <div className="showcase-card-top">
-                    <div className="showcase-card-icon-pill">
-                      <img
-                        src={category.icon}
-                        alt={category.title}
-                        className="showcase-card-icon"
-                        draggable="false"
-                      />
+                    <div className="showcase-card-bottom">
+                      <div className="showcase-card-info">
+                        <h3 className="showcase-card-title">{category.title}</h3>
+                        <p className="showcase-card-desc">{category.description}</p>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
+                ))}
+              </div>
 
-                  <div className="showcase-card-bottom">
-                    <div className="showcase-card-info">
-                      <h3 className="showcase-card-title">{category.title}</h3>
-                      <p className="showcase-card-desc">{category.description}</p>
-                    </div>
-                    <div className="showcase-card-arrow" aria-hidden="true">
-                      →
-                    </div>
-                  </div>
-                </Link>
-              ))}
+              <button
+                type="button"
+                className="showcase-slider-arrow showcase-slider-next"
+                onClick={() => scrollCategorySlider(1)}
+                aria-label="Next categories"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
             </div>
 
-            <button
-              type="button"
-              className="showcase-slider-arrow showcase-slider-next"
-              onClick={() => scrollCategorySlider(1)}
-              aria-label="Next categories"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
+            {/* SLIDER PROGRESS BAR */}
+            <div className="showcase-progress-track">
+              <div className="showcase-progress-bar" ref={progressBarRef} />
+            </div>
           </div>
         </div>
       </main>
