@@ -177,6 +177,60 @@ function Dashboard() {
   const specialCarouselRef = useRef(null)
   const automaticCarouselRef = useRef(null)
   const profileMenuRef = useRef(null)
+  const categorySliderRef = useRef(null)
+  const isDraggingRef = useRef(false)
+  const dragStartXRef = useRef(0)
+  const dragScrollLeftRef = useRef(0)
+  const hasDraggedRef = useRef(false)
+
+  const scrollCategorySlider = (direction) => {
+    if (!categorySliderRef.current) return
+    const container = categorySliderRef.current
+    const card = container.querySelector('.showcase-category-card')
+    const scrollAmount = card ? card.offsetWidth + 18 : 340
+    container.scrollBy({
+      left: direction * scrollAmount,
+      behavior: 'smooth',
+    })
+  }
+
+  const handleSliderPointerDown = (e) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return
+    const slider = categorySliderRef.current
+    if (!slider) return
+    isDraggingRef.current = true
+    hasDraggedRef.current = false
+    dragStartXRef.current = e.clientX
+    dragScrollLeftRef.current = slider.scrollLeft
+  }
+
+  const handleSliderPointerMove = (e) => {
+    if (!isDraggingRef.current) return
+    const slider = categorySliderRef.current
+    if (!slider) return
+    const diff = e.clientX - dragStartXRef.current
+    if (Math.abs(diff) > 5) {
+      hasDraggedRef.current = true
+      slider.style.scrollBehavior = 'auto'
+      slider.style.scrollSnapType = 'none'
+      slider.classList.add('is-dragging')
+      slider.scrollLeft = dragScrollLeftRef.current - diff
+    }
+  }
+
+  const handleSliderPointerUp = () => {
+    if (!isDraggingRef.current) return
+    isDraggingRef.current = false
+    const slider = categorySliderRef.current
+    if (slider) {
+      slider.classList.remove('is-dragging')
+      slider.style.scrollBehavior = 'smooth'
+      slider.style.scrollSnapType = 'x mandatory'
+    }
+    setTimeout(() => {
+      hasDraggedRef.current = false
+    }, 80)
+  }
 
   useEffect(() => {
     if (!token || backendLoading) return
@@ -316,36 +370,48 @@ function Dashboard() {
       description: 'Stories, essays & creative writing',
       type: 'Writing',
       number: '01',
+      image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80',
+      icon: '/Icons/writing.svg',
     },
     {
       title: 'Drawing',
       description: 'Sketches, paintings & illustrations',
       type: 'Drawing',
       number: '02',
+      image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80',
+      icon: '/Icons/drawing.svg',
     },
     {
-      title: 'Poem',
+      title: 'Poetry',
       description: 'Poetry & original compositions',
       type: 'Poem',
       number: '03',
+      image: 'https://images.unsplash.com/photo-1649832708151-8221e8cc9e96?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      icon: '/Icons/poem.svg',
     },
     {
       title: 'Song',
       description: 'Original songs & musical creations',
       type: 'Song',
       number: '04',
+      image: '/music.png',
+      icon: '/Icons/song.svg',
     },
     {
       title: 'Instrumental',
-      description: 'Instrumental Performances',
+      description: 'Instrumental performances',
       type: 'Instrumental',
       number: '05',
+      image: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=900&q=80',
+      icon: '/Icons/instrument.svg',
     },
     {
       title: 'Dance',
       description: 'Classical, contemporary & folk dance',
       type: 'Dance',
       number: '06',
+      image: '/dance-card.png',
+      icon: '/Icons/dance.svg',
     },
   ]
 
@@ -445,44 +511,106 @@ function Dashboard() {
         </div>
       )}
 
-      <main className="categories-section">
-        <div className="section-label">
-          • STUDENT CREATIVITY
-        </div>
+      <main className="showcase-section">
+        <div className="showcase-card">
+          {/* HERO ROW */}
+          <div className="showcase-hero">
+            <div className="showcase-hero-content">
+              <div className="showcase-badge">
+                <span className="showcase-badge-star">✦</span> STUDENT CREATIVITY
+              </div>
 
-        <h1>Student Talent Showcase</h1>
+              <h1 className="showcase-title">
+                Student <span className="showcase-talent-text">Talent</span> Showcase
+              </h1>
 
-        <p className="section-description">
-          Create, share and inspire with writing, poetry, drawing, music and other
-          original student creations.
-        </p>
+              <p className="showcase-description">
+                Create, share and inspire with writing, poetry, drawing, music and other original student creations.
+              </p>
 
-        <div className="categories-grid">
-          {categories.map((category) => (
-            <Link
-              key={category.type}
-              to={`/category/${encodeURIComponent(category.type)}`}
-              className={`category-card category-${category.number}`}
+              <div className="showcase-actions">
+                <Link to="/category/All" className="showcase-btn showcase-btn-primary">
+                  Explore All Creations <span className="showcase-btn-arrow">→</span>
+                </Link>
+
+                <Link to="/submit" className="showcase-btn showcase-btn-secondary">
+                  + Add Post
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* SLIDER SECTION (3 CARDS VISIBLE + SWIPE/DRAG) */}
+          <div className="showcase-slider-container">
+            <button
+              type="button"
+              className="showcase-slider-arrow showcase-slider-prev"
+              onClick={() => scrollCategorySlider(-1)}
+              aria-label="Previous categories"
             >
-              <div className="category-number">
-                {category.number}
-              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
 
-              <div className="category-content">
-                <span className="category-type">
-                  {category.type}
-                </span>
+            <div
+              className="showcase-slider"
+              ref={categorySliderRef}
+              onPointerDown={handleSliderPointerDown}
+              onPointerMove={handleSliderPointerMove}
+              onPointerUp={handleSliderPointerUp}
+              onPointerCancel={handleSliderPointerUp}
+              onMouseLeave={handleSliderPointerUp}
+            >
+              {categories.map((category) => (
+                <Link
+                  key={category.type}
+                  to={`/category/${encodeURIComponent(category.type)}`}
+                  className="showcase-category-card"
+                  style={{ backgroundImage: `url(${category.image})` }}
+                  onClick={(e) => {
+                    if (hasDraggedRef.current) {
+                      e.preventDefault()
+                    }
+                  }}
+                >
+                  <div className="showcase-card-overlay" />
 
-                <h2>{category.title}</h2>
+                  <div className="showcase-card-top">
+                    <div className="showcase-card-icon-pill">
+                      <img
+                        src={category.icon}
+                        alt={category.title}
+                        className="showcase-card-icon"
+                        draggable="false"
+                      />
+                    </div>
+                  </div>
 
-                <p>{category.description}</p>
+                  <div className="showcase-card-bottom">
+                    <div className="showcase-card-info">
+                      <h3 className="showcase-card-title">{category.title}</h3>
+                      <p className="showcase-card-desc">{category.description}</p>
+                    </div>
+                    <div className="showcase-card-arrow" aria-hidden="true">
+                      →
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
 
-                <span className="category-link">
-                  Explore →
-                </span>
-              </div>
-            </Link>
-          ))}
+            <button
+              type="button"
+              className="showcase-slider-arrow showcase-slider-next"
+              onClick={() => scrollCategorySlider(1)}
+              aria-label="Next categories"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
         </div>
       </main>
 
