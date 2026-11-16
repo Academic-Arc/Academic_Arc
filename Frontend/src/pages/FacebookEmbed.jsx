@@ -157,8 +157,10 @@ function FacebookEmbed({ url, className = '' }) {
 
         containerRef.current.appendChild(video)
 
+        let ratioLocked = false
+
         const detectOrientation = () => {
-          if (cancelled || !containerRef.current) return
+          if (cancelled || !containerRef.current || ratioLocked) return
           const span = containerRef.current.querySelector('span')
           const iframe = containerRef.current.querySelector('iframe')
 
@@ -188,8 +190,13 @@ function FacebookEmbed({ url, className = '' }) {
             width = iframe.clientWidth
           }
 
-          if (width && height) {
-            if (width > height * 1.15) {
+          if (width > 0 && height > 0 && width !== 1000 && height !== 1000) {
+            ratioLocked = true
+            const ratio = `${width} / ${height}`
+            containerRef.current.style.setProperty('--fb-aspect-ratio', ratio)
+            containerRef.current.style.aspectRatio = ratio
+
+            if (width >= height) {
               containerRef.current.classList.add('fb-landscape')
               containerRef.current.classList.remove('fb-portrait')
             } else {
@@ -206,7 +213,8 @@ function FacebookEmbed({ url, className = '' }) {
             )
           }
           detectOrientation()
-          setTimeout(detectOrientation, 500)
+          setTimeout(detectOrientation, 300)
+          setTimeout(detectOrientation, 800)
           setTimeout(detectOrientation, 1500)
         })
       } catch (err) {
