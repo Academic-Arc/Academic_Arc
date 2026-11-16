@@ -2,15 +2,18 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 const categories = [
-  { name: 'Writing', label: 'Writing' },
-  { name: 'Drawing', label: 'Drawing' },
-  { name: 'Poem', label: 'Poetry' },
-  { name: 'Song', label: 'Song' },
-  { name: 'Instrumental', label: 'Instrumental' },
-  { name: 'Dance', label: 'Dance' },
+  { name: 'All', label: 'All Works', icon: '/Icons/all.svg' },
+  { name: 'Writing', label: 'Writing', icon: '/Icons/writing.svg' },
+  { name: 'Drawing', label: 'Drawing', icon: '/Icons/drawing.svg' },
+  { name: 'Poem', label: 'Poetry', icon: '/Icons/poem.svg' },
+  { name: 'Song', label: 'Song', icon: '/Icons/song.svg' },
+  { name: 'Instrumental', label: 'Instrumental', icon: '/Icons/instrument.svg' },
+  { name: 'Dance', label: 'Dance', icon: '/Icons/dance.svg' },
 ]
 
 const descriptions = {
+  All:
+    'Explore student sketches, stories, poetry, music and performances across Academic Arc.',
   Writing:
     'Explore original stories, essays and creative writing by students on Academic Arc.',
   Drawing:
@@ -30,20 +33,23 @@ function CategorySidebar({ categoryName }) {
   const location = useLocation()
 
   const isHomeActive = location.pathname === '/'
+  const isAllActive = categoryName?.toLowerCase() === 'all'
 
   const isMoreActive =
+    categoryName === 'Poem' ||
     categoryName === 'Song' ||
     categoryName === 'Instrumental' ||
     categoryName === 'Dance' ||
     moreOpen
 
   const primaryCategories = [
+    { name: 'All', label: 'All', path: '/category/All', icon: '/Icons/all.svg' },
     { name: 'Writing', label: 'Writing', path: '/category/Writing', icon: '/Icons/writing.svg' },
     { name: 'Drawing', label: 'Drawing', path: '/category/Drawing', icon: '/Icons/drawing.svg' },
-    { name: 'Poem', label: 'Poetry', path: '/category/Poem', icon: '/Icons/poem.svg' },
   ]
 
   const moreCategories = [
+    { name: 'Poem', label: 'Poetry', path: '/category/Poem', icon: '/Icons/poem.svg' },
     { name: 'Song', label: 'Song', path: '/category/Song', icon: '/Icons/song.svg' },
     { name: 'Instrumental', label: 'Instrumental', path: '/category/Instrumental', icon: '/Icons/instrument.svg' },
     { name: 'Dance', label: 'Dance', path: '/category/Dance', icon: '/Icons/dance.svg' },
@@ -54,46 +60,68 @@ function CategorySidebar({ categoryName }) {
       {/* ========================================================= */}
       {/* DESKTOP & TABLET SIDEBAR (Retained as-is, hidden on mobile) */}
       {/* ========================================================= */}
-      <aside className="category-sidebar">
+      <aside className="category-sidebar" aria-label="Category navigation">
         <div className="category-sidebar-content">
+          {/* Back to Home Button */}
           <Link
             to="/"
             className="category-sidebar-back"
             aria-label="Back to home"
+            title="Back to home"
           >
-            <img src="/Icons/dropdown.svg" alt="Back" />
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </Link>
 
-          <div className="category-sidebar-section">
+          {/* Current Category Hero Section */}
+          <div className="category-sidebar-hero">
             <span className="category-sidebar-label">CATEGORY</span>
-            <h2>{categoryName === 'Poem' ? 'Poetry' : categoryName}</h2>
-            <p>
+            <h2 className="category-sidebar-title">
+              {categoryName?.toLowerCase() === 'all'
+                ? 'All Works'
+                : categoryName === 'Poem'
+                ? 'Poetry'
+                : categoryName}
+            </h2>
+            <p className="category-sidebar-desc">
               {descriptions[categoryName] ||
+                descriptions[categoryName === 'All' ? 'All' : ''] ||
                 'Explore student creations on Academic Arc.'}
             </p>
           </div>
 
-          <div className="category-sidebar-section">
-            <span className="category-sidebar-label">EXPLORE</span>
+          {/* Explore Other Categories */}
+          <div className="category-sidebar-nav-section">
+            <span className="category-sidebar-nav-heading">EXPLORE</span>
             <nav className="category-sidebar-nav">
-              {categories.map((category) => (
-                <Link
-                  key={category.name}
-                  to={`/category/${encodeURIComponent(category.name)}`}
-                  className={
-                    category.name === categoryName
-                      ? 'category-sidebar-link active'
-                      : 'category-sidebar-link'
-                  }
-                >
-                  {category.label}
-                </Link>
-              ))}
+              {categories.map((category) => {
+                const isActive =
+                  categoryName?.toLowerCase() === category.name.toLowerCase()
+                return (
+                  <Link
+                    key={category.name}
+                    to={`/category/${encodeURIComponent(category.name)}`}
+                    className={`category-sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <span className="category-link-icon-wrap">
+                      <img
+                        src={category.icon}
+                        alt=""
+                        className="category-link-icon"
+                      />
+                    </span>
+                    <span className="category-link-label">{category.label}</span>
+                  </Link>
+                )
+              })}
             </nav>
           </div>
 
+          {/* Submit Work Button */}
           <Link to="/submit" className="category-sidebar-submit">
-            Submit
+            <img src="/Icons/submit.svg" alt="" className="category-submit-icon" />
+            <span>Submit</span>
           </Link>
         </div>
       </aside>
@@ -112,9 +140,9 @@ function CategorySidebar({ categoryName }) {
           <span>Home</span>
         </Link>
 
-        {/* Writing, Drawing, Poetry */}
+        {/* All, Writing, Drawing */}
         {primaryCategories.map((item) => {
-          const isActive = categoryName === item.name
+          const isActive = categoryName?.toLowerCase() === item.name.toLowerCase()
 
           return (
             <Link
@@ -163,10 +191,15 @@ function CategorySidebar({ categoryName }) {
               <div className="mobile-more-heading-group">
                 <span className="mobile-more-category-tag">CATEGORY</span>
                 <h2 className="mobile-more-title">
-                  {categoryName === 'Poem' ? 'Poetry' : categoryName}
+                  {categoryName?.toLowerCase() === 'all'
+                    ? 'All Works'
+                    : categoryName === 'Poem'
+                    ? 'Poetry'
+                    : categoryName}
                 </h2>
                 <p className="mobile-more-desc">
                   {descriptions[categoryName] ||
+                    descriptions[categoryName === 'All' ? 'All' : ''] ||
                     'Explore student creations on Academic Arc.'}
                 </p>
               </div>
@@ -185,7 +218,8 @@ function CategorySidebar({ categoryName }) {
               <span className="mobile-more-explore-tag">EXPLORE</span>
               <div className="mobile-more-links">
                 {moreCategories.map((item) => {
-                  const isActive = categoryName === item.name
+                  const isActive =
+                    categoryName?.toLowerCase() === item.name.toLowerCase()
 
                   return (
                     <Link

@@ -73,6 +73,62 @@
   display: block;
 }
 
+.submission-viewer-media .facebook-embed-container {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  aspect-ratio: var(--fb-aspect-ratio, 16 / 9);
+  max-height: 100%;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative;
+  overflow: hidden;
+  background: #000000;
+  margin: auto;
+}
+
+.submission-viewer-media .facebook-embed-container.fb-portrait {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: var(--fb-aspect-ratio, 9 / 16);
+  margin: 0 auto;
+}
+
+.submission-viewer-media .facebook-embed-container .fb-video,
+.submission-viewer-media .facebook-embed-container > div,
+.submission-viewer-media .facebook-embed-container span {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.submission-viewer-media .facebook-embed-container iframe {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border: none !important;
+  display: block !important;
+}
+
+.submission-viewer-media .facebook-embed-fallback {
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+}
+
+.submission-viewer-media .facebook-embed-fallback a {
+  color: #d98222;
+  text-decoration: underline;
+}
+
 
 
 .viewer-writing {
@@ -878,23 +934,26 @@
   }
 
   .mobile-viewer-content .facebook-embed-container {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    max-height: calc(92vh - 140px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    background: #000000;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: var(--fb-aspect-ratio, 16 / 9) !important;
+    max-height: calc(92vh - 140px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: #000000 !important;
+    margin: 0 auto !important;
   }
 
   .mobile-viewer-content .facebook-embed-container.fb-portrait {
-    width: auto;
-    height: calc(92vh - 140px);
-    max-width: 100%;
-    aspect-ratio: 9 / 16;
-    margin: 0 auto;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: var(--fb-aspect-ratio, 9 / 16) !important;
+    max-height: calc(92vh - 140px) !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
   }
 
   .mobile-viewer-content .facebook-embed-container .fb-video,
@@ -916,6 +975,7 @@
     max-height: 100% !important;
     border: none !important;
     display: block !important;
+    object-fit: cover !important;
   }
 
   .mobile-viewer-content .viewer-writing {

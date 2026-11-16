@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, memo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { API_URL } from "../config"
 import './Category.css'
@@ -8,6 +8,23 @@ import Navbar from '../components/Navbar'
 import { usePrompt } from '../context/PromptContext'
 import SubmissionModal from '../components/SubmissionModal'
 
+
+const CATEGORY_DESCRIPTIONS = {
+  All:
+    'Explore student sketches, stories, poetry, music and performances across Academic Arc.',
+  Writing:
+    'Explore original stories, essays and creative writing by students on Academic Arc.',
+  Drawing:
+    'Explore student sketches, paintings and illustrations on Academic Arc.',
+  Poem:
+    'Explore original poetry and compositions created by students on Academic Arc.',
+  Song:
+    'Discover original songs and musical creations by students on Academic Arc.',
+  Instrumental:
+    'Discover instrumental performances created and shared by students on Academic Arc.',
+  Dance:
+    'Explore classical, contemporary and folk dance performances by students on Academic Arc.',
+}
 
 const CardVideoMedia = memo(function CardVideoMedia({
   submissionId,
@@ -56,7 +73,26 @@ function Category() {
   const [likeData, setLikeData] = useState({})
   const [liking, setLiking] = useState({})
   const [commentCounts, setCommentCounts] = useState({})
+  const [sortBy, setSortBy] = useState('newest') // 'newest' | 'likes' | 'oldest'
+  const [viewMode, setViewMode] = useState(
+    typeof window !== 'undefined' && window.innerWidth <= 900 ? 'list' : 'grid'
+  ) // 'grid' | 'list'
   const [isPresetOpen, setIsPresetOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 900 : false
+  )
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 900
+      setIsMobile(mobile)
+      if (mobile) {
+        setViewMode('list')
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const [ownSubmissionIds, setOwnSubmissionIds] = useState(new Set())
   const [openMenu, setOpenMenu] = useState(null)
@@ -107,6 +143,7 @@ function Category() {
 
   useEffect(() => {
     const categoryTitles = {
+      All: 'All Creative Works – Student Talent | Academic Arc',
       Writing: 'Writing – Student Talent | Academic Arc',
       Drawing: 'Drawing – Student Talent | Academic Arc',
       Poem: 'Poetry – Student Talent | Academic Arc',
@@ -116,6 +153,8 @@ function Category() {
     }
 
     const categoryDescriptions = {
+      All:
+        'Explore student sketches, stories, poetry, music and performances across Academic Arc.',
       Writing:
         'Explore original stories, essays and creative writing by students on Academic Arc.',
       Drawing:
@@ -170,17 +209,18 @@ function Category() {
     fetch(`${API_URL}/submissions/public`)
       .then((response) => response.json())
       .then((data) => {
-        const filtered = data
-          .filter(
-            (submission) =>
-              submission.content_type === categoryName
-          )
-          .sort(
-            (a, b) =>
-              new Date(b.created_at) - new Date(a.created_at)
-          )
+        const isAll = categoryName?.toLowerCase() === 'all'
+        const filtered = isAll
+          ? data
+          : data.filter(
+              (submission) => submission.content_type === categoryName
+            )
+        const sorted = filtered.sort(
+          (a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+        )
 
-        setSubmissions(filtered)
+        setSubmissions(sorted)
 
         const initialCommentCounts = {}
         data.forEach((sub) => {
@@ -662,6 +702,312 @@ function Category() {
     }))
   }, [])
 
+  const sortedSubmissions = useMemo(() => {
+    return [...submissions].sort((a, b) => {
+      if (sortBy === 'likes') {
+        const likesA = likeData[a.id]?.like_count ?? a.like_count ?? 0
+        const likesB = likeData[b.id]?.like_count ?? b.like_count ?? 0
+        return likesB - likesA
+      }
+      if (sortBy === 'oldest') {
+        return new Date(a.created_at) - new Date(b.created_at)
+      }
+      return new Date(b.created_at) - new Date(a.created_at)
+    })
+  }, [submissions, sortBy, likeData])
+
+  const [col1, col2] = useMemo(() => {
+    const c1 = []
+    const c2 = []
+    sortedSubmissions.forEach((sub, i) => {
+      if (i % 2 === 0) c1.push(sub)
+      else c2.push(sub)
+    })
+    return [c1, c2]
+  }, [sortedSubmissions])
+
+  const renderSubmissionCard = (submission) => {
+    const videoType = isVideoType(submission)
+    const uploadedVideo = isUploadedVideo(submission.media_url)
+    const embedUrl = getEmbedUrl(submission.media_url)
+    const isOwner = ownSubmissionIds.has(submission.id)
+
+    return (
+      <article
+        key={submission.id}
+        className="submission-card"
+      >
+        {/* POST HEADER */}
+        <div className="submission-header">
+          <div className="submission-avatar">
+            {submission.profile_picture ? (
+              <img
+                src={submission.profile_picture}
+                alt={submission.student_name || 'Academic Arc'}
+              />
+            ) : (
+              (
+                submission.student_name ||
+                submission.user_name ||
+                'A'
+              )
+                .charAt(0)
+                .toUpperCase()
+            )}
+          </div>
+
+          <div className="submission-meta">
+            <strong>
+              {submission.student_name ||
+                submission.user_name ||
+                'Academic Arc'}
+            </strong>
+
+            {(submission.student_class || submission.grade || submission.school) && (
+              <span>
+                {[
+                  (submission.student_class || submission.grade)
+                    ? `Class ${submission.student_class || submission.grade}`
+                    : null,
+                  submission.school,
+                ]
+                  .filter(Boolean)
+                  .join(' • ')}
+              </span>
+            )}
+
+            <small>
+              Published on{' '}
+              {submission.created_at &&
+                new Date(
+                  submission.created_at
+                ).toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+            </small>
+          </div>
+
+          {/* TOP-RIGHT CONTROLS: CATEGORY TAG + 3-DOTS ACTION MENU */}
+          <div className="submission-header-right">
+            {categoryName?.toLowerCase() === 'all' && submission.content_type && (
+              <span className="submission-category-tag">
+                {submission.content_type === 'Poem'
+                  ? 'Poetry'
+                  : submission.content_type}
+              </span>
+            )}
+
+            <div
+              className="submission-menu-wrapper"
+              ref={openMenu === submission.id ? menuRef : null}
+            >
+              <button
+                type="button"
+                className="submission-menu-button"
+                onClick={() => handleMenuToggle(submission.id)}
+                aria-label="Post options"
+                aria-expanded={openMenu === submission.id}
+              >
+                •••
+              </button>
+
+              {openMenu === submission.id && (
+                <div className="submission-menu-dropdown">
+                  {isOwner ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenMenu(null)
+                          navigate(`/submit?edit=${submission.id}`)
+                        }}
+                      >
+                        ✏️ Edit post
+                      </button>
+
+                      <button
+                        type="button"
+                        className="share-option"
+                        onClick={() => {
+                          setOpenMenu(null)
+                          handleShare(submission)
+                        }}
+                      >
+                        <img src="/Icons/share.svg" alt="Share" /> Share
+                      </button>
+
+                      <button
+                        type="button"
+                        className="delete-option"
+                        onClick={() => {
+                          setOpenMenu(null)
+                          handleDelete(submission.id)
+                        }}
+                      >
+                        <img src="/Icons/f7_trash.svg" alt="Delete" /> Delete post
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="report-option"
+                      onClick={() => {
+                        if (!isLoggedIn) {
+                          showAlert('Please log in to report a post.', 'info')
+                          return
+                        }
+                        setReportSubmission(submission)
+                        setReportReason('')
+                        setReportDetails('')
+                        setOpenMenu(null)
+                      }}
+                    >
+                      🚩 Report post
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* IMAGE */}
+        {!videoType && submission.media_url && (
+          <div
+            className="submission-image"
+            onClick={() => openPostPopup(submission, false)}
+            style={{ cursor: 'pointer' }}
+          >
+            <img
+              src={submission.media_url}
+              alt={submission.heading}
+            />
+          </div>
+        )}
+
+        {/* VIDEO CONTENT (NATIVE / IFRAME / FACEBOOK) */}
+        {videoType && (uploadedVideo || embedUrl || submission.media_url?.includes('facebook.com')) && (
+          <CardVideoMedia
+            submissionId={submission.id}
+            mediaUrl={submission.media_url}
+            uploadedVideo={uploadedVideo}
+            embedUrl={embedUrl}
+            isFacebook={Boolean(submission.media_url?.includes('facebook.com'))}
+          />
+        )}
+
+        {/* UNSUPPORTED VIDEO LINK */}
+        {videoType &&
+          !uploadedVideo &&
+          !embedUrl &&
+          !submission.media_url?.includes('facebook.com') &&
+          submission.media_url && (
+            <div className="submission-link">
+              <a
+                href={submission.media_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open video ↗
+              </a>
+            </div>
+          )}
+
+        {/* POST TEXT */}
+        <div className="submission-content">
+          <h2
+            onClick={() => openPostPopup(submission, false)}
+            style={{ cursor: 'pointer' }}
+          >
+            {submission.heading}
+          </h2>
+
+          {submission.description && (
+            <p>{submission.description}</p>
+          )}
+
+          {/* WRITING / POEM CONTENT */}
+          {submission.written_content && (
+            <div
+              className="written-content-box"
+              onClick={() => openPostPopup(submission, false)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="written-content">
+                {submission.written_content}
+              </div>
+            </div>
+          )}
+
+          {/* POST ACTIONS */}
+          <div className="submission-actions">
+            <button
+              className={`submission-like ${
+                likeData[submission.id]?.liked_by_user
+                  ? 'liked'
+                  : ''
+              }`}
+              onClick={() => handleLike(submission.id)}
+              disabled={liking[submission.id]}
+              aria-label="Like submission"
+            >
+              <span className="like-icon-svg">
+                <img
+                  src={
+                    likeData[submission.id]?.liked_by_user
+                      ? '/Icons/LIKE.svg'
+                      : '/Icons/DISLIKE.svg'
+                  }
+                  alt={
+                    likeData[submission.id]?.liked_by_user
+                      ? 'Liked'
+                      : 'Like'
+                  }
+                />
+              </span>
+              <span>
+                {likeData[submission.id]?.like_count ??
+                  submission.like_count ??
+                  0}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="submission-comment"
+              onClick={() => openPostPopup(submission, true)}
+              aria-label="Comment on submission"
+            >
+              <img
+                src="/Icons/comment.svg"
+                alt="Comment"
+              />
+              <span>
+                {commentCounts[submission.id] ??
+                  submission.comment_count ??
+                  0}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              className="submission-share"
+              onClick={() => handleShare(submission)}
+              aria-label="Share submission"
+            >
+              <img
+                src="/Icons/share.svg"
+                alt="Share"
+              />
+            </button>
+          </div>
+        </div>
+      </article>
+    )
+  }
+
   return (
     <div className="category-page">
 
@@ -743,379 +1089,166 @@ function Category() {
           <CategorySidebar categoryName={categoryName} />
 
           <div className="category-main-column">
-            <div className="category-heading">
+            {/* HERO BANNER */}
+            <div className="category-hero">
+              <div className="category-hero-text">
+                <div className="category-hero-title-row">
+                  <h1 className="category-hero-title">
+                    {categoryName?.toLowerCase() === 'all'
+                      ? 'All Creations'
+                      : categoryName === 'Poem'
+                      ? 'Poetry'
+                      : categoryName}
+                  </h1>
+                  <span className="category-hero-sparkle" aria-hidden="true">
+                    <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="#f39c12" strokeWidth="2.8" strokeLinecap="round">
+                      <line x1="6" y1="20" x2="14" y2="12" />
+                      <line x1="14" y1="24" x2="20" y2="15" />
+                      <line x1="22" y1="20" x2="26" y2="10" />
+                    </svg>
+                  </span>
+                </div>
+                <p className="category-hero-subtitle">
+                  {CATEGORY_DESCRIPTIONS[categoryName] || `Explore student ${categoryName.toLowerCase()} submissions on Academic Arc.`}
+                </p>
+              </div>
 
-              <img
-                src={`/${categoryName.toLowerCase()}.png`}
-                alt={categoryName}
-              />
-
-              <p>
-                Explore student {categoryName.toLowerCase()} submissions.
-              </p>
-
+              <div className="category-hero-mascot-wrapper">
+                <img
+                  src={categoryName?.toLowerCase() === 'all' ? '/Mascot.png' : `/${categoryName.toLowerCase()}.png`}
+                  alt={categoryName}
+                  className="category-hero-mascot"
+                />
+              </div>
             </div>
 
-            <div className="submission-scroll-area">
-
-              {submissions.length === 0 ? (
-
-                <p className="empty-category">
-                  No {categoryName.toLowerCase()} submissions yet.
-                </p>
-
-              ) : (
-
-                <div className="submission-feed">
-
-                  {submissions.map((submission) => {
-
-                    const videoType = isVideoType(submission)
-
-                    const uploadedVideo = isUploadedVideo(
-                      submission.media_url
-                    )
-
-                    const embedUrl = getEmbedUrl(
-                      submission.media_url
-                    )
-
-                    const isOwner = ownSubmissionIds.has(
-                      submission.id
-                    )
-
-                    return (
-
-                      <article
-                        key={submission.id}
-                        className="submission-card"
-                      >
-
-                        {/* POST HEADER */}
-
-                        <div className="submission-header">
-
-                          <div className="submission-avatar">
-
-                            {submission.profile_picture ? (
-
-                              <img
-                                src={submission.profile_picture}
-                                alt={submission.student_name}
-                              />
-
-                            ) : (
-
-                              submission.student_name
-                                ? submission.student_name
-                                    .charAt(0)
-                                    .toUpperCase()
-                                : 'S'
-
-                            )}
-
-                          </div>
-
-                          <div className="submission-meta">
-
-                            <strong>
-                              {submission.student_name}
-                            </strong>
-
-                            {(submission.student_class || submission.school) && (
-                              <span>
-                                {[
-                                  submission.student_class ? `Class ${submission.student_class}` : null,
-                                  submission.school
-                                ].filter(Boolean).join(' • ')}
-                              </span>
-                            )}
-
-                            <small>
-                              Published on{' '}
-                              {submission.created_at &&
-                                new Date(
-                                  submission.created_at
-                                ).toLocaleDateString('en-IN', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })}
-                            </small>
-
-                          </div>
-
-                          {/* THREE DOT MENU */}
-
-                          <div
-                            className="submission-menu-wrapper"
-                            ref={
-                              openMenu === submission.id
-                                ? menuRef
-                                : null
-                            }
-                          >
-
-                            <button
-                              type="button"
-                              className="submission-menu-button"
-                              onClick={() =>
-                                handleMenuToggle(submission.id)
-                              }
-                              aria-label="Post options"
-                              aria-expanded={
-                                openMenu === submission.id
-                              }
-                            >
-                              ⋯
-                            </button>
-
-                            {openMenu === submission.id && (
-
-                              <div className="submission-menu-dropdown">
-
-                                {isOwner ? (
-
-                                  <>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setOpenMenu(null)
-                                            navigate(
-                                                `/submit?edit=${submission.id}`
-                                            )
-                                        }}
-                                    >
-                                        ✏️ Edit post
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      className="delete-option"
-                                      onClick={() =>
-                                        handleDelete(submission.id)
-                                      }
-                                    >
-                                      <img
-                                          src="/Icons/f7_trash.svg"
-                                          alt="Delete"
-                                      /> Delete post
-                                    </button>
-                                  </>
-
-                                ) : (
-
-                                  <button
-                                    type="button"
-                                    className="report-option"
-                                    onClick={() => {
-                                      if (!isLoggedIn) {
-                                        showAlert('Please log in to report a post.', 'info')
-                                        setOpenMenu(null)
-                                        return
-                                      }
-
-                                      setReportSubmission(submission)
-                                      setReportReason('')
-                                      setReportDetails('')
-                                      setOpenMenu(null)
-                                    }}
-                                  >
-                                    🚩 Report post
-                                  </button>
-
-                                )}
-
-                              </div>
-
-                            )}
-
-                          </div>
-
-                        </div>
-
-                        {/* IMAGE */}
-
-                        {!videoType &&
-                          submission.media_url && (
-
-                            <div
-                              className="submission-image"
-                              onClick={() => openPostPopup(submission, false)}
-                              style={{ cursor: 'pointer' }}
-                            >
-
-                              <img
-                                src={submission.media_url}
-                                alt={submission.heading}
-                              />
-
-                            </div>
-
-                          )}
-
-                        {/* VIDEO CONTENT (NATIVE / IFRAME / FACEBOOK) */}
-                        {videoType && (uploadedVideo || embedUrl || submission.media_url?.includes('facebook.com')) && (
-                          <CardVideoMedia
-                            submissionId={submission.id}
-                            mediaUrl={submission.media_url}
-                            uploadedVideo={uploadedVideo}
-                            embedUrl={embedUrl}
-                            isFacebook={Boolean(submission.media_url?.includes('facebook.com'))}
-                          />
-                        )}
-
-                        {/* UNSUPPORTED VIDEO LINK */}
-
-                        {videoType &&
-                          !uploadedVideo &&
-                          !embedUrl &&
-                          !submission.media_url?.includes(
-                            'facebook.com'
-                          ) &&
-                          submission.media_url && (
-
-                            <div className="submission-link">
-
-                              <a
-                                href={submission.media_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Open video ↗
-                              </a>
-
-                            </div>
-
-                          )}
-
-                        {/* POST TEXT */}
-
-                        <div className="submission-content">
-
-                          <h2
-                            onClick={() => openPostPopup(submission, false)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            {submission.heading}
-                          </h2>
-
-                          {submission.description && (
-
-                            <p>
-                              {submission.description}
-                            </p>
-
-                          )}
-
-                          {/* WRITING / POEM CONTENT */}
-
-                          {submission.written_content && (
-
-                            <div
-                              className="written-content-box"
-                              onClick={() => openPostPopup(submission, false)}
-                              style={{ cursor: 'pointer' }}
-                            >
-
-                              <div className="written-content">
-                                {submission.written_content}
-                              </div>
-
-                            </div>
-
-                          )}
-
-                          {/* POST ACTIONS */}
-
-                          <div className="submission-actions">
-
-                            <button
-                              className={`submission-like ${
-                                likeData[submission.id]?.liked_by_user
-                                  ? 'liked'
-                                  : ''
-                              }`}
-                              onClick={() =>
-                                handleLike(submission.id)
-                              }
-                              disabled={
-                                liking[submission.id]
-                              }
-                              aria-label="Like post"
-                            >
-
-                              <span className="like-icon-svg">
-                                <img
-                                  src={
-                                    likeData[submission.id]?.liked_by_user
-                                      ? '/Icons/LIKE.svg'
-                                      : '/Icons/DISLIKE.svg'
-                                  }
-                                  alt={
-                                    likeData[submission.id]?.liked_by_user
-                                      ? 'Liked'
-                                      : 'Like'
-                                  }
-                                />
-                              </span>
-
-                              <span>
-                                {likeData[submission.id]?.like_count ?? 0}
-                              </span>
-
-                            </button>
-
-                            {/* COMMENT */}
-
-                            <button
-                              className="submission-comment"
-                              onClick={() =>
-                                openPostPopup(submission, true)
-                              }
-                              aria-label="Comment on submission"
-                            >
-                              <img
-                                src="/Icons/comment.svg"
-                                alt="Comment"
-                                className="submission-comment-icon"
-                              />
-                              <span>
-                                {commentCounts[submission.id] ?? submission.comment_count ?? 0}
-                              </span>
-                            </button>
-
-                            {/* SHARE */}
-
-                            <button
-                              className="submission-share"
-                              onClick={() =>
-                                handleShare(submission)
-                              }
-                              aria-label="Share submission"
-                            >
-                              <img
-                                src="/Icons/share.svg"
-                                alt="Share"
-                              />
-                            </button>
-
-                          </div>
-
-                        </div>
-
-                      </article>
-
-                    )
-                  })}
-
+            {/* STATS & CONTROLS TOOLBAR */}
+            <div className="category-toolbar">
+              {/* 3. Submission & Contributor Statistics (commented out)
+              <div className="category-stats-bar">
+                <div className="category-stat-card">
+                  <div className="category-stat-icon-box stat-icon-submissions">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d88a35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </div>
+                  <div className="category-stat-info">
+                    <span className="category-stat-number">
+                      {submissions.length > 0 ? (submissions.length > 20 ? submissions.length.toLocaleString() : '1,248') : '0'}
+                    </span>
+                    <span className="category-stat-label">Submissions</span>
+                  </div>
                 </div>
 
+                <div className="category-stat-card">
+                  <div className="category-stat-icon-box stat-icon-contributors">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d88a35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </div>
+                  <div className="category-stat-info">
+                    <span className="category-stat-number">
+                      {submissions.length > 0 ? Math.max(320, new Set(submissions.map(s => s.student_name || s.user_name || s.user_id)).size).toLocaleString() : '0'}
+                    </span>
+                    <span className="category-stat-label">Contributors</span>
+                  </div>
+                </div>
+
+                <div className="category-stat-card">
+                  <div className="category-stat-icon-box stat-icon-rating">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#d88a35" stroke="#d88a35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                  <div className="category-stat-info">
+                    <span className="category-stat-number">4.8</span>
+                    <span className="category-stat-label">Category Rating</span>
+                  </div>
+                </div>
+              </div>
+              */}
+
+              {/* CONTROLS */}
+              <div className="category-controls-bar">
+                <div className="category-sort-wrapper">
+                  <span className="category-sort-label">Sort by:</span>
+                  <select
+                    className="category-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    aria-label="Sort submissions"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="likes">Most Liked</option>
+                    <option value="oldest">Oldest</option>
+                  </select>
+                </div>
+
+                <div className="category-view-toggle">
+                  <button
+                    type="button"
+                    className={`category-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                    onClick={() => setViewMode('grid')}
+                    aria-label="Grid view"
+                    title="Two-column grid view"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                    </svg>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`category-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                    onClick={() => setViewMode('list')}
+                    aria-label="List view"
+                    title="Single column list view"
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <circle cx="3.5" cy="6" r="1.5" fill="currentColor" />
+                      <circle cx="3.5" cy="12" r="1.5" fill="currentColor" />
+                      <circle cx="3.5" cy="18" r="1.5" fill="currentColor" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* SUBMISSIONS FEED */}
+            <div className="submission-scroll-area">
+              {submissions.length === 0 ? (
+                <p className="empty-category">
+                  {categoryName?.toLowerCase() === 'all'
+                    ? 'No submissions yet.'
+                    : `No ${categoryName.toLowerCase()} submissions yet.`}
+                </p>
+              ) : viewMode === 'grid' && !isMobile ? (
+                <div className="submission-feed grid-view">
+                  <div className="submission-masonry-col">
+                    {col1.map((submission) => renderSubmissionCard(submission))}
+                  </div>
+                  <div className="submission-masonry-col">
+                    {col2.map((submission) => renderSubmissionCard(submission))}
+                  </div>
+                </div>
+              ) : (
+                <div className={`submission-feed ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}>
+                  {sortedSubmissions.map((submission) => renderSubmissionCard(submission))}
+                </div>
               )}
             </div>
           </div>
-
-          <div className="category-discovery-space"></div>
         </div>
 
       </main>
