@@ -52,8 +52,8 @@
   height: 42px;
   margin: 0 auto;
 
-  border: 3px solid rgba(216, 138, 53, 0.2);
-  border-top-color: #d88a35;
+  border: 3px solid rgba(240, 124, 34, 0.2);
+  border-top-color: #f07c22;
   border-radius: 50%;
 
   animation: backend-loader-spin 0.8s linear infinite;
@@ -77,7 +77,7 @@ body.backend-loading {
   margin-bottom: 25px;
   border: 1px solid rgba(210, 120, 25, 0.5);
   border-radius: 30px;
-  color: #d88a35;
+  color: #f07c22;
   background: rgba(150, 75, 15, 0.12);
   font-size: 12px;
   font-weight: 600;
@@ -522,7 +522,7 @@ body.backend-loading {
 
 .featured-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(216, 138, 53, 0.4);
+  border-color: rgba(240, 124, 34, 0.4);
 }
 
 
@@ -535,7 +535,7 @@ body.backend-loading {
   z-index: 3;
   padding: 6px 10px;
   border-radius: 20px;
-  background: #d88a35;
+  background: #f07c22;
   color: #ffffff;
   font-size: 10px;
   font-weight: 600;

@@ -199,7 +199,7 @@
 }
 
 .type-icon {
-    filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) hue-rotate(344deg) brightness(90%) contrast(90%);
+    filter: brightness(0) saturate(100%) invert(60%) sepia(68%) saturate(2700%) hue-rotate(346deg) brightness(98%) contrast(93%);
     font-size: 20px;
     flex-shrink: 0;
 }

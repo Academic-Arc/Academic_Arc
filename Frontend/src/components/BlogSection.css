@@ -23,7 +23,7 @@
   margin-bottom: 16px;
   border: 1px solid rgba(210, 120, 25, 0.5);
   border-radius: 30px;
-  color: #d88a35;
+  color: #f07c22;
   background: rgba(150, 75, 15, 0.12);
   font-size: 12px;
   font-weight: 600;
@@ -70,7 +70,7 @@
 .blog-issue-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #d88a35;
+  color: #f07c22;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -120,7 +120,7 @@
   top: 14px;
   left: 14px;
   z-index: 2;
-  background: #d88a35;
+  background: #f07c22;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
@@ -198,7 +198,7 @@
 }
 
 .blog-cover-heading:hover {
-  color: #d88a35;
+  color: #f07c22;
 }
 
 .blog-cover-summary {
@@ -212,7 +212,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #d88a35;
+  color: #f07c22;
   font-size: 14.5px;
   font-weight: 700;
   text-decoration: none;
@@ -286,13 +286,13 @@
 }
 
 .blog-sidebar-item:hover {
-  border-color: #d88a35;
+  border-color: #f07c22;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
 .blog-sidebar-item:hover .blog-sidebar-headline {
-  color: #d88a35;
+  color: #f07c22;
 }
 
 .blog-sidebar-thumb-wrap {
@@ -323,7 +323,7 @@
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
-  color: #d88a35;
+  color: #f07c22;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 4px;

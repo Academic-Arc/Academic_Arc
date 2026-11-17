@@ -155,13 +155,13 @@
 
 .navbar-dark .navbar-submit-button {
   background: transparent;
-  border: 1px solid rgba(216, 138, 53, 0.6);
+  border: 1px solid rgba(240, 124, 34, 0.6);
   color: #d8d4ce;
 }
 
 .navbar-light .navbar-submit-button {
   background: transparent;
-  border: 1px solid rgba(216, 138, 53, 0.6);
+  border: 1px solid rgba(240, 124, 34, 0.6);
   color: #3a3733;
 }
 
@@ -185,12 +185,12 @@
 }
 
 .navbar-dark .navbar-profile-button {
-  border: 1px solid rgba(216, 138, 53, 0.6);
+  border: 1px solid rgba(240, 124, 34, 0.6);
   color: #d8d4ce;
 }
 
 .navbar-light .navbar-profile-button {
-  border: 1px solid rgba(216, 138, 53, 0.6);
+  border: 1px solid rgba(240, 124, 34, 0.6);
   color: #3a3733;
 }
 
@@ -239,7 +239,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #d88a35;
+  background: #f07c22;
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -261,8 +261,7 @@
   width: 12px;
   height: 12px;
   transition: transform 0.2s ease;
-  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) 
-          hue-rotate(344deg) brightness(90%) contrast(90%);
+  filter: brightness(0) saturate(100%) invert(60%) sepia(68%) saturate(2700%) hue-rotate(346deg) brightness(98%) contrast(93%);
 }
 
 .navbar-profile-arrow.open {
@@ -270,8 +269,7 @@
 }
 
 .navbar-dark .navbar-profile-arrow {
-  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) 
-          hue-rotate(344deg) brightness(90%) contrast(90%);
+  filter: brightness(0) saturate(100%) invert(60%) sepia(68%) saturate(2700%) hue-rotate(346deg) brightness(98%) contrast(93%);
 }
 
 /* =========================
@@ -331,7 +329,7 @@
 
 .navbar-profile-menu a:hover,
 .navbar-profile-menu button:hover {
-  background: rgba(216, 138, 53, 0.08);
+  background: rgba(240, 124, 34, 0.08);
 }
 
 .navbar-profile-menu img {
@@ -340,13 +338,11 @@
 }
 
 .navbar-dark .navbar-profile-menu img {
-  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) 
-          hue-rotate(344deg) brightness(90%) contrast(90%);
+  filter: brightness(0) saturate(100%) invert(60%) sepia(68%) saturate(2700%) hue-rotate(346deg) brightness(98%) contrast(93%);
 }
 
 .navbar-light .navbar-profile-menu img {
-  filter: brightness(0) saturate(100%) invert(66%) sepia(30%) saturate(1633%) 
-          hue-rotate(344deg) brightness(90%) contrast(90%);
+  filter: brightness(0) saturate(100%) invert(60%) sepia(68%) saturate(2700%) hue-rotate(346deg) brightness(98%) contrast(93%);
 }
 
 .navbar-logout-icon {
@@ -415,12 +411,12 @@
 }
 
 .navbar-dark .navbar-sign-in-button {
-  border: 1px solid rgba(216, 138, 53, 0.8);
+  border: 1px solid rgba(240, 124, 34, 0.8);
   color: #f5f2ed;
 }
 
 .navbar-light .navbar-sign-in-button {
-  border: 1px solid rgba(216, 138, 53, 0.8);
+  border: 1px solid rgba(240, 124, 34, 0.8);
   color: #3a3733;
 }
 
@@ -516,7 +512,7 @@
 }
 
 .navbar-search-result-item:hover {
-  background: rgba(216, 138, 53, 0.08);
+  background: rgba(240, 124, 34, 0.08);
 }
 
 .navbar-search-no-results {
