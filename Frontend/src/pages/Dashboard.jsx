@@ -204,6 +204,7 @@ function Dashboard() {
   }
 
   const handleSliderPointerDown = (e) => {
+    if (e.pointerType === 'touch') return
     if (e.button !== 0 && e.pointerType === 'mouse') return
     const slider = categorySliderRef.current
     if (!slider) return
@@ -211,6 +212,9 @@ function Dashboard() {
     hasDraggedRef.current = false
     dragStartXRef.current = e.clientX
     dragScrollLeftRef.current = slider.scrollLeft
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch (_) {}
   }
 
   const handleSliderPointerMove = (e) => {
@@ -224,19 +228,22 @@ function Dashboard() {
       slider.style.scrollSnapType = 'none'
       slider.classList.add('is-dragging')
       slider.scrollLeft = dragScrollLeftRef.current - diff
-      updateProgressBar()
     }
   }
 
-  const handleSliderPointerUp = () => {
+  const handleSliderPointerUp = (e) => {
     if (!isDraggingRef.current) return
     isDraggingRef.current = false
     const slider = categorySliderRef.current
     if (slider) {
+      try {
+        if (e && e.currentTarget && e.pointerId) {
+          e.currentTarget.releasePointerCapture(e.pointerId)
+        }
+      } catch (_) {}
       slider.classList.remove('is-dragging')
       slider.style.scrollBehavior = 'smooth'
       slider.style.scrollSnapType = 'x mandatory'
-      updateProgressBar()
     }
     setTimeout(() => {
       hasDraggedRef.current = false
@@ -547,7 +554,9 @@ function Dashboard() {
 
               <div className="showcase-actions">
                 <Link to="/category/All" className="showcase-btn showcase-btn-primary">
-                  Explore All Creations <span className="showcase-btn-arrow">→</span>
+                  <span className="showcase-btn-text-full">Explore All Creations</span>
+                  <span className="showcase-btn-text-short">Explore</span>{' '}
+                  <span className="showcase-btn-arrow">→</span>
                 </Link>
 
                 <Link to="/submit" className="showcase-btn showcase-btn-secondary">

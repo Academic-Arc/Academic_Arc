@@ -1128,7 +1128,7 @@ function Category() {
               <div className="category-stats-bar">
                 <div className="category-stat-card">
                   <div className="category-stat-icon-box stat-icon-submissions">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d88a35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f07c22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
@@ -1144,7 +1144,7 @@ function Category() {
 
                 <div className="category-stat-card">
                   <div className="category-stat-icon-box stat-icon-contributors">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d88a35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f07c22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                       <circle cx="9" cy="7" r="4" />
                       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -1161,7 +1161,7 @@ function Category() {
 
                 <div className="category-stat-card">
                   <div className="category-stat-icon-box stat-icon-rating">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#d88a35" stroke="#d88a35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#f07c22" stroke="#f07c22" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   </div>

@@ -34,7 +34,7 @@
 }
 
 .admin-blog-card.is-cover-story {
-  border-left: 3px solid #d88a35;
+  border-left: 3px solid #f07c22;
 }
 
 .admin-blog-card:hover {
@@ -263,7 +263,7 @@
 }
 
 .admin-uploading-tag {
-  color: #d88a35;
+  color: #f07c22;
   font-size: 11px;
   font-weight: 600;
 }
@@ -356,16 +356,16 @@
 .admin-blog-modal-submit-btn {
   height: 34px;
   padding: 0 18px;
-  border: 1px solid #d88a35;
+  border: 1px solid #f07c22;
   border-radius: 6px;
-  background: #d88a35;
+  background: #f07c22;
   color: #ffffff;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 6px rgba(216, 138, 53, 0.2);
+  box-shadow: 0 2px 6px rgba(240, 124, 34, 0.2);
 }
 
 .admin-blog-modal-submit-btn:hover {
