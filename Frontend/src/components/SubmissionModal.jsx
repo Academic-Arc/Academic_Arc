@@ -638,6 +638,52 @@ function SubmissionModal({
         />
       )
     }
+    const isPdf =
+      submission.media_type === 'application/pdf' ||
+      submission.media_url?.toLowerCase().endsWith('.pdf')
+
+    if (isPdf) {
+      return (
+        <div style={{ width: '100%', height: '100%', minHeight: '380px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#1c1b18' }}>
+          <iframe
+            src={submission.media_url}
+            title={submission.heading || 'PDF Document'}
+            style={{ width: '100%', height: '100%', minHeight: '360px', border: 'none', flex: 1 }}
+          />
+          <a
+            href={submission.media_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '8px 18px', background: '#f07c22', color: '#ffffff', borderRadius: '8px', textDecoration: 'none', margin: '10px', fontSize: '13px', fontWeight: 600 }}
+          >
+            Open / Download PDF ↗
+          </a>
+        </div>
+      )
+    }
+
+    const isDoc =
+      submission.media_type?.includes('word') ||
+      submission.media_url?.toLowerCase().endsWith('.docx') ||
+      submission.media_url?.toLowerCase().endsWith('.doc')
+
+    if (isDoc) {
+      return (
+        <div style={{ padding: '40px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+          <span style={{ fontSize: '48px' }}>📄</span>
+          <strong style={{ fontSize: '16px' }}>{submission.heading || 'Document Attached'}</strong>
+          <a
+            href={submission.media_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '10px 20px', background: '#f07c22', color: '#ffffff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}
+          >
+            Download / View Document ↗
+          </a>
+        </div>
+      )
+    }
+
     if (submission.media_url) {
       return <img src={submission.media_url} alt={submission.heading || 'Submission'} />
     }

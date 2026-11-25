@@ -553,6 +553,10 @@ function Category() {
         )
       )
 
+      if (selectedSubmission?.id === submissionId) {
+        closeSubmissionViewer()
+      }
+
       setLikeData((prev) => {
         const updated = { ...prev }
         delete updated[submissionId]
@@ -1418,6 +1422,7 @@ function Category() {
               delete copy[id]
               return copy
             })
+            closeSubmissionViewer()
           }}
         />
       )}

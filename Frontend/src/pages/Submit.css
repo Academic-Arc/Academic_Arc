@@ -568,3 +568,236 @@
         font-size: 18px;
     }
 }
+
+/* =========================================
+   UPLOAD PREVIEW CONTAINER
+   ========================================= */
+
+.upload-preview-container {
+    background: #faf8f5;
+    border: 2px solid #e5dfd5;
+    border-radius: 16px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upload-preview-container:hover {
+    border-color: #f07c22;
+}
+
+.upload-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.upload-preview-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #f07c22;
+    background: rgba(240, 124, 34, 0.1);
+    padding: 5px 12px;
+    border-radius: 20px;
+}
+
+.upload-preview-remove-btn {
+    background: transparent;
+    border: 1px solid #e0dad0;
+    color: #888277;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-preview-remove-btn:hover {
+    background: #fdf0ee;
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.upload-preview-body {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.upload-preview-image-wrapper {
+    max-height: 280px;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f0ece5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e4ded5;
+}
+
+.upload-preview-image {
+    max-width: 100%;
+    max-height: 280px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.upload-preview-video-wrapper {
+    width: 100%;
+    max-height: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+
+.upload-preview-video {
+    width: 100%;
+    max-height: 300px;
+    display: block;
+}
+
+.upload-preview-audio-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e8e2d8;
+    border-radius: 12px;
+}
+
+.upload-preview-audio-icon {
+    font-size: 32px;
+}
+
+.upload-preview-audio {
+    width: 100%;
+    max-width: 440px;
+}
+
+.upload-preview-doc-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border: 1px solid #e8e2d8;
+    border-radius: 14px;
+    box-sizing: border-box;
+}
+
+.upload-doc-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: #f4ede2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.upload-doc-icon-box.pdf {
+    background: #fde8e8;
+}
+
+.upload-doc-icon-box.doc {
+    background: #e6f0fa;
+}
+
+.upload-doc-type-tag {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #d32f2f;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.upload-doc-icon-box.doc .upload-doc-type-tag {
+    color: #1976d2;
+}
+
+.upload-doc-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.upload-doc-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+}
+
+.upload-doc-name {
+    font-size: 14px;
+    color: #292826;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.upload-doc-meta {
+    font-size: 12px;
+    color: #8c867a;
+}
+
+.upload-doc-preview-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f07c22;
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: rgba(240, 124, 34, 0.1);
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.upload-doc-preview-link:hover {
+    background: #f07c22;
+    color: #ffffff;
+}
+
+.upload-preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid #ebe5dc;
+    font-size: 12.5px;
+}
+
+.upload-preview-filename {
+    color: #6d685f;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 70%;
+}
+
+.upload-preview-replace-label {
+    color: #f07c22;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.upload-preview-replace-label input {
+    display: none;
+}

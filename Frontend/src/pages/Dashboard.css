@@ -370,12 +370,14 @@ body.backend-loading {
       rgba(15, 12, 10, 0.95) 100%
     );
   z-index: 1;
+  pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
 .showcase-card-bottom {
   position: relative;
   z-index: 2;
+  pointer-events: none;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
