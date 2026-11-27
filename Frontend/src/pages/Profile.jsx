@@ -618,6 +618,10 @@ function Profile() {
                 )
             )
 
+            if (selectedSubmission?.id === submissionId) {
+                closeSubmissionViewer()
+            }
+
             setOpenSubmissionMenu(null)
             showToast('Submission deleted successfully.', 'info')
         } catch (err) {
@@ -1315,6 +1319,7 @@ function Profile() {
                     onClose={closeSubmissionViewer}
                     onDelete={(id) => {
                         setSubmissions((prev) => prev.filter((s) => s.id !== id))
+                        closeSubmissionViewer()
                     }}
                 />
             )}

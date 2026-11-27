@@ -192,16 +192,27 @@ async def upload_submission_file(
         "image/jpeg": "jpg",
         "image/png": "png",
         "image/webp": "webp",
+        "image/gif": "gif",
         "audio/mpeg": "mp3",
         "audio/wav": "wav",
         "audio/ogg": "ogg",
         "audio/mp4": "m4a",
+        "audio/x-m4a": "m4a",
         "video/mp4": "mp4",
         "video/webm": "webm",
-        "video/ogg": "ogv"
+        "video/ogg": "ogv",
+        "video/quicktime": "mov",
+        "application/pdf": "pdf",
+        "application/msword": "doc",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+        "text/plain": "txt"
     }
 
-    file_extension = extension_map[file.content_type]
+    raw_ext = ""
+    if file.filename and "." in file.filename:
+        raw_ext = file.filename.rsplit(".", 1)[-1].lower()
+
+    file_extension = extension_map.get(file.content_type, raw_ext or "bin")
 
     # Generate unique filename
     file_name = f"{uuid.uuid4()}.{file_extension}"
@@ -210,67 +221,85 @@ async def upload_submission_file(
     file_bytes = await file.read()
 
     # File Size Limiter
-    MAX_IMAGE_SIZE = 5 * 1024 * 1024
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024
     MAX_AUDIO_SIZE = 20 * 1024 * 1024
     MAX_VIDEO_SIZE = 50 * 1024 * 1024
+    MAX_DOC_SIZE = 25 * 1024 * 1024
 
     allowed_image_types = {
         "image/jpeg",
         "image/png",
-        "image/webp"
+        "image/webp",
+        "image/gif"
     }
 
     allowed_audio_types = {
         "audio/mpeg",
         "audio/wav",
         "audio/ogg",
-        "audio/mp4"
+        "audio/mp4",
+        "audio/x-m4a"
     }
 
     allowed_video_types = {
         "video/mp4",
         "video/webm",
-        "video/ogg"
+        "video/ogg",
+        "video/quicktime"
     }
 
-    if file.content_type in allowed_image_types:
+    allowed_doc_types = {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "text/plain"
+    }
+
+    allowed_doc_extensions = {"pdf", "doc", "docx", "txt"}
+
+    if file.content_type in allowed_image_types or raw_ext in {"jpg", "jpeg", "png", "webp", "gif"}:
         if len(file_bytes) > MAX_IMAGE_SIZE:
             raise HTTPException(
                 status_code=400,
-                detail="Image files must be 5 MB or smaller."
+                detail="Image files must be 10 MB or smaller."
             )
 
         try:
             image = Image.open(
                 io.BytesIO(file_bytes)
             )
-
             image.verify()
-
         except Exception:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid or corrupted image file."
             )
 
-    elif file.content_type in allowed_audio_types:
+    elif file.content_type in allowed_audio_types or raw_ext in {"mp3", "wav", "ogg", "m4a"}:
         if len(file_bytes) > MAX_AUDIO_SIZE:
             raise HTTPException(
                 status_code=400,
                 detail="Audio files must be 20 MB or smaller."
             )
 
-    elif file.content_type in allowed_video_types:
+    elif file.content_type in allowed_video_types or raw_ext in {"mp4", "webm", "ogv", "mov"}:
         if len(file_bytes) > MAX_VIDEO_SIZE:
             raise HTTPException(
                 status_code=400,
                 detail="Video files must be 50 MB or smaller."
             )
 
+    elif file.content_type in allowed_doc_types or raw_ext in allowed_doc_extensions:
+        if len(file_bytes) > MAX_DOC_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail="Document files must be 25 MB or smaller."
+            )
+
     else:
         raise HTTPException(
             status_code=400,
-            detail="Unsupported media format."
+            detail="Unsupported media format. Please upload Word, PDF, PNG, JPG, or MP4."
         )
 
     # Upload to Supabase Storage
@@ -286,8 +315,15 @@ async def upload_submission_file(
     # Save the Supabase file URL in the database
     public_url = supabase.storage.from_("submissions").get_public_url(file_name)
 
+    detected_content_type = file.content_type
+    if not detected_content_type or detected_content_type == "application/octet-stream":
+        if file_extension == "pdf":
+            detected_content_type = "application/pdf"
+        elif file_extension in {"doc", "docx"}:
+            detected_content_type = "application/msword"
+
     submission.media_url = public_url
-    submission.media_type = file.content_type
+    submission.media_type = detected_content_type
 
     # Delete the previous uploaded Supabase file after
     # the new file has been uploaded successfully.

@@ -212,9 +212,6 @@ function Dashboard() {
     hasDraggedRef.current = false
     dragStartXRef.current = e.clientX
     dragScrollLeftRef.current = slider.scrollLeft
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    } catch (_) {}
   }
 
   const handleSliderPointerMove = (e) => {
@@ -223,7 +220,12 @@ function Dashboard() {
     if (!slider) return
     const diff = e.clientX - dragStartXRef.current
     if (Math.abs(diff) > 4) {
-      hasDraggedRef.current = true
+      if (!hasDraggedRef.current) {
+        hasDraggedRef.current = true
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId)
+        } catch (_) {}
+      }
       slider.style.scrollBehavior = 'auto'
       slider.style.scrollSnapType = 'none'
       slider.classList.add('is-dragging')
@@ -237,7 +239,7 @@ function Dashboard() {
     const slider = categorySliderRef.current
     if (slider) {
       try {
-        if (e && e.currentTarget && e.pointerId) {
+        if (e && e.currentTarget && e.pointerId && e.currentTarget.hasPointerCapture?.(e.pointerId)) {
           e.currentTarget.releasePointerCapture(e.pointerId)
         }
       } catch (_) {}
@@ -247,7 +249,7 @@ function Dashboard() {
     }
     setTimeout(() => {
       hasDraggedRef.current = false
-    }, 80)
+    }, 100)
   }
 
   useEffect(() => {
@@ -599,6 +601,7 @@ function Dashboard() {
                     onClick={(e) => {
                       if (hasDraggedRef.current) {
                         e.preventDefault()
+                        e.stopPropagation()
                       }
                     }}
                   >
@@ -769,6 +772,7 @@ function Dashboard() {
           onDelete={(id) => {
             setSpecialPosts((prev) => prev.filter((p) => p.id !== id))
             setAutomaticPosts((prev) => prev.filter((p) => p.id !== id))
+            setSelectedSubmission(null)
           }}
         />
       )}

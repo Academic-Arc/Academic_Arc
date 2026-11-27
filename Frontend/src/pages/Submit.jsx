@@ -4,6 +4,14 @@ import { API_URL } from "../config";
 import './Submit.css'
 import Navbar from '../components/Navbar'
 
+function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
 function Submit() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
@@ -24,6 +32,7 @@ function Submit() {
     const [message, setMessage] = useState('')
 
     const [file, setFile] = useState(null)
+    const [filePreview, setFilePreview] = useState(null)
     const [mediaUrl, setMediaUrl] = useState('')
     const [mediaType, setMediaType] = useState('video')
 
@@ -36,6 +45,20 @@ function Submit() {
     const [loadingUser, setLoadingUser] = useState(true)
 
     const [saving, setSaving] = useState(false)
+
+    useEffect(() => {
+        if (!file) {
+            setFilePreview(null)
+            return
+        }
+
+        const url = URL.createObjectURL(file)
+        setFilePreview(url)
+
+        return () => {
+            URL.revokeObjectURL(url)
+        }
+    }, [file])
 
     useEffect(() => {
         let isMounted = true
@@ -356,14 +379,15 @@ function Submit() {
                         }
                     )
 
-                    const uploadResult =
-                        await uploadResponse.json()
+                    let uploadResult = null
+                    try {
+                        uploadResult = await uploadResponse.json()
+                    } catch (_) {}
 
                     if (!uploadResponse.ok) {
                         setMessage(
-                            JSON.stringify(
-                                uploadResult.detail
-                            )
+                            (uploadResult && (typeof uploadResult.detail === 'string' ? uploadResult.detail : JSON.stringify(uploadResult.detail))) ||
+                            'Failed to upload file to storage.'
                         )
                         setSaving(false)
                         return
@@ -441,14 +465,15 @@ function Submit() {
                     }
                 )
 
-                const uploadResult =
-                    await uploadResponse.json()
+                let uploadResult = null
+                try {
+                    uploadResult = await uploadResponse.json()
+                } catch (_) {}
 
                 if (!uploadResponse.ok) {
                     setMessage(
-                        JSON.stringify(
-                            uploadResult.detail
-                        )
+                        (uploadResult && (typeof uploadResult.detail === 'string' ? uploadResult.detail : JSON.stringify(uploadResult.detail))) ||
+                        'Failed to upload file to storage.'
                     )
                     setSaving(false)
                     return
@@ -466,7 +491,7 @@ function Submit() {
             console.error(error)
 
             setMessage(
-                'Could not connect to the backend.'
+                error.message || 'Could not connect to the backend.'
             )
 
         } finally {
@@ -785,44 +810,162 @@ function Submit() {
                         </div>
 
 
-                        {/* FILE UPLOAD */}
+                        {/* FILE UPLOAD & PREVIEW */}
 
                         {!mediaUrl.trim() && (
-                            <label className="upload-box">
+                            file ? (
+                                <div className="upload-preview-container">
+                                    <div className="upload-preview-header">
+                                        <span className="upload-preview-badge">Selected File Preview</span>
+                                        <button
+                                            type="button"
+                                            className="upload-preview-remove-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setFile(null)
+                                            }}
+                                            title="Remove file"
+                                        >
+                                            ✕ Remove
+                                        </button>
+                                    </div>
 
-                                <input
-                                    type="file"
-                                    onChange={(e) => {
-                                        const selectedFile =
-                                            e.target.files[0] || null
+                                    <div className="upload-preview-body">
+                                        {file.type.startsWith('image/') && filePreview && (
+                                            <div className="upload-preview-image-wrapper">
+                                                <img
+                                                    src={filePreview}
+                                                    alt="Uploaded preview"
+                                                    className="upload-preview-image"
+                                                />
+                                            </div>
+                                        )}
 
-                                        setFile(selectedFile)
+                                        {file.type.startsWith('video/') && filePreview && (
+                                            <div className="upload-preview-video-wrapper">
+                                                <video
+                                                    src={filePreview}
+                                                    controls
+                                                    className="upload-preview-video"
+                                                />
+                                            </div>
+                                        )}
 
-                                        if (selectedFile) {
-                                            setMediaUrl('')
-                                        }
-                                    }}
-                                />
+                                        {file.type.startsWith('audio/') && filePreview && (
+                                            <div className="upload-preview-audio-wrapper">
+                                                <div className="upload-preview-audio-icon">🎵</div>
+                                                <audio
+                                                    src={filePreview}
+                                                    controls
+                                                    className="upload-preview-audio"
+                                                />
+                                            </div>
+                                        )}
 
-                                <div className="upload-icon">
-                                    ↥
+                                        {(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) && (
+                                            <div className="upload-preview-doc-wrapper pdf">
+                                                <div className="upload-doc-icon-box pdf">
+                                                    <span className="upload-doc-type-tag">PDF</span>
+                                                    <span className="upload-doc-icon">📄</span>
+                                                </div>
+                                                <div className="upload-doc-info">
+                                                    <strong className="upload-doc-name">{file.name}</strong>
+                                                    <span className="upload-doc-meta">{formatFileSize(file.size)} · Portable Document</span>
+                                                </div>
+                                                {filePreview && (
+                                                    <a
+                                                        href={filePreview}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="upload-doc-preview-link"
+                                                    >
+                                                        Open Preview ↗
+                                                    </a>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {(file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx') || file.type.includes('word')) && (
+                                            <div className="upload-preview-doc-wrapper doc">
+                                                <div className="upload-doc-icon-box doc">
+                                                    <span className="upload-doc-type-tag">DOC</span>
+                                                    <span className="upload-doc-icon">📝</span>
+                                                </div>
+                                                <div className="upload-doc-info">
+                                                    <strong className="upload-doc-name">{file.name}</strong>
+                                                    <span className="upload-doc-meta">{formatFileSize(file.size)} · Word Document</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {!file.type.startsWith('image/') &&
+                                         !file.type.startsWith('video/') &&
+                                         !file.type.startsWith('audio/') &&
+                                         !file.name.toLowerCase().endsWith('.pdf') &&
+                                         !file.name.toLowerCase().endsWith('.doc') &&
+                                         !file.name.toLowerCase().endsWith('.docx') && (
+                                            <div className="upload-preview-doc-wrapper generic">
+                                                <div className="upload-doc-icon-box">
+                                                    <span className="upload-doc-icon">📁</span>
+                                                </div>
+                                                <div className="upload-doc-info">
+                                                    <strong className="upload-doc-name">{file.name}</strong>
+                                                    <span className="upload-doc-meta">{formatFileSize(file.size)}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="upload-preview-footer">
+                                        <span className="upload-preview-filename">{file.name} ({formatFileSize(file.size)})</span>
+                                        <label className="upload-preview-replace-label">
+                                            Replace file
+                                            <input
+                                                type="file"
+                                                onChange={(e) => {
+                                                    const newFile = e.target.files[0] || null
+                                                    if (newFile) {
+                                                        setFile(newFile)
+                                                        setMediaUrl('')
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
+                            ) : (
+                                <label className="upload-box">
+                                    <input
+                                        type="file"
+                                        onChange={(e) => {
+                                            const selectedFile =
+                                                e.target.files[0] || null
 
-                                <strong>
-                                    {file
-                                        ? file.name
-                                        : 'Drop your file here'}
-                                </strong>
+                                            setFile(selectedFile)
 
-                                <span>
-                                    or click to browse · Maximum file size 10 MB
-                                </span>
+                                            if (selectedFile) {
+                                                setMediaUrl('')
+                                            }
+                                        }}
+                                    />
 
-                                <small>
-                                    Supported formats: Word, PDF, PNG, JPG, JPEG, MP4
-                                </small>
+                                    <div className="upload-icon">
+                                        ↥
+                                    </div>
 
-                            </label>
+                                    <strong>
+                                        Drop your file here
+                                    </strong>
+
+                                    <span>
+                                        or click to browse · Maximum file size 10 MB
+                                    </span>
+
+                                    <small>
+                                        Supported formats: Word, PDF, PNG, JPG, JPEG, MP4
+                                    </small>
+                                </label>
+                            )
                         )}
 
 
