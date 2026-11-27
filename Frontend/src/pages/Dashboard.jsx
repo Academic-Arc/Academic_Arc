@@ -219,7 +219,7 @@ function Dashboard() {
     const slider = categorySliderRef.current
     if (!slider) return
     const diff = e.clientX - dragStartXRef.current
-    if (Math.abs(diff) > 4) {
+    if (Math.abs(diff) > 15) {
       if (!hasDraggedRef.current) {
         hasDraggedRef.current = true
         try {
@@ -420,7 +420,7 @@ function Dashboard() {
       description: 'Original songs & musical creations',
       type: 'Song',
       number: '04',
-      image: '/music.png',
+      image: '/song-card.png',
       icon: '/Icons/song.svg',
     },
     {
@@ -598,6 +598,8 @@ function Dashboard() {
                     to={`/category/${encodeURIComponent(category.type)}`}
                     className="showcase-category-card"
                     style={{ backgroundImage: `url(${category.image})` }}
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                     onClick={(e) => {
                       if (hasDraggedRef.current) {
                         e.preventDefault()

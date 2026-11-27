@@ -45,6 +45,26 @@ def make_unique_slug(db: Session, base_text: str, blog_id: Optional[int] = None)
 # PUBLIC ENDPOINTS
 # ==========================================
 
+def serialize_blog(b: Blog):
+    if not b:
+        return None
+    return {
+        "id": b.id,
+        "title": b.title,
+        "slug": b.slug,
+        "excerpt": b.excerpt,
+        "category": b.category,
+        "cover_image_url": b.cover_image_url,
+        "is_cover_story": b.is_cover_story,
+        "issue_label": b.issue_label,
+        "published_date": b.published_date,
+        "read_time": b.read_time,
+        "author_name": b.author_name,
+        "view_count": b.view_count,
+        "created_at": b.created_at.isoformat() if b.created_at else None
+    }
+
+
 @router.get("/")
 @limiter.limit("60/minute")
 def get_published_blogs(
@@ -53,7 +73,7 @@ def get_published_blogs(
 ):
     """
     Get editorial blog articles for the home page showcase directly from database.
-    Returns the cover story, sidebar articles ('Read More'), and current issue label.
+    Returns the cover story, latest 4 sidebar articles ('Read More'), and current issue label.
     """
     # 1. Fetch cover story
     cover_story = (
@@ -71,7 +91,7 @@ def get_published_blogs(
             .first()
         )
 
-    # 2. Fetch sidebar articles
+    # 2. Fetch latest 4 sidebar articles
     sidebar_query = db.query(Blog).filter(Blog.is_published == True)
     if cover_story:
         sidebar_query = sidebar_query.filter(Blog.id != cover_story.id)
@@ -79,35 +99,36 @@ def get_published_blogs(
     articles = (
         sidebar_query
         .order_by(Blog.created_at.desc())
-        .limit(6)
+        .limit(4)
         .all()
     )
 
     issue_label = cover_story.issue_label if cover_story else ""
 
-    def serialize_blog(b: Blog):
-        if not b:
-            return None
-        return {
-            "id": b.id,
-            "title": b.title,
-            "slug": b.slug,
-            "excerpt": b.excerpt,
-            "category": b.category,
-            "cover_image_url": b.cover_image_url,
-            "is_cover_story": b.is_cover_story,
-            "issue_label": b.issue_label,
-            "published_date": b.published_date,
-            "read_time": b.read_time,
-            "author_name": b.author_name,
-            "view_count": b.view_count,
-            "created_at": b.created_at.isoformat() if b.created_at else None
-        }
-
     return {
         "issue_label": issue_label,
         "cover_story": serialize_blog(cover_story),
         "articles": [serialize_blog(a) for a in articles]
+    }
+
+
+@router.get("/all")
+@limiter.limit("60/minute")
+def get_all_published_blogs(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all published blog articles ordered from newest to oldest.
+    """
+    blogs = (
+        db.query(Blog)
+        .filter(Blog.is_published == True)
+        .order_by(Blog.created_at.desc())
+        .all()
+    )
+    return {
+        "blogs": [serialize_blog(b) for b in blogs]
     }
 
 
@@ -242,7 +263,6 @@ def create_blog_admin(
 
     if payload.is_cover_story:
         db.query(Blog).filter(
-            Blog.issue_label == payload.issue_label,
             Blog.is_cover_story == True
         ).update({"is_cover_story": False})
 
@@ -292,9 +312,7 @@ def update_blog_admin(
         update_data["slug"] = make_unique_slug(db, update_data["slug"], blog.id)
 
     if update_data.get("is_cover_story"):
-        target_issue = update_data.get("issue_label", blog.issue_label)
         db.query(Blog).filter(
-            Blog.issue_label == target_issue,
             Blog.id != blog.id,
             Blog.is_cover_story == True
         ).update({"is_cover_story": False})

@@ -1,6 +1,6 @@
 .magazine {
   min-height: 100vh;
-  padding: 0 clamp(24px, 8vw, 250px) 30px;
+  padding: 0 clamp(24px, 8vw, 250px) 0;
   color: #f5f2ed;
   background:
     radial-gradient(
@@ -411,10 +411,19 @@ body.backend-loading {
 /* FEATURED SECTION */
 
 .featured-section {
-  margin: 120px calc(-1 * clamp(24px, 8vw, 250px)) 0;
-  padding: 75px clamp(24px, 8vw, 250px) 100px;
+  margin: 40px calc(-1 * clamp(24px, 8vw, 250px)) 0;
+  padding: 155px clamp(24px, 8vw, 250px) 100px;
 
-  background: #f5f2ed;
+  background: linear-gradient(
+    180deg,
+    rgba(245, 242, 237, 0) 0px,
+    rgba(245, 242, 237, 0.08) 32px,
+    rgba(245, 242, 237, 0.28) 64px,
+    rgba(245, 242, 237, 0.62) 96px,
+    rgba(245, 242, 237, 0.88) 124px,
+    #f5f2ed 150px,
+    #f5f2ed 100%
+  );
   color: #f5f2ed;
 
   text-align: left;

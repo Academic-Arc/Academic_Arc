@@ -65,9 +65,9 @@ function BlogDetail() {
           <button
             type="button"
             className="blog-back-btn"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/blogs')}
           >
-            ← Back to Showcase
+            ← Back to All Blogs
           </button>
 
           {blog?.issue_label && (

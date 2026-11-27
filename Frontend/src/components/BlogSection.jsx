@@ -51,7 +51,7 @@ function BlogSection() {
   }
 
   const cover = blogData?.cover_story
-  const sidebarArticles = blogData?.articles || []
+  const sidebarArticles = (blogData?.articles || []).slice(0, 4)
   const hasBlogs = !!cover || sidebarArticles.length > 0
 
   const handleArticleClick = (article) => {
@@ -214,6 +214,13 @@ function BlogSection() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="blog-sidebar-footer">
+                <Link to="/blogs" className="blog-see-all-link">
+                  <span>See All</span>
+                  <span className="blog-cta-arrow">→</span>
+                </Link>
               </div>
             </aside>
           )}
