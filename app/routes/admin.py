@@ -36,6 +36,105 @@ def admin_me(
         "email": admin.email
     }
 
+
+@router.get("/overview")
+def get_admin_overview(
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    now = datetime.utcnow()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    total_students = (
+        db.query(User)
+        .filter(User.is_student == True)
+        .count()
+    )
+
+    total_posts = db.query(Submission).count()
+
+    active_categories = (
+        db.query(func.count(func.distinct(Submission.content_type)))
+        .scalar()
+        or 0
+    )
+
+    posts_this_month = (
+        db.query(Submission)
+        .filter(Submission.created_at >= month_start)
+        .count()
+    )
+
+    recent_posts_rows = (
+        db.query(Submission, User)
+        .join(User, Submission.user_id == User.id)
+        .order_by(Submission.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    recent_posts = [
+        {
+            "id": submission.id,
+            "heading": submission.heading,
+            "content_type": submission.content_type,
+            "user_name": user.name,
+            "created_at": submission.created_at,
+        }
+        for submission, user in recent_posts_rows
+    ]
+
+    recent_students_rows = (
+        db.query(User, Student)
+        .outerjoin(Student, Student.user_id == User.id)
+        .filter(User.is_student == True)
+        .order_by(User.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    recent_students = [
+        {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "profile_picture": user.profile_picture,
+            "school": student.school if student else None,
+            "student_class": student.student_class if student else None,
+            "created_at": user.created_at,
+        }
+        for user, student in recent_students_rows
+    ]
+
+    recent_users_rows = (
+        db.query(User)
+        .filter(User.is_student == False, User.role != "admin")
+        .order_by(User.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    recent_users = [
+        {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "profile_picture": user.profile_picture,
+            "created_at": user.created_at,
+        }
+        for user in recent_users_rows
+    ]
+
+    return {
+        "total_students": total_students,
+        "total_posts": total_posts,
+        "active_categories": active_categories,
+        "posts_this_month": posts_this_month,
+        "recent_posts": recent_posts,
+        "recent_students": recent_students,
+        "recent_users": recent_users,
+    }
+
 @router.get("/posts")
 def get_admin_posts(
     admin: User = Depends(get_current_admin),

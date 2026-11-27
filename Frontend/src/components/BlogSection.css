@@ -1,14 +1,24 @@
 /* ==========================================================================
-   EDITORIAL BLOG SECTION - #f5f2ed Background (Matching Special Mentions)
+   EDITORIAL BLOG SECTION - Distinct #eae4db Background with Seamless Blends
    ========================================================================== */
 
 .blog-editorial-section {
   margin: 0 calc(-1 * clamp(24px, 8vw, 250px)) 0;
-  padding: 50px clamp(24px, 8vw, 250px) 100px;
-  background: #f5f2ed;
+  padding: 100px clamp(24px, 8vw, 250px) 125px;
+  background: linear-gradient(
+    180deg,
+    #f5f2ed 0px,
+    #f0ebe3 45px,
+    #eae4db 90px,
+    #eae4db calc(100% - 96px),
+    #dfd6c9 calc(100% - 76px),
+    #b9ab99 calc(100% - 56px),
+    #6b5c4d calc(100% - 36px),
+    #261f19 calc(100% - 16px),
+    #0f0e0d 100%
+  );
   color: #171717;
   text-align: left;
-  border-top: 1px solid #e2ded8;
   box-sizing: border-box;
 }
 
@@ -347,6 +357,36 @@
   color: #888888;
 }
 
+.blog-sidebar-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.blog-see-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #f07c22;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.blog-see-all-link .blog-cta-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.blog-see-all-link:hover {
+  color: #b96b1e;
+}
+
+.blog-see-all-link:hover .blog-cta-arrow {
+  transform: translateX(5px);
+}
+
 /* ==========================================
    RESPONSIVE DESIGN
    ========================================== */
@@ -364,7 +404,7 @@
 
 @media (max-width: 640px) {
   .blog-editorial-section {
-    padding: 40px clamp(16px, 5vw, 40px) 70px;
+    padding: 85px clamp(16px, 5vw, 40px) 115px;
   }
 
   .blog-section-header h2 {

@@ -27,6 +27,7 @@ import About from './pages/About'
 import Policy from './pages/Policy'
 import SkeletonLoader from './components/SkeletonLoader'
 import BlogDetail from './pages/BlogDetail'
+import AllBlogs from './pages/AllBlogs'
 import { PromptProvider } from './context/PromptContext'
 
 function App() {
@@ -98,6 +99,7 @@ function App() {
       location.pathname === "/about" ||
       location.pathname === "/policy" ||
       location.pathname === "/privacy-policy" ||
+      location.pathname === "/blogs" ||
       location.pathname.startsWith("/category/") ||
       location.pathname.startsWith("/blog/");
   return (
@@ -119,6 +121,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/policy" element={<Policy />} />
             <Route path="/privacy-policy" element={<Policy />} />
+            <Route path="/blogs" element={<AllBlogs />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
 
             <Route path="/admin" element={<AdminDashboard />} />
